@@ -1,0 +1,31 @@
+/* Base styles */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom CSS if needed */
+.text-orange {
+  color: #FF7A00;
+}
+
+.bg-orange {
+  background-color: #FF7A00;
+}
+
+.bg-dark-blue {
+  background-color: #0a1929;
+}
+
+.hover-orange:hover {
+  color: #FF7A00;
+  transition: color 0.3s ease;
+}
