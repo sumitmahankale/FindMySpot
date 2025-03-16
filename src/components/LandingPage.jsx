@@ -18,6 +18,7 @@ const LandingPage = () => {
           <span className="text-2xl font-bold">FindMySpot</span>
         </div>
         <div className="flex items-center space-x-6">
+        <a href="#become-lister" className="hover:text-yellow-500" style={{ transition: "color 0.3s" }}>Lister </a>
           <a href="#features" className="hover:text-yellow-500" style={{ transition: "color 0.3s" }}>Features</a>
           <a href="#how-it-works" className="hover:text-yellow-500" style={{ transition: "color 0.3s" }}>How It Works</a>
           <a href="#pricing" className="hover:text-yellow-500" style={{ transition: "color 0.3s" }}>Pricing</a>
@@ -184,7 +185,7 @@ const LandingPage = () => {
             How <span style={{ color: "#FF7A00" }}>FindMySpot</span> Works
           </h2>
           
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "2rem" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "2rem" }} >
             {[
               { 
                 step: 1, 
@@ -290,7 +291,34 @@ const LandingPage = () => {
           </button>
         </div>
       </div>
-
+{/* Want to be a Lister? Section */}
+<div style={{ padding: "5rem 0", backgroundColor: "#0d2748" }}id="become-lister">
+  <div className="container mx-auto px-6 text-center">
+    <h2 className="text-3xl font-bold mb-4">Want to be a Lister?</h2>
+    <p className="text-xl mb-8 max-w-xl mx-auto" style={{ color: "#CBD5E0" }}>
+      Turn your unused parking space into income. Register your spot for betterment of everyone.
+    </p>
+    <button style={{ 
+        backgroundColor: "#FF7A00", 
+        padding: "0.75rem 2rem", 
+        borderRadius: "9999px", 
+        fontWeight: "500",
+        fontSize: "1.125rem",
+        transition: "all 0.3s"
+      }}
+      onMouseOver={(e) => {
+        e.target.style.backgroundColor = "#E56E00";
+        e.target.style.boxShadow = "0 10px 15px -3px rgba(255, 122, 0, 0.3)";
+      }}
+      onMouseOut={(e) => {
+        e.target.style.backgroundColor = "#FF7A00";
+        e.target.style.boxShadow = "none";
+      }}
+    >
+      Get Started
+    </button>
+  </div>
+</div>
       {/* Footer */}
       <footer style={{ backgroundColor: "#071423", padding: "3rem 0" }}>
         <div className="container mx-auto px-6">
