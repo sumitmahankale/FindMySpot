@@ -5,10 +5,13 @@ const LandingPage = () => {
   
   useEffect(() => {
     setIsAnimated(true);
+
+  
   }, []);
 
   return (
     <div className="min-h-screen" style={{ background: "linear-gradient(to bottom, #0a1929, #0d2748)", color: "white" }}>
+      
       {/* Navigation */}
       <nav className="flex justify-between items-center p-6 relative z-10">
         <div className="flex items-center">
