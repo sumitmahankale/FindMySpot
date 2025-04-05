@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom'
+
+
 
 const LandingPage = () => {
   const [isAnimated, setIsAnimated] = useState(false);
@@ -8,7 +11,25 @@ const LandingPage = () => {
 
   
   }, []);
+  const navigate = useNavigate();
 
+  const handleLoginClick = () => {
+    navigate('/login');
+    // navigate('/main'); // Redirects to LoginPage
+    
+  };
+  const navigatemain = useNavigate();
+
+  const handleLoginClickk = () => {
+    navigatemain('/main'); // Redirects to MainPage
+    
+  };
+  const navigateabout = useNavigate();
+
+  const handleabout = () => {
+    navigateabout('/about'); // Redirects to MainPage
+    
+  };
   return (
     <div className="min-h-screen" style={{ background: "linear-gradient(to bottom, #0a1929, #0d2748)", color: "white" }}>
       
@@ -34,6 +55,7 @@ const LandingPage = () => {
             }}
             onMouseOver={(e) => e.target.style.backgroundColor = "#E56E00"}
             onMouseOut={(e) => e.target.style.backgroundColor = "#FF7A00"}
+            onClick={handleLoginClick}
           >
             Login
           </button>
@@ -70,6 +92,7 @@ const LandingPage = () => {
                 e.target.style.backgroundColor = "#FF7A00";
                 e.target.style.boxShadow = "none";
               }}
+              onClick={handleLoginClickk}
             >
               Get Started
             </button>
@@ -90,6 +113,7 @@ const LandingPage = () => {
                 e.target.style.backgroundColor = "transparent";
                 e.target.style.color = "#FF7A00";
               }}
+              onClick={handleabout}
             >
               Learn More
             </button>

@@ -1,10 +1,13 @@
+// File: src/components/SignupPage.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './LoginPage.css';
+import './LoginPage.css'; // Reuse same styles
 
-const LoginPage = () => {
+const SignupPage = () => {
   const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -14,21 +17,16 @@ const LoginPage = () => {
     setError('');
     setIsLoading(true);
 
-    // Simulate API call
     setTimeout(() => {
       setIsLoading(false);
-
-      // Simple validation
-      if (email && password.length >= 6) {
-        localStorage.setItem('isAuthenticated', 'true');
-
-        const username = email.split('@')[0];
-        localStorage.setItem('username', username);
-
-        navigate('/home');
-      } else {
-        setError('Invalid credentials. Email required and password must be at least 6 characters.');
+      if (!email || !username || password.length < 6 || password !== confirmPassword) {
+        setError('Please fill all fields correctly. Passwords must match and be at least 6 characters.');
+        return;
       }
+
+      localStorage.setItem('isAuthenticated', 'true');
+      localStorage.setItem('username', username);
+      navigate('/home');
     }, 1500);
   };
 
@@ -37,20 +35,27 @@ const LoginPage = () => {
       <div className="login-container">
         <div className="login-form-container animate-slide-left">
           <div className="login-header">
-            <div className="logo animate-scale">
-              SecureLogin
-            </div>
-            <h2 className="animate-fade-down">
-              Welcome Back
-            </h2>
-            <p className="animate-fade-down-delay">
-              Sign in to access your account
-            </p>
+            <div className="logo animate-scale">SecureSignup</div>
+            <h2 className="animate-fade-down">Create Account</h2>
+            <p className="animate-fade-down-delay">Sign up to get started</p>
           </div>
 
           {error && <div className="error-message">{error}</div>}
 
           <form onSubmit={handleSubmit} className="login-form animate-fade-in">
+            <div className="form-group">
+              <label htmlFor="username">Username</label>
+              <input
+                className="input-focus-effect"
+                type="text"
+                id="username"
+                placeholder="Enter your username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+              />
+            </div>
+
             <div className="form-group">
               <label htmlFor="email">Email</label>
               <input
@@ -77,36 +82,33 @@ const LoginPage = () => {
               />
             </div>
 
-            <div className="form-options">
-              <div className="remember-me">
-                <input type="checkbox" id="remember" />
-                <label htmlFor="remember">Remember me</label>
-              </div>
-              <a href="#forgot" className="forgot-password">Forgot Password?</a>
+            <div className="form-group">
+              <label htmlFor="confirmPassword">Confirm Password</label>
+              <input
+                className="input-focus-effect"
+                type="password"
+                id="confirmPassword"
+                placeholder="Confirm your password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+              />
             </div>
 
-            <button
-              type="submit"
-              className="login-button hover-effect"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <div className="spinner"></div>
-              ) : (
-                'Log In'
-              )}
+            <button type="submit" className="login-button hover-effect" disabled={isLoading}>
+              {isLoading ? <div className="spinner"></div> : 'Sign Up'}
             </button>
           </form>
 
           <div className="register-option animate-fade-in-delay">
-            <p>Don't have an account? <a href="#signup">Sign up</a></p>
+            <p>Already have an account? <a href="/login">Log in</a></p>
           </div>
         </div>
 
         <div className="login-image-container animate-slide-right">
           <img
             src="/login-image.png"
-            alt="Login illustration"
+            alt="Signup illustration"
             className="login-image"
           />
         </div>
@@ -115,4 +117,4 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage;
+export default SignupPage;

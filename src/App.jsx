@@ -3,6 +3,8 @@ import LandingPage from './components/LandingPage';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import LoginPage from './components/LoginPage';
 import ParkingApp from './components/ParkingApp';
+import SignUp from './components/SignUp';
+import About from './components/Aboutt';
 
 const router=createBrowserRouter([
   {
@@ -16,6 +18,14 @@ const router=createBrowserRouter([
   {
     path: "main",
     element : <ParkingApp/>,
+  },
+  {
+    path: "signup",
+    element : <SignUp/>,
+  },
+  {
+    path: "about",
+    element : <About/>,
   },
 
 ]);
