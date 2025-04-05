@@ -1,97 +1,124 @@
 
 # FindMySpot: Real-Time Parking Locator
 
-## Overview
+FindMySpot is a full-stack web application built using the MERN stack that helps users locate and reserve real-time parking spots listed by parking space owners ("Listers"). Integrated with the Google Maps API for a visual and interactive experience, it offers a seamless login/signup system with modern styling and responsive design.
 
-FindMySpot is a real-time parking locator application built using the MERN stack and Google Maps API. It helps users find available parking spaces in real-time, while allowing listers to add and manage their parking spots.
+## Live Demo
+
+(Coming soon...)
+
+## Screenshots
+
+![Landing Page](./screenshots/landing.png)
+![Signup Page](./screenshots/signup.png)
+![Map View](./screenshots/map.png)
+
+## Tech Stack
+
+- Frontend: React, React Router, Tailwind CSS / Custom CSS animations
+- Backend: Node.js, Express.js
+- Database: MongoDB, Mongoose
+- Authentication: JWT, Bcrypt
+- Maps Integration: Google Maps JavaScript API
+- State Management: Context API / Redux (TBD)
 
 ## Features
 
-- Real-time parking availability updates
-- Smart navigation to the nearest available parking spot
-- Secure authentication for users and listers
-- Interactive map integration using Google Maps API
-- User-friendly interface for searching and filtering parking spots
+- Authentication System: Login/Signup with separate CSS animations & themes.
+- Interactive Google Map: Real-time parking spots appear as markers.
+- Lister Module: Add parking spots via a dynamic form and see them live on the map.
+- User Dashboard (Upcoming): View, book, or favorite parking spots.
+- Responsive Design: Works on mobile and desktop.
 
-## Technologies Used
+## Getting Started
 
-- **Frontend**: React, Tailwind CSS
-- **Backend**: Node.js, Express.js
-- **Database**: MongoDB
-- **Authentication**: JWT, bcrypt
-- **Maps Integration**: Google Maps API
+### 1. Clone the repo
 
-## Installation
+```bash
+git clone https://github.com/your-username/findmyspot.git
+cd findmyspot
+```
 
-### Prerequisites
+### 2. Install dependencies
 
-Ensure you have the following installed:
+- Backend
+  ```bash
+  cd backend
+  npm install
+  ```
 
-- Node.js
-- MongoDB
-- A Google Maps API Key
+- Frontend
+  ```bash
+  cd ../frontend
+  npm install
+  ```
 
-### Steps
+### 3. Set up environment variables
 
-1. Clone the repository:
+Create `.env` files in both `frontend/` and `backend/` folders.
 
-   ```sh
-   git clone https://github.com/your-username/FindMySpot.git
-   cd FindMySpot
-   ```
+#### For `backend/.env`
+```
+PORT=5000
+MONGO_URI=your_mongo_connection_string
+JWT_SECRET=your_jwt_secret
+```
 
-2. Install dependencies:
+#### For `frontend/.env`
+```
+REACT_APP_GOOGLE_MAPS_API_KEY=your_google_maps_api_key
+```
 
-   ```sh
-   npm install
-   cd client
-   npm install
-   ```
+### 4. Run the app
 
-3. Set up environment variables:
+- Backend
+  ```bash
+  cd backend
+  npm run dev
+  ```
 
-   - Create a `.env` file in the root directory
-   - Add the required values such as `MONGO_URI`, `JWT_SECRET`, and `GOOGLE_MAPS_API_KEY`
+- Frontend
+  ```bash
+  cd frontend
+  npm start
+  ```
 
-4. Start the development server:
+The app should be running at http://localhost:3000
 
-   ```sh
-   npm run dev
-   ```
+## Folder Structure
 
-## Usage
+```
+findmyspot/
+├── frontend/
+│   ├── public/
+│   ├── src/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   ├── styles/
+│   │   └── App.jsx
+├── backend/
+│   ├── models/
+│   ├── routes/
+│   ├── controllers/
+│   └── server.js
+```
 
-- Users can search for parking spots on an interactive map.
-- Listers can add and manage their parking spots in real-time.
-- Navigation assistance guides users to available spots efficiently.
+## Upcoming Features
 
-## Contribution
+- Booking system
+- User dashboard
+- Payment integration
+- Notifications
+- Admin panel for listers
 
-Contributions are welcome! To contribute:
+## Contributing
 
-1. Fork the repository.
-2. Create a new branch.
-3. Make your changes and commit them.
-4. Submit a pull request.
+Pull requests are welcome! For major changes, please open an issue first to discuss what you’d like to change.
 
 ## License
 
 This project is licensed under the MIT License.
 
-## Contact
+## Author
 
-For any inquiries, reach out at sumitmahankale7@gmail.com
-=======
-# React + Vite
-
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
-
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript and enable type-aware lint rules. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
->>>>>>> 5bce055 (added)
+FindMySpot by [Your Name](https://github.com/your-username)
