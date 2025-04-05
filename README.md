@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 # FindMySpot: Real-Time Parking Locator
 
 ## Overview
