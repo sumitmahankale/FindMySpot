@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './LoginPage.css';
+import './CSS/LoginPage.css';
+import { Link } from 'react-router-dom';
+
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -99,7 +101,7 @@ const LoginPage = () => {
           </form>
 
           <div className="register-option animate-fade-in-delay">
-            <p>Don't have an account? <a href="#signup">Sign up</a></p>
+            <p>Don't have an account? <Link to="/signup">Sign up</Link></p>
           </div>
         </div>
 

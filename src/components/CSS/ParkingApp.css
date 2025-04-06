@@ -1,0 +1,11 @@
+.rupee-symbol::before {
+    content: '₹';
+    color: #16a34a; /* Tailwind's green-600 */
+    font-weight: 600;
+    font-size: 0.875rem; /* same as text-sm */
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    
+  }
+  

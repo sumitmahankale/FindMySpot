@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import "./AboutEnhanced.css";
+import "./CSS/AboutEnhanced.css";
+import { useNavigate } from 'react-router-dom'
 
 const ParkingBanner = () => {
   return (
@@ -183,7 +184,13 @@ const ParkingBanner = () => {
 
 const About = () => {
   const [isLoaded, setIsLoaded] = useState(false);
+const navigate = useNavigate();
 
+  const handleClick = () => {
+    navigate('/login');
+    // navigate('/main'); // Redirects to LoginPage
+    
+  };
   useEffect(() => {
     // Set loaded state after a small delay for entrance animations
     setTimeout(() => setIsLoaded(true), 300);
@@ -277,7 +284,7 @@ const About = () => {
         </div>
         <div className="cta-section animate-on-scroll">
           <div className="cta-text">Ready to find your spot?</div>
-          <button className="cta-button">Get Started</button>
+          <button className="cta-button" onClick={handleClick}>Get Started</button>
         </div>
         <p className="mission-statement animate-on-scroll">
           We are on a mission to simplify urban mobility, save time, reduce emissions, and make your life easier — one

@@ -3,7 +3,7 @@ import LandingPage from './components/LandingPage';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import LoginPage from './components/LoginPage';
 import ParkingApp from './components/ParkingApp';
-import SignUp from './components/SignUp';
+import SignUp from './components/SignupPage';
 import About from './components/About';
 
 const router=createBrowserRouter([

@@ -20,7 +20,7 @@ const ParkingContext = createContext();
 const initialSpaces = [
   { 
     id: 1, 
-    name: "John Doe", 
+    name: "Yash Ahirrao", 
     contact: "555-1234", 
     lat: 18.5204, 
     lng: 73.8567, 
@@ -31,7 +31,7 @@ const initialSpaces = [
   },
   { 
     id: 2, 
-    name: "Jane Smith", 
+    name: "Piyush Yadav", 
     contact: "555-5678", 
     lat: 18.5300, 
     lng: 73.8500, 
@@ -574,12 +574,13 @@ const ParkingSpaceUser = () => {
               </div>
               
               <div className="flex items-center p-2 hover:bg-green-50 rounded-lg transition-colors duration-200">
-                <DollarSign className="w-5 h-5 mr-3 text-green-600" />
-                <div>
-                  <div className="text-sm text-gray-500">Price</div>
-                  <div className="font-medium">{selectedListing.price}</div>
-                </div>
-              </div>
+            <div className="w-5 h-5 mr-3 text-green-600 text-lg font-semibold">₹</div>
+            <div>
+              <div className="text-sm text-gray-500">Price</div>
+              <div className="font-medium">{selectedListing.price}</div>
+            </div>
+          </div>
+
               
               <div className="flex items-center p-2 hover:bg-orange-50 rounded-lg transition-colors duration-200">
                 <Calendar className="w-5 h-5 mr-3 text-orange-500" />

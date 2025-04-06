@@ -35,12 +35,15 @@ const LandingPage = () => {
       
       {/* Navigation */}
       <nav className="flex justify-between items-center p-6 relative z-10">
-        <div className="flex items-center">
-          <svg viewBox="0 0 24 24" className="h-8 w-8 mr-2" style={{ color: "#FF7A00" }} fill="currentColor">
-            <path d="M12 2C7.58 2 4 5.58 4 10c0 5.25 7 12 8 12s8-6.75 8-12c0-4.42-3.58-8-8-8zm0 11c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z" />
-          </svg>
-          <span className="text-2xl font-bold">FindMySpot</span>
-        </div>
+      <div className="flex items-center">
+    {/* Replace the SVG with your image */}
+    <img 
+  src="/logo.png" 
+  alt="FindMySpot Logo" 
+  className="h-20 mr-2 -ml-10" 
+/>
+    {/* <span className="text-2xl font-bold">FindMySpot</span> */}
+  </div>
         <div className="flex items-center space-x-6">
         <a href="#become-lister" className="hover:text-yellow-500" style={{ transition: "color 0.3s" }}>Lister </a>
           <a href="#features" className="hover:text-yellow-500" style={{ transition: "color 0.3s" }}>Features</a>
