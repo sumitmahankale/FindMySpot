@@ -30,12 +30,18 @@ const ParkingBanner = () => {
         <pattern id="gridPattern" width="20" height="20" patternUnits="userSpaceOnUse">
           <rect width="20" height="20" fill="none" stroke="#3e5f8a" strokeWidth="0.5" strokeOpacity="0.3" />
         </pattern>
+        
+        {/* Add text glow effect */}
+        <filter id="textGlow" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="2" result="blur" />
+          <feComposite in="SourceGraphic" in2="blur" operator="over" />
+        </filter>
       </defs>
       
       {/* Night sky background with stars */}
       <rect width="800" height="250" fill="url(#skyGradient)" />
       
-      Stars
+      {/* Stars */}
       {[...Array(50)].map((_, i) => (
         <circle 
           key={i} 
@@ -92,6 +98,38 @@ const ParkingBanner = () => {
         );
       })} */}
       
+      {/* "ABOUT FINDMYSPOT" text over buildings */}
+      <g className="banner-text" filter="url(#textGlow)">
+        <text 
+          textAnchor="middle" 
+          x="400" 
+          y="95" 
+          fontSize="33" 
+          fontWeight="bold" 
+          fontFamily="Arial, sans-serif" 
+          fill="#ffffff" 
+          className="text-animation"
+        >
+          About FindMySpot
+        </text>
+        {/* Text outline for better visibility */}
+        <text 
+          textAnchor="middle" 
+          x="400" 
+          y="90" 
+          fontSize="38" 
+          fontWeight="bold" 
+          fontFamily="Arial, sans-serif" 
+          fill="none"
+          stroke="#ffffff"
+          strokeWidth="0.5"
+          strokeOpacity="0.7"
+          className="text-animation"
+        >
+         
+        </text>
+      </g>
+      
       {/* Road with perspective */}
       <path d="M0,150 L800,150 L800,250 L0,250 Z" fill="url(#roadGradient)" />
       
@@ -143,29 +181,6 @@ const ParkingBanner = () => {
         <circle cx="10" cy="7" r="4" fill="#f5f5f5" />
       </g>
       
-      {/* App name with dynamic styling */}
-      {/* <g transform="translate(400, 80)" filter="url(#dropShadow)">
-        <text 
-          textAnchor="middle" 
-          fontSize="46" 
-          fontWeight="bold" 
-          fontFamily="Arial, sans-serif" 
-          fill="#f5f5f5"
-        >
-          <tspan x="0" y="0">Find</tspan>
-          <tspan x="0" y="0" fill="#ff9a40">My</tspan>
-          <tspan x="100" y="0">Spot</tspan>
-        </text>
-        <text 
-          textAnchor="middle" 
-          x="0" 
-          y="25" 
-          fontSize="14" 
-          fontFamily="Arial, sans-serif" 
-          fill="#f5f5f5"
-        >PARKING MADE SIMPLE</text>
-      </g> */}
-      
       {/* Decorative elements */}
       <g className="decorative-elements">
         {/* Radar-like circles around highlighted spot */}
@@ -184,13 +199,13 @@ const ParkingBanner = () => {
 
 const About = () => {
   const [isLoaded, setIsLoaded] = useState(false);
-const navigate = useNavigate();
+  const navigate = useNavigate();
 
   const handleClick = () => {
     navigate('/login');
     // navigate('/main'); // Redirects to LoginPage
-    
   };
+  
   useEffect(() => {
     // Set loaded state after a small delay for entrance animations
     setTimeout(() => setIsLoaded(true), 300);
@@ -243,7 +258,7 @@ const navigate = useNavigate();
 
       <div className="about-content">
         <h1 className="about-title animate-on-scroll">
-          <span className="title-text">About FindMySpot</span>
+          <span className="title-text">What We Do</span>
         </h1>
         <div className="divider animate-on-scroll">
           <span className="line"></span>
