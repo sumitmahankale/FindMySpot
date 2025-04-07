@@ -1,51 +1,89 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom'
 
-
-
 const LandingPage = () => {
   const [isAnimated, setIsAnimated] = useState(false);
+  const [headingText, setHeadingText] = useState('');
+  const fullHeading = "Never Circle The Block Again";
+  const mainText = "Never Circle The Block ";
+  const highlightedText = "Again";
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
   
   useEffect(() => {
     setIsAnimated(true);
+    
+    // Letter-by-letter animation for the heading
+    const animateHeading = () => {
+      if (isPaused) return;
+      
+      if (currentIndex <= fullHeading.length) {
+        if (currentIndex < mainText.length) {
+          // Animating the main text portion
+          setHeadingText(mainText.substring(0, currentIndex));
+        } else {
+          // Animating the highlighted text portion
+          const highlightedIndex = currentIndex - mainText.length;
+          // Use display: inline-block to ensure text stays on same line
+          setHeadingText(
+            mainText + 
+            `<span style="color: #FF7A00; display: inline;">${highlightedText.substring(0, highlightedIndex)}</span>`
+          );
+        }
+        
+        setCurrentIndex(prevIndex => prevIndex + 1);
+      } else {
+        // Text is complete, start pause
+        setIsPaused(true);
+        
+        // After 3 seconds, reset and start over
+        setTimeout(() => {
+          setCurrentIndex(0);
+          setHeadingText('');
+          setIsPaused(false);
+        }, 3000);
+      }
+    };
+    
+    // Set interval for the letter animation
+    const letterAnimationInterval = setInterval(animateHeading, 150);
+    
+    // Clean up interval
+    return () => clearInterval(letterAnimationInterval);
+  }, [currentIndex, isPaused, mainText, highlightedText, fullHeading]);
 
-  
-  }, []);
   const navigate = useNavigate();
 
   const handleLoginClick = () => {
     navigate('/login');
-    // navigate('/main'); // Redirects to LoginPage
-    
   };
+  
   const navigatemain = useNavigate();
 
   const handleLoginClickk = () => {
-    navigatemain('/signup'); // Redirects to MainPage
-    
+    navigatemain('/signup');
   };
+  
   const navigateabout = useNavigate();
 
   const handleabout = () => {
-    navigateabout('/about'); // Redirects to MainPage
-    
+    navigateabout('/about');
   };
+  
   return (
     <div className="min-h-screen" style={{ background: "linear-gradient(to bottom, #0a1929, #0d2748)", color: "white" }}>
       
       {/* Navigation */}
       <nav className="flex justify-between items-center p-6 relative z-10">
-      <div className="flex items-center">
-    {/* Replace the SVG with your image */}
-    <img 
-  src="/logo.png" 
-  alt="FindMySpot Logo" 
-  className="h-20 mr-2 -ml-10" 
-/>
-    {/* <span className="text-2xl font-bold">FindMySpot</span> */}
-  </div>
+        <div className="flex items-center">
+          <img 
+            src="/logo.png" 
+            alt="FindMySpot Logo" 
+            className="h-20 mr-2 -ml-10" 
+          />
+        </div>
         <div className="flex items-center space-x-6">
-        <a href="#become-lister" className="hover:text-yellow-500" style={{ transition: "color 0.3s" }}>Lister </a>
+          <a href="#become-lister" className="hover:text-yellow-500" style={{ transition: "color 0.3s" }}>Lister </a>
           <a href="#features" className="hover:text-yellow-500" style={{ transition: "color 0.3s" }}>Features</a>
           <a href="#how-it-works" className="hover:text-yellow-500" style={{ transition: "color 0.3s" }}>How It Works</a>
           <a href="#pricing" className="hover:text-yellow-500" style={{ transition: "color 0.3s" }}>Pricing</a>
@@ -72,9 +110,12 @@ const LandingPage = () => {
           transform: isAnimated ? 'translateY(0)' : 'translateY(10px)',
           opacity: isAnimated ? 1 : 0
         }}>
-          <h1 className="text-5xl font-bold mb-6 max-w-2xl">
-            Never Circle The Block <span style={{ color: "#FF7A00" }}>Again</span>
-          </h1>
+          <h1 className="text-5xl font-bold mb-6 max-w-2xl whitespace-nowrap" style={{ minHeight: "3.5rem" }}>
+  <span 
+    dangerouslySetInnerHTML={{ __html: headingText }}
+  />
+  <span className="animate-blink">|</span>
+</h1>
           <p className="text-xl mb-8 max-w-xl" style={{ color: "#CBD5E0" }}>
             Find and reserve parking spots in real-time. Save time, reduce stress, and never worry about where to park.
           </p>
@@ -321,34 +362,36 @@ const LandingPage = () => {
           </button>
         </div>
       </div>
-{/* Want to be a Lister? Section */}
-<div style={{ padding: "5rem 0", backgroundColor: "#0d2748" }}id="become-lister">
-  <div className="container mx-auto px-6 text-center">
-    <h2 className="text-3xl font-bold mb-4">Want to be a Lister?</h2>
-    <p className="text-xl mb-8 max-w-xl mx-auto" style={{ color: "#CBD5E0" }}>
-      Turn your unused parking space into income. Register your spot for betterment of everyone.
-    </p>
-    <button style={{ 
-        backgroundColor: "#FF7A00", 
-        padding: "0.75rem 2rem", 
-        borderRadius: "9999px", 
-        fontWeight: "500",
-        fontSize: "1.125rem",
-        transition: "all 0.3s"
-      }}
-      onMouseOver={(e) => {
-        e.target.style.backgroundColor = "#E56E00";
-        e.target.style.boxShadow = "0 10px 15px -3px rgba(255, 122, 0, 0.3)";
-      }}
-      onMouseOut={(e) => {
-        e.target.style.backgroundColor = "#FF7A00";
-        e.target.style.boxShadow = "none";
-      }}
-    >
-      Get Started
-    </button>
-  </div>
-</div>
+      
+      {/* Want to be a Lister? Section */}
+      <div style={{ padding: "5rem 0", backgroundColor: "#0d2748" }}id="become-lister">
+        <div className="container mx-auto px-6 text-center">
+          <h2 className="text-3xl font-bold mb-4">Want to be a Lister?</h2>
+          <p className="text-xl mb-8 max-w-xl mx-auto" style={{ color: "#CBD5E0" }}>
+            Turn your unused parking space into income. Register your spot for betterment of everyone.
+          </p>
+          <button style={{ 
+              backgroundColor: "#FF7A00", 
+              padding: "0.75rem 2rem", 
+              borderRadius: "9999px", 
+              fontWeight: "500",
+              fontSize: "1.125rem",
+              transition: "all 0.3s"
+            }}
+            onMouseOver={(e) => {
+              e.target.style.backgroundColor = "#E56E00";
+              e.target.style.boxShadow = "0 10px 15px -3px rgba(255, 122, 0, 0.3)";
+            }}
+            onMouseOut={(e) => {
+              e.target.style.backgroundColor = "#FF7A00";
+              e.target.style.boxShadow = "none";
+            }}
+          >
+            Get Started
+          </button>
+        </div>
+      </div>
+      
       {/* Footer */}
       <footer style={{ backgroundColor: "#071423", padding: "3rem 0" }}>
         <div className="container mx-auto px-6">
