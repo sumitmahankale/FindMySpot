@@ -5,6 +5,8 @@ import LoginPage from './components/LoginPage';
 import ParkingApp from './components/ParkingApp';
 import SignUp from './components/SignupPage';
 import About from './components/About';
+import ListerPage from './components/ParkingListerPage';
+import ParkingPage from './components/ParkingFinderPage'
 
 const router=createBrowserRouter([
   {
@@ -27,7 +29,14 @@ const router=createBrowserRouter([
     path: "about",
     element : <About/>,
   },
-
+  {
+    path: "lister",
+    element : <ListerPage/>,
+  },
+  {
+    path: "parking",
+    element : <ParkingPage/>,
+  },
 ]);
 function App() {
   return (

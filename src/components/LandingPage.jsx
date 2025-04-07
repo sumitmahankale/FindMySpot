@@ -21,7 +21,7 @@ const LandingPage = () => {
   const navigatemain = useNavigate();
 
   const handleLoginClickk = () => {
-    navigatemain('/main'); // Redirects to MainPage
+    navigatemain('/signup'); // Redirects to MainPage
     
   };
   const navigateabout = useNavigate();

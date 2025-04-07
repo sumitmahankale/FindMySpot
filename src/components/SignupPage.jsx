@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './CSS/SignUp.css';
 
@@ -11,6 +11,89 @@ const SignupPage = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const navigate = useNavigate();
+
+  // Initialize Google Sign-In
+  useEffect(() => {
+    // Load the Google Sign-In API script
+    const loadGoogleScript = () => {
+      const script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.defer = true;
+      document.body.appendChild(script);
+      
+      script.onload = () => {
+        initializeGoogleSignIn();
+      };
+    };
+
+    // Initialize Google Sign-In button
+    const initializeGoogleSignIn = () => {
+      if (window.google) {
+        window.google.accounts.id.initialize({
+          client_id: 'YOUR_GOOGLE_CLIENT_ID', // Replace with your actual Google Client ID
+          callback: handleGoogleSignIn
+        });
+        
+        window.google.accounts.id.renderButton(
+          document.getElementById('google-signin-button'),
+          { theme: 'outline', size: 'large', width: '100%', text: 'signup_with' }
+        );
+      }
+    };
+
+    loadGoogleScript();
+    
+    // Cleanup
+    return () => {
+      const googleScript = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
+      if (googleScript) {
+        googleScript.remove();
+      }
+    };
+  }, []);
+
+  // Handle Google Sign-In response
+  const handleGoogleSignIn = async (response) => {
+    setIsLoading(true);
+    setError('');
+    
+    try {
+      // Send the ID token to your backend
+      const result = await fetch('/api/auth/google', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          token: response.credential
+        })
+      });
+      
+      const data = await result.json();
+      
+      if (!result.ok) {
+        throw new Error(data.message || 'Failed to sign in with Google');
+      }
+      
+      // Store user data
+      localStorage.setItem('isAuthenticated', 'true');
+      localStorage.setItem('username', data.username);
+      localStorage.setItem('fullName', data.fullName);
+      localStorage.setItem('token', data.token);
+      
+      setSuccess('Successfully signed in with Google!');
+      
+      // Redirect after showing success message
+      setTimeout(() => {
+        navigate('/home');
+      }, 1500);
+    } catch (err) {
+      setError(err.message || 'Error signing in with Google');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -37,22 +120,45 @@ const SignupPage = () => {
       return;
     }
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
-      setSuccess('Account created successfully!');
-      
-      // Store user data (in a real app, this would be handled by a backend)
-      localStorage.setItem('isAuthenticated', 'true');
-      const username = email.split('@')[0];
-      localStorage.setItem('username', username);
-      localStorage.setItem('fullName', fullName);
-      
-      // Redirect after showing success message
-      setTimeout(() => {
-        navigate('/home');
-      }, 1500);
-    }, 1500);
+    // Send registration request to backend
+    fetch('/api/auth/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        email,
+        password,
+        fullName
+      })
+    })
+      .then(response => response.json())
+      .then(data => {
+        setIsLoading(false);
+        
+        if (data.error) {
+          setError(data.error);
+          return;
+        }
+        
+        setSuccess('Account created successfully!');
+        
+        // Store user data
+        localStorage.setItem('isAuthenticated', 'true');
+        localStorage.setItem('username', data.username);
+        localStorage.setItem('fullName', data.fullName);
+        localStorage.setItem('token', data.token);
+        
+        // Redirect after showing success message
+        setTimeout(() => {
+          navigate('/home');
+        }, 1500);
+      })
+      .catch(err => {
+        setIsLoading(false);
+        setError('Error creating account. Please try again.');
+        console.error(err);
+      });
   };
 
   return (
@@ -150,6 +256,12 @@ const SignupPage = () => {
                 'Create Account'
               )}
             </button>
+            
+            <div className="separator">
+              <span>OR</span>
+            </div>
+            
+            <div id="google-signin-button" className="google-signin"></div>
           </form>
 
           <div className="login-option animate-fade-in-delay">
@@ -163,10 +275,6 @@ const SignupPage = () => {
             alt="Signup illustration"
             className="signup-image"
           />
-          {/* <div className="security-badge animate-pulse">
-            <div className="lock-icon"></div>
-            <span>Secure Signup</span>
-          </div> */}
         </div>
       </div>
     </div>
