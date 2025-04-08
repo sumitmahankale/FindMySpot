@@ -1,11 +1,11 @@
 // ListerDashboard.jsx - Complete dashboard for parking space listers
 import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import { Edit, Trash2, AlertCircle, X, MapPin, CalendarRange } from 'lucide-react';
+import { Edit, Trash2, AlertCircle, X, MapPin } from 'lucide-react';
 import axios from 'axios';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import BookingManagement from './BookingManagement';
+import './CSS/ListerDashboard.css'
 
 // Fix for Leaflet marker icons in React
 delete L.Icon.Default.prototype._getIconUrl;
@@ -28,7 +28,6 @@ const ListerDashboard = () => {
     contact: ''
   });
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
-  const [activeTab, setActiveTab] = useState('details');
   
   // Fetch user's spaces
   useEffect(() => {
@@ -56,7 +55,6 @@ const ListerDashboard = () => {
       description: space.description || '',
       contact: space.contact
     });
-    setActiveTab('details'); // Reset to details tab when selecting a new space
   };
   
   const handleInputChange = (e) => {
@@ -118,7 +116,7 @@ const ListerDashboard = () => {
     <div className="w-full max-w-7xl mx-auto p-4">
       <div className="bg-white shadow-xl rounded-xl overflow-hidden">
         {/* Header */}
-        <div className="bg-blue-800 text-white p-6">
+        <div className="bg-blue-900 text-white p-6">
           <h1 className="text-2xl font-bold">My Parking Spaces</h1>
           <p className="text-blue-100">Manage your listed parking spaces</p>
         </div>
@@ -170,7 +168,7 @@ const ListerDashboard = () => {
                   <h2 className="text-xl font-bold text-gray-800">{selectedSpace.location}</h2>
                   <div className="flex space-x-2">
                     <button 
-                      className="flex items-center px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                      className="flex items-center px-3 py-2 bg-blue-900 text-white rounded hover:bg-blue-700"
                       onClick={() => setIsEditModalOpen(true)}
                     >
                       <Edit size={16} className="mr-1" /> Edit
@@ -184,76 +182,42 @@ const ListerDashboard = () => {
                   </div>
                 </div>
                 
-                {/* Tab Navigation */}
-                <div className="border-b">
-                  <nav className="flex">
-                    <button
-                      className={`py-3 px-6 font-medium border-b-2 ${
-                        activeTab === 'details' 
-                          ? 'border-blue-600 text-blue-600' 
-                          : 'border-transparent text-gray-500 hover:text-gray-700'
-                      }`}
-                      onClick={() => setActiveTab('details')}
-                    >
-                      <MapPin size={16} className="inline mr-2" />
-                      Space Details
-                    </button>
-                    <button
-                      className={`py-3 px-6 font-medium border-b-2 ${
-                        activeTab === 'bookings' 
-                          ? 'border-blue-600 text-blue-600' 
-                          : 'border-transparent text-gray-500 hover:text-gray-700'
-                      }`}
-                      onClick={() => setActiveTab('bookings')}
-                    >
-                      <CalendarRange size={16} className="inline mr-2" />
-                      Bookings
-                    </button>
-                  </nav>
-                </div>
-                
-                {/* Tab Content */}
+                {/* Space Details Content */}
                 <div className="p-6">
-                  {activeTab === 'details' ? (
-                    <div>
-                      <div className="bg-gray-50 p-4 rounded-lg mb-4">
-                        <h3 className="font-medium text-gray-700 mb-2">Space Details</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <p className="text-sm"><span className="text-gray-500">Price:</span> {selectedSpace.price || 'Not specified'}</p>
-                            <p className="text-sm"><span className="text-gray-500">Availability:</span> {selectedSpace.availability || 'Not specified'}</p>
-                            <p className="text-sm"><span className="text-gray-500">Contact:</span> {selectedSpace.contact}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm"><span className="text-gray-500">Listed On:</span> {new Date(selectedSpace.createdAt).toLocaleDateString()}</p>
-                            <p className="text-sm"><span className="text-gray-500">Last Updated:</span> {new Date(selectedSpace.updatedAt).toLocaleDateString()}</p>
-                          </div>
-                        </div>
-                        <div className="mt-2">
-                          <p className="text-sm"><span className="text-gray-500">Description:</span> {selectedSpace.description || 'No description provided'}</p>
-                        </div>
+                  <div className="bg-gray-50 p-4 rounded-lg mb-4">
+                    <h3 className="font-medium text-gray-700 mb-2">Space Details</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm"><span className="text-gray-500">Price:</span> {selectedSpace.price || 'Not specified'}</p>
+                        <p className="text-sm"><span className="text-gray-500">Availability:</span> {selectedSpace.availability || 'Not specified'}</p>
+                        <p className="text-sm"><span className="text-gray-500">Contact:</span> {selectedSpace.contact}</p>
                       </div>
-                      
-                      <div className="h-64 md:h-96 rounded-lg overflow-hidden border-2 border-gray-200 mt-4 relative">
-                        <MapContainer 
-                          center={[selectedSpace.lat, selectedSpace.lng]} 
-                          zoom={15} 
-                          style={{ height: '100%', width: '100%' }}
-                          className="z-0"
-                        >
-                          <TileLayer
-                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                          />
-                          <Marker position={[selectedSpace.lat, selectedSpace.lng]}>
-                            <Popup>{selectedSpace.location}</Popup>
-                          </Marker>
-                        </MapContainer>
+                      <div>
+                        <p className="text-sm"><span className="text-gray-500">Listed On:</span> {new Date(selectedSpace.createdAt).toLocaleDateString()}</p>
+                        <p className="text-sm"><span className="text-gray-500">Last Updated:</span> {new Date(selectedSpace.updatedAt).toLocaleDateString()}</p>
                       </div>
                     </div>
-                  ) : (
-                    <BookingManagement parkingSpaceId={selectedSpace.id} />
-                  )}
+                    <div className="mt-2">
+                      <p className="text-sm"><span className="text-gray-500">Description:</span> {selectedSpace.description || 'No description provided'}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="h-64 md:h-96 rounded-lg overflow-hidden border-2 border-gray-200 mt-4 relative">
+                    <MapContainer 
+                      center={[selectedSpace.lat, selectedSpace.lng]} 
+                      zoom={15} 
+                      style={{ height: '100%', width: '100%' }}
+                      className="z-0"
+                    >
+                      <TileLayer
+                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                      />
+                      <Marker position={[selectedSpace.lat, selectedSpace.lng]}>
+                        <Popup>{selectedSpace.location}</Popup>
+                      </Marker>
+                    </MapContainer>
+                  </div>
                 </div>
               </div>
             ) : (
@@ -344,7 +308,7 @@ const ListerDashboard = () => {
                   Cancel
                 </button>
                 <button 
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                  className="px-4 py-2 bg-blue-900 text-white rounded-md hover:bg-blue-700"
                   onClick={handleUpdateSpace}
                 >
                   Save Changes
