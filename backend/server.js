@@ -25,7 +25,7 @@ const sequelize = new Sequelize({
   dialect: 'mysql', // or 'postgres', 'mariadb'
   host: process.env.DB_HOST || 'localhost',
   username: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || 'Sunita@8208',
+  password: process.env.DB_PASSWORD || '******',
   database: process.env.DB_NAME || 'FindMySpot',
   
   logging: false // set to console.log to see SQL queries
