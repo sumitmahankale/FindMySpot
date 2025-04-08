@@ -31,7 +31,7 @@ const SignupPage = () => {
     const initializeGoogleSignIn = () => {
       if (window.google) {
         window.google.accounts.id.initialize({
-          client_id: 'YOUR_GOOGLE_CLIENT_ID', // Replace with your actual Google Client ID
+          client_id: '', // Replace with your actual Google Client ID
           callback: handleGoogleSignIn
         });
         

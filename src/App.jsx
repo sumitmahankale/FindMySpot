@@ -6,7 +6,8 @@ import ParkingApp from './components/ParkingApp';
 import SignUp from './components/SignupPage';
 import About from './components/About';
 import ListerPage from './components/ParkingListerPage';
-import ParkingPage from './components/ParkingFinderPage'
+import ParkingPage from './components/ParkingFinderPage';
+import ListerDashboard from './components/ListerDashboard.jsx';
 
 const router=createBrowserRouter([
   {
@@ -36,6 +37,10 @@ const router=createBrowserRouter([
   {
     path: "parking",
     element : <ParkingPage/>,
+  },
+  {
+    path : "dash",
+    element : <ListerDashboard/>,
   },
 ]);
 function App() {
