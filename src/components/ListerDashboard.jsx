@@ -1,354 +1,344 @@
-// ListerDashboard.jsx - Complete dashboard for parking space listers
+// ListerDashboard.jsx - For parking space owners to manage parking entries
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import { Edit, Trash2, AlertCircle, X, MapPin } from 'lucide-react';
 import axios from 'axios';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-import './CSS/ListerDashboard.css'
-
-// Fix for Leaflet marker icons in React
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
+import { Trash2 } from 'lucide-react';
 
 const ListerDashboard = () => {
-  const [userSpaces, setUserSpaces] = useState([]);
-  const [selectedSpace, setSelectedSpace] = useState(null);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [editFormData, setEditFormData] = useState({
-    location: '',
-    price: '',
-    availability: '',
-    description: '',
-    contact: ''
+  const [entries, setEntries] = useState([]);
+  const [newEntry, setNewEntry] = useState({
+    id: '',
+    name: '',
+    inTime: '',
+    outTime: '',
+    date: '',
+    spotNumber: ''
   });
-  const [notification, setNotification] = useState({ show: false, message: '', type: '' });
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   
-  // Fetch user's spaces
+  // Fetch existing entries
   useEffect(() => {
-    const fetchUserSpaces = async () => {
+    const fetchEntries = async () => {
       try {
-        // In a real app, this would filter by the logged-in user ID
-        const response = await axios.get('http://localhost:5000/api/parking-spaces');
-        // For demo, let's pretend all spaces belong to the current user
-        setUserSpaces(response.data);
+        setIsLoading(true);
+        // Mock data if API fails - for testing purposes
+        try {
+          const response = await axios.get('http://localhost:5000/api/parking-entries');
+          setEntries(response.data);
+        } catch (apiError) {
+          console.warn('API not available, using mock data:', apiError);
+          // Initialize with empty array - in a real app you might use mock data here
+          setEntries([]);
+        }
       } catch (error) {
-        console.error('Error fetching your parking spaces:', error);
-        showNotification('Failed to load your parking spaces', 'error');
+        console.error('Error fetching parking entries:', error);
+        setErrorMessage('Failed to load parking entries. Please try again.');
+      } finally {
+        setIsLoading(false);
       }
     };
     
-    fetchUserSpaces();
+    fetchEntries();
   }, []);
   
-  const handleSpaceSelect = (space) => {
-    setSelectedSpace(space);
-    setEditFormData({
-      location: space.location,
-      price: space.price || '',
-      availability: space.availability || '',
-      description: space.description || '',
-      contact: space.contact
-    });
-  };
-  
-  const handleInputChange = (e) => {
-    setEditFormData({
-      ...editFormData,
-      [e.target.name]: e.target.value
-    });
-  };
-  
-  const handleUpdateSpace = async () => {
-    if (!selectedSpace) return;
+  // Add new entry
+  const handleAddEntry = async (e) => {
+    e.preventDefault();
+    
+    if (!newEntry.id || !newEntry.name || !newEntry.inTime || !newEntry.date || !newEntry.spotNumber) {
+      setErrorMessage("Please fill in all required fields");
+      return;
+    }
+
+    setIsLoading(true);
     
     try {
-      await axios.put(`http://localhost:5000/api/parking-spaces/${selectedSpace.id}`, {
-        ...editFormData
+      // Try with API first
+      let addedEntry;
+      try {
+        const response = await axios.post('http://localhost:5000/api/parking-entries', newEntry);
+        addedEntry = response.data;
+      } catch (apiError) {
+        console.warn('API not available, adding entry locally:', apiError);
+        // Fallback to local state only (for demo/development)
+        addedEntry = {
+          ...newEntry,
+          _id: Date.now().toString() // Generate temp ID
+        };
+      }
+      
+      // Update local state
+      setEntries([...entries, addedEntry]);
+      
+      // Reset form
+      setNewEntry({
+        id: `PKG${(entries.length + 1).toString().padStart(3, '0')}`,
+        name: '',
+        inTime: '',
+        outTime: '',
+        date: new Date().toISOString().split('T')[0],
+        spotNumber: ''
       });
       
-      // Update local state
-      const updatedSpaces = userSpaces.map(space => 
-        space.id === selectedSpace.id ? { ...space, ...editFormData } : space
-      );
+      setSuccessMessage("Parking entry added successfully!");
+      setErrorMessage('');
       
-      setUserSpaces(updatedSpaces);
-      setSelectedSpace({ ...selectedSpace, ...editFormData });
-      setIsEditModalOpen(false);
-      showNotification('Parking space updated successfully!', 'success');
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setSuccessMessage("");
+      }, 3000);
     } catch (error) {
-      console.error('Error updating parking space:', error);
-      showNotification('Failed to update parking space', 'error');
+      console.error('Error adding parking entry:', error);
+      setErrorMessage('Failed to add parking entry. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
   
-  const handleDeleteSpace = async () => {
-    if (!selectedSpace) return;
-    
-    try {
-      await axios.delete(`http://localhost:5000/api/parking-spaces/${selectedSpace.id}`);
-      
-      // Update local state
-      const updatedSpaces = userSpaces.filter(space => space.id !== selectedSpace.id);
-      setUserSpaces(updatedSpaces);
-      setSelectedSpace(null);
-      setIsDeleteModalOpen(false);
-      showNotification('Parking space removed successfully!', 'success');
-    } catch (error) {
-      console.error('Error deleting parking space:', error);
-      showNotification('Failed to delete parking space', 'error');
+  // Delete entry
+  const handleDeleteEntry = async (entryId) => {
+    if (window.confirm('Are you sure you want to delete this entry?')) {
+      setIsLoading(true);
+      try {
+        // Try API delete first
+        try {
+          await axios.delete(`http://localhost:5000/api/parking-entries/${entryId}`);
+        } catch (apiError) {
+          console.warn('API not available, deleting entry locally:', apiError);
+          // No action needed here as we'll update local state anyway
+        }
+        
+        // Update local state regardless of API success
+        setEntries(entries.filter(entry => entry._id !== entryId));
+        setSuccessMessage("Entry deleted successfully!");
+        
+        // Clear success message after 3 seconds
+        setTimeout(() => {
+          setSuccessMessage("");
+        }, 3000);
+      } catch (error) {
+        console.error('Error deleting parking entry:', error);
+        setErrorMessage('Failed to delete entry. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
   
-  const showNotification = (message, type) => {
-    setNotification({ show: true, message, type });
-    setTimeout(() => {
-      setNotification({ show: false, message: '', type: '' });
-    }, 5000);
-  };
+  // Generate auto-ID when component loads or entries change
+  useEffect(() => {
+    // Set next ID based on entries length
+    const nextId = `PKG${(entries.length + 1).toString().padStart(3, '0')}`;
+    setNewEntry(prev => ({...prev, id: nextId}));
+  }, [entries.length]);
+  
+  // Set today's date as default when component loads
+  useEffect(() => {
+    const today = new Date().toISOString().split('T')[0];
+    setNewEntry(prev => ({...prev, date: today}));
+  }, []);
+
+  // Function to handle adding a test entry (for debugging)
+ 
 
   return (
-    <div className="w-full max-w-7xl mx-auto p-4">
-      <div className="bg-white shadow-xl rounded-xl overflow-hidden">
-        {/* Header */}
-        <div className="bg-blue-900 text-white p-6">
-          <h1 className="text-2xl font-bold">My Parking Spaces</h1>
-          <p className="text-blue-100">Manage your listed parking spaces</p>
+    <div className="w-full max-w-6xl mx-auto p-4 bg-white shadow-xl rounded-xl">
+      <div className="border-b pb-4 mb-6">
+        <h1 className="text-2xl font-bold text-blue-800">Parking Entry Dashboard</h1>
+        <p className="text-gray-600">Manage entries for your parking spaces</p>
+      </div>
+      
+      {successMessage && (
+        <div className="mb-4 p-3 bg-green-100 border border-green-300 text-green-700 rounded-lg">
+          {successMessage}
+        </div>
+      )}
+      
+      {errorMessage && (
+        <div className="mb-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded-lg">
+          {errorMessage}
+        </div>
+      )}
+      
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* Entry Form */}
+        <div className="w-full lg:w-1/3">
+          <div className="bg-blue-50 p-6 rounded-lg shadow-md">
+            <h2 className="text-xl font-semibold mb-4 text-blue-800">Add New Parking Entry</h2>
+            
+            <form onSubmit={handleAddEntry} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Entry ID <span className="text-red-500">*</span></label>
+                <input 
+                  type="text" 
+                  className="w-full rounded-md border-gray-300 shadow-sm p-2 border"
+                  value={newEntry.id}
+                  onChange={(e) => setNewEntry({...newEntry, id: e.target.value})}
+                  placeholder="e.g. PKG001"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Customer Name <span className="text-red-500">*</span></label>
+                <input 
+                  type="text" 
+                  className="w-full rounded-md border-gray-300 shadow-sm p-2 border"
+                  value={newEntry.name}
+                  onChange={(e) => setNewEntry({...newEntry, name: e.target.value})}
+                  placeholder="e.g. John Doe"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Date <span className="text-red-500">*</span></label>
+                <input 
+                  type="date" 
+                  className="w-full rounded-md border-gray-300 shadow-sm p-2 border"
+                  value={newEntry.date}
+                  onChange={(e) => setNewEntry({...newEntry, date: e.target.value})}
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">In Time <span className="text-red-500">*</span></label>
+                <input 
+                  type="time" 
+                  className="w-full rounded-md border-gray-300 shadow-sm p-2 border"
+                  value={newEntry.inTime}
+                  onChange={(e) => setNewEntry({...newEntry, inTime: e.target.value})}
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Out Time</label>
+                <input 
+                  type="time" 
+                  className="w-full rounded-md border-gray-300 shadow-sm p-2 border"
+                  value={newEntry.outTime}
+                  onChange={(e) => setNewEntry({...newEntry, outTime: e.target.value})}
+                />
+                <p className="text-xs text-gray-500 mt-1">Leave blank if vehicle is still parked</p>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Spot Number <span className="text-red-500">*</span></label>
+                <input 
+                  type="text" 
+                  className="w-full rounded-md border-gray-300 shadow-sm p-2 border"
+                  value={newEntry.spotNumber}
+                  onChange={(e) => setNewEntry({...newEntry, spotNumber: e.target.value})}
+                  placeholder="e.g. A-12"
+                />
+              </div>
+              
+              <div className="pt-2">
+                <button 
+                  type="submit"
+                  className={`w-full ${isLoading ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'} text-white font-bold py-3 px-4 rounded-lg transition-all duration-200`}
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Adding...' : 'Add Entry'}
+                </button>
+                
+                <p className="text-xs text-gray-500 mt-2 text-center">
+                  <span className="text-red-500">*</span> Required fields
+                </p>
+              </div>
+            </form>
+            
+            {/* Debug button - only show in development */}
+           
+          </div>
         </div>
         
-        {/* Notification */}
-        {notification.show && (
-          <div className={`p-4 ${notification.type === 'error' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'} flex justify-between items-center`}>
-            <span>{notification.message}</span>
-            <button onClick={() => setNotification({ show: false, message: '', type: '' })}>
-              <X size={18} />
-            </button>
-          </div>
-        )}
-        
-        {/* Content Area */}
-        <div className="flex flex-col md:flex-row">
-          {/* Left side - list of spaces */}
-          <div className="w-full md:w-1/3 border-r border-gray-200">
-            <div className="p-4 bg-gray-50 border-b">
-              <h2 className="text-lg font-semibold text-gray-700">Your Listed Spaces</h2>
-            </div>
+        {/* Entries List */}
+        <div className="w-full lg:w-2/3">
+          <div className="bg-white p-4 rounded-lg shadow-md">
+            <h2 className="text-xl font-semibold mb-4 text-blue-700">
+              Current Parking Entries
+            </h2>
             
-            {userSpaces.length === 0 ? (
-              <div className="p-6 text-center text-gray-500">
-                <p>You haven't listed any parking spaces yet.</p>
+            {isLoading ? (
+              <div className="flex justify-center items-center py-6">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div>
               </div>
             ) : (
-              <div className="overflow-y-auto max-h-screen">
-                {userSpaces.map(space => (
-                  <div 
-                    key={space.id} 
-                    className={`p-4 cursor-pointer hover:bg-gray-50 border-b ${selectedSpace?.id === space.id ? 'bg-blue-50' : ''}`}
-                    onClick={() => handleSpaceSelect(space)}
-                  >
-                    <h3 className="font-medium text-blue-800">{space.location}</h3>
-                    <p className="text-sm text-gray-600">{space.price}</p>
-                    <p className="text-xs text-gray-500">{space.availability}</p>
-                  </div>
-                ))}
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        ID
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Name
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Date
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        In/Out
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Spot
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Action
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {entries.length > 0 ? (
+                      entries.map((entry) => (
+                        <tr key={entry._id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {entry.id}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {entry.name}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {new Date(entry.date).toLocaleDateString()}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <div>In: {entry.inTime}</div>
+                            {entry.outTime && <div>Out: {entry.outTime}</div>}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {entry.spotNumber}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <button 
+                              onClick={() => handleDeleteEntry(entry._id)}
+                              className="text-red-600 hover:text-red-900"
+                              disabled={isLoading}
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="6" className="px-6 py-4 text-center text-sm text-gray-500">
+                          No parking entries found. Add your first entry!
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
             )}
-          </div>
-          
-          {/* Right side - details and map */}
-          <div className="w-full md:w-2/3">
-            {selectedSpace ? (
-              <div>
-                <div className="flex justify-between items-center p-4 border-b">
-                  <h2 className="text-xl font-bold text-gray-800">{selectedSpace.location}</h2>
-                  <div className="flex space-x-2">
-                    <button 
-                      className="flex items-center px-3 py-2 bg-blue-900 text-white rounded hover:bg-blue-700"
-                      onClick={() => setIsEditModalOpen(true)}
-                    >
-                      <Edit size={16} className="mr-1" /> Edit
-                    </button>
-                    <button 
-                      className="flex items-center px-3 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-                      onClick={() => setIsDeleteModalOpen(true)}
-                    >
-                      <Trash2 size={16} className="mr-1" /> Remove
-                    </button>
-                  </div>
-                </div>
-                
-                {/* Space Details Content */}
-                <div className="p-6">
-                  <div className="bg-gray-50 p-4 rounded-lg mb-4">
-                    <h3 className="font-medium text-gray-700 mb-2">Space Details</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm"><span className="text-gray-500">Price:</span> {selectedSpace.price || 'Not specified'}</p>
-                        <p className="text-sm"><span className="text-gray-500">Availability:</span> {selectedSpace.availability || 'Not specified'}</p>
-                        <p className="text-sm"><span className="text-gray-500">Contact:</span> {selectedSpace.contact}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm"><span className="text-gray-500">Listed On:</span> {new Date(selectedSpace.createdAt).toLocaleDateString()}</p>
-                        <p className="text-sm"><span className="text-gray-500">Last Updated:</span> {new Date(selectedSpace.updatedAt).toLocaleDateString()}</p>
-                      </div>
-                    </div>
-                    <div className="mt-2">
-                      <p className="text-sm"><span className="text-gray-500">Description:</span> {selectedSpace.description || 'No description provided'}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="h-64 md:h-96 rounded-lg overflow-hidden border-2 border-gray-200 mt-4 relative">
-                    <MapContainer 
-                      center={[selectedSpace.lat, selectedSpace.lng]} 
-                      zoom={15} 
-                      style={{ height: '100%', width: '100%' }}
-                      className="z-0"
-                    >
-                      <TileLayer
-                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                      />
-                      <Marker position={[selectedSpace.lat, selectedSpace.lng]}>
-                        <Popup>{selectedSpace.location}</Popup>
-                      </Marker>
-                    </MapContainer>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-64 p-6">
-                <AlertCircle size={48} className="text-gray-400 mb-4" />
-                <p className="text-gray-500">Select a parking space to view details</p>
+            
+            {entries.length > 0 && (
+              <div className="mt-4 text-right text-sm text-gray-500">
+                Total Entries: {entries.length}
               </div>
             )}
           </div>
         </div>
       </div>
-      
-      {/* Edit Modal */}
-      {isEditModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md relative z-60">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Edit Parking Space</h2>
-              <button onClick={() => setIsEditModalOpen(false)}>
-                <X size={24} />
-              </button>
-            </div>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Location Name</label>
-                <input 
-                  type="text" 
-                  name="location"
-                  className="w-full rounded-md border-gray-300 shadow-sm p-2 border"
-                  value={editFormData.location}
-                  onChange={handleInputChange}
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
-                <input 
-                  type="text" 
-                  name="price"
-                  className="w-full rounded-md border-gray-300 shadow-sm p-2 border"
-                  value={editFormData.price}
-                  onChange={handleInputChange}
-                  placeholder="e.g. ₹150/hour or ₹5000/month"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Availability</label>
-                <input 
-                  type="text" 
-                  name="availability"
-                  className="w-full rounded-md border-gray-300 shadow-sm p-2 border"
-                  value={editFormData.availability}
-                  onChange={handleInputChange}
-                  placeholder="e.g. 24/7 or Weekdays 9-5"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Contact</label>
-                <input 
-                  type="text" 
-                  name="contact"
-                  className="w-full rounded-md border-gray-300 shadow-sm p-2 border"
-                  value={editFormData.contact}
-                  onChange={handleInputChange}
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                <textarea 
-                  name="description"
-                  className="w-full rounded-md border-gray-300 shadow-sm p-2 border"
-                  value={editFormData.description}
-                  onChange={handleInputChange}
-                  placeholder="Describe your parking space..."
-                  rows={3}
-                />
-              </div>
-              
-              <div className="flex justify-end space-x-3 pt-4">
-                <button 
-                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-                  onClick={() => setIsEditModalOpen(false)}
-                >
-                  Cancel
-                </button>
-                <button 
-                  className="px-4 py-2 bg-blue-900 text-white rounded-md hover:bg-blue-700"
-                  onClick={handleUpdateSpace}
-                >
-                  Save Changes
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {/* Delete Confirmation Modal */}
-      {isDeleteModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md relative z-60">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-red-600">Remove Parking Space</h2>
-              <button onClick={() => setIsDeleteModalOpen(false)}>
-                <X size={24} />
-              </button>
-            </div>
-            
-            <p className="mb-4">Are you sure you want to remove this parking space? This action cannot be undone.</p>
-            
-            <div className="flex justify-end space-x-3">
-              <button 
-                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-                onClick={() => setIsDeleteModalOpen(false)}
-              >
-                Cancel
-              </button>
-              <button 
-                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-                onClick={handleDeleteSpace}
-              >
-                Remove Space
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

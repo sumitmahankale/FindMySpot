@@ -7,7 +7,8 @@ import SignUp from './components/SignupPage';
 import About from './components/About';
 import ListerPage from './components/ParkingListerPage';
 import ParkingPage from './components/ParkingFinderPage';
-import ListerDashboard from './components/ListerDashboard.jsx';
+import ListerDashboard from './components/AdminListerDashboard.jsx';
+import ListerDashboardd from './components/ListerDashboard.jsx';
 
 const router=createBrowserRouter([
   {
@@ -41,6 +42,10 @@ const router=createBrowserRouter([
   {
     path : "dash",
     element : <ListerDashboard/>,
+  },
+  {
+    path : "listerdashboard",
+    element : <ListerDashboardd/>,
   },
 ]);
 function App() {
