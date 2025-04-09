@@ -436,3 +436,12 @@
     padding: 30px 20px;
   }
 }
+.hover-orange {
+  color: black;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.hover-orange:hover {
+  color: #FF8C00;
+}

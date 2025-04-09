@@ -80,11 +80,11 @@ const LoginPage = () => {
             </div>
 
             <div className="form-options">
-              <div className="remember-me">
-                <input type="checkbox" id="remember" />
-                <label htmlFor="remember">Remember me</label>
-              </div>
-              <a href="#forgot" className="forgot-password">Forgot Password?</a>
+            <a href="#loginn" onClick={() => navigate('/forgetpass')} className="hover-orange">
+  Forgot Password?
+</a>
+
+
             </div>
 
             <button

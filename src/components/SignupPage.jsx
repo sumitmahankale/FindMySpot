@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './CSS/SignUp.css';
+import { Link } from 'react-router-dom';
 
 const SignupPage = () => {
   const [email, setEmail] = useState('');
@@ -212,7 +213,11 @@ const SignupPage = () => {
 
           <div className="login-option animate-fade-in-delay">
             <p>Already have an account? <a href="#login" onClick={() => navigate('/login')}>Log in</a></p>
+                <Link to="/" className="back-link">
+                  ← Back
+                </Link>
           </div>
+          
         </div>
 
         <div className="signup-image-container animate-slide-right">
@@ -222,7 +227,9 @@ const SignupPage = () => {
             className="signup-image"
           />
         </div>
+        
       </div>
+     
     </div>
   );
 };
