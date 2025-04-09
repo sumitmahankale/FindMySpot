@@ -10,6 +10,7 @@ const SignupPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [showPopup, setShowPopup] = useState(false);
   const navigate = useNavigate();
 
   // Initialize Google Sign-In
@@ -31,7 +32,7 @@ const SignupPage = () => {
     const initializeGoogleSignIn = () => {
       if (window.google) {
         window.google.accounts.id.initialize({
-          client_id: '', // Replace with your actual Google Client ID
+         // client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID || '', // Use environment variable
           callback: handleGoogleSignIn
         });
         
@@ -83,19 +84,21 @@ const SignupPage = () => {
       localStorage.setItem('token', data.token);
       
       setSuccess('Successfully signed in with Google!');
+      setShowPopup(true);
       
       // Redirect after showing success message
       setTimeout(() => {
         navigate('/home');
-      }, 1500);
+      }, 2000);
     } catch (err) {
       setError(err.message || 'Error signing in with Google');
+      setShowPopup(true);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setSuccess('');
@@ -104,65 +107,100 @@ const SignupPage = () => {
     // Simple validation
     if (!email || !password || !confirmPassword || !fullName) {
       setError('All fields are required');
+      setShowPopup(true);
       setIsLoading(false);
       return;
     }
 
     if (password.length < 6) {
       setError('Password must be at least 6 characters');
+      setShowPopup(true);
       setIsLoading(false);
       return;
     }
 
     if (password !== confirmPassword) {
       setError('Passwords do not match');
+      setShowPopup(true);
       setIsLoading(false);
       return;
     }
 
-    // Send registration request to backend
-    fetch('/api/auth/register', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        email,
-        password,
-        fullName
-      })
-    })
-      .then(response => response.json())
-      .then(data => {
-        setIsLoading(false);
-        
-        if (data.error) {
-          setError(data.error);
-          return;
-        }
-        
-        setSuccess('Account created successfully!');
-        
-        // Store user data
-        localStorage.setItem('isAuthenticated', 'true');
-        localStorage.setItem('username', data.username);
-        localStorage.setItem('fullName', data.fullName);
-        localStorage.setItem('token', data.token);
-        
-        // Redirect after showing success message
-        setTimeout(() => {
-          navigate('/home');
-        }, 1500);
-      })
-      .catch(err => {
-        setIsLoading(false);
-        setError('Error creating account. Please try again.');
-        console.error(err);
+    try {
+      // Send registration request to backend
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          fullName
+        })
       });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create account');
+      }
+      
+      // Store user data
+      localStorage.setItem('isAuthenticated', 'true');
+      localStorage.setItem('username', data.username);
+      localStorage.setItem('fullName', data.fullName);
+      localStorage.setItem('token', data.token);
+      
+      setSuccess('Account created successfully!');
+      setShowPopup(true);
+      
+      // Redirect after showing success message
+      setTimeout(() => {
+        navigate('/home');
+      }, 2000);
+    } catch (err) {
+      setError(err.message || 'Error creating account. Please try again.');
+      setShowPopup(true);
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Close popup after timeout
+  useEffect(() => {
+    if (showPopup) {
+      const timer = setTimeout(() => {
+        setShowPopup(false);
+      }, 5000); // Auto-hide after 5 seconds
+      
+      return () => clearTimeout(timer);
+    }
+  }, [showPopup]);
+
+  // Handle popup close button
+  const handleClosePopup = () => {
+    setShowPopup(false);
   };
 
   return (
     <div className="signup-page">
+      {/* Popup Message */}
+      {showPopup && (error || success) && (
+        <div className={`popup-message ${error ? 'error-popup' : 'success-popup'}`}>
+          <div className="popup-content">
+            <span className="close-popup" onClick={handleClosePopup}>&times;</span>
+            <div className="popup-icon">
+              {error ? '❌' : '✅'}
+            </div>
+            <div className="popup-text">
+              {error || success}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="signup-container">
         <div className="signup-form-container animate-slide-left">
           <div className="signup-header">
@@ -176,9 +214,6 @@ const SignupPage = () => {
               Sign up to get started
             </p>
           </div>
-
-          {error && <div className="error-message">{error}</div>}
-          {success && <div className="success-message">{success}</div>}
 
           <form onSubmit={handleSubmit} className="signup-form animate-fade-in">
             <div className="form-group">

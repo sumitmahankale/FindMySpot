@@ -145,7 +145,7 @@ const ListerDashboard = () => {
   return (
     <div className="w-full max-w-6xl mx-auto p-4 bg-white shadow-xl rounded-xl">
       <div className="border-b pb-4 mb-6">
-        <h1 className="text-2xl font-bold text-blue-800">Parking Entry Dashboard</h1>
+        <h1 className="text-2xl font-bold text-blue-900">Parking Entry Dashboard</h1>
         <p className="text-gray-600">Manage entries for your parking spaces</p>
       </div>
       
@@ -165,7 +165,7 @@ const ListerDashboard = () => {
         {/* Entry Form */}
         <div className="w-full lg:w-1/3">
           <div className="bg-blue-50 p-6 rounded-lg shadow-md">
-            <h2 className="text-xl font-semibold mb-4 text-blue-800">Add New Parking Entry</h2>
+            <h2 className="text-xl font-semibold mb-4 text-blue-900">Add New Parking Entry</h2>
             
             <form onSubmit={handleAddEntry} className="space-y-4">
               <div>
@@ -235,7 +235,7 @@ const ListerDashboard = () => {
               <div className="pt-2">
                 <button 
                   type="submit"
-                  className={`w-full ${isLoading ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'} text-white font-bold py-3 px-4 rounded-lg transition-all duration-200`}
+                  className={`w-full ${isLoading ? 'bg-blue-900' : 'bg-blue-900 hover:bg-blue-700'} text-white font-bold py-3 px-4 rounded-lg transition-all duration-200`}
                   disabled={isLoading}
                 >
                   {isLoading ? 'Adding...' : 'Add Entry'}
@@ -255,7 +255,7 @@ const ListerDashboard = () => {
         {/* Entries List */}
         <div className="w-full lg:w-2/3">
           <div className="bg-white p-4 rounded-lg shadow-md">
-            <h2 className="text-xl font-semibold mb-4 text-blue-700">
+            <h2 className="text-xl font-semibold mb-4 text-blue-900">
               Current Parking Entries
             </h2>
             
