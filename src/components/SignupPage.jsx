@@ -13,91 +13,6 @@ const SignupPage = () => {
   const [showPopup, setShowPopup] = useState(false);
   const navigate = useNavigate();
 
-  // Initialize Google Sign-In
-  useEffect(() => {
-    // Load the Google Sign-In API script
-    const loadGoogleScript = () => {
-      const script = document.createElement('script');
-      script.src = 'https://accounts.google.com/gsi/client';
-      script.async = true;
-      script.defer = true;
-      document.body.appendChild(script);
-      
-      script.onload = () => {
-        initializeGoogleSignIn();
-      };
-    };
-
-    // Initialize Google Sign-In button
-    const initializeGoogleSignIn = () => {
-      if (window.google) {
-        window.google.accounts.id.initialize({
-         // client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID || '', // Use environment variable
-          callback: handleGoogleSignIn
-        });
-        
-        window.google.accounts.id.renderButton(
-          document.getElementById('google-signin-button'),
-          { theme: 'outline', size: 'large', width: '100%', text: 'signup_with' }
-        );
-      }
-    };
-
-    loadGoogleScript();
-    
-    // Cleanup
-    return () => {
-      const googleScript = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
-      if (googleScript) {
-        googleScript.remove();
-      }
-    };
-  }, []);
-
-  // Handle Google Sign-In response
-  const handleGoogleSignIn = async (response) => {
-    setIsLoading(true);
-    setError('');
-    
-    try {
-      // Send the ID token to your backend
-      const result = await fetch('/api/auth/google', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          token: response.credential
-        })
-      });
-      
-      const data = await result.json();
-      
-      if (!result.ok) {
-        throw new Error(data.message || 'Failed to sign in with Google');
-      }
-      
-      // Store user data
-      localStorage.setItem('isAuthenticated', 'true');
-      localStorage.setItem('username', data.username);
-      localStorage.setItem('fullName', data.fullName);
-      localStorage.setItem('token', data.token);
-      
-      setSuccess('Successfully signed in with Google!');
-      setShowPopup(true);
-      
-      // Redirect after showing success message
-      setTimeout(() => {
-        navigate('/home');
-      }, 2000);
-    } catch (err) {
-      setError(err.message || 'Error signing in with Google');
-      setShowPopup(true);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -127,8 +42,7 @@ const SignupPage = () => {
     }
 
     try {
-      // Send registration request to backend
-      const response = await fetch('/api/auth/register', {
+      const response = await fetch('http://localhost:5000/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -139,12 +53,15 @@ const SignupPage = () => {
           fullName
         })
       });
-      
+    
       const data = await response.json();
       
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to create account');
+        console.error('Server error response:', data);
+        throw new Error(data.error || 'Failed to register user');
       }
+      
+      // Rest of your success handling...
       
       // Store user data
       localStorage.setItem('isAuthenticated', 'true');
@@ -157,7 +74,7 @@ const SignupPage = () => {
       
       // Redirect after showing success message
       setTimeout(() => {
-        navigate('/home');
+        navigate('/Login');
       }, 2000);
     } catch (err) {
       setError(err.message || 'Error creating account. Please try again.');
@@ -291,12 +208,6 @@ const SignupPage = () => {
                 'Create Account'
               )}
             </button>
-            
-            <div className="separator">
-              <span>OR</span>
-            </div>
-            
-            <div id="google-signin-button" className="google-signin"></div>
           </form>
 
           <div className="login-option animate-fade-in-delay">

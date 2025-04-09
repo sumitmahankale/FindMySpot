@@ -27,7 +27,7 @@ const LoginPage = () => {
         const username = email.split('@')[0];
         localStorage.setItem('username', username);
 
-        navigate('/home');
+        navigate('/parking');
       } else {
         setError('Invalid credentials. Email required and password must be at least 6 characters.');
       }
