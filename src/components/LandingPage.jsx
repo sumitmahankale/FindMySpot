@@ -361,6 +361,7 @@ const LandingPage = () => {
               e.target.style.backgroundColor = "#FF7A00";
               e.target.style.boxShadow = "none";
             }}
+            onClick={handleLoginClickk}
           >
             Get Started Now
           </button>
@@ -426,9 +427,9 @@ const LandingPage = () => {
               <div>
                 <h3 className="font-bold mb-4">Company</h3>
                 <ul style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                  <li><a href="#" style={{ color: "#A0AEC0" }} className="hover:text-orange-500">About Us</a></li>
-                  <li><a href="#" style={{ color: "#A0AEC0" }} className="hover:text-orange-500">Careers</a></li>
-                  <li><a href="#" style={{ color: "#A0AEC0" }} className="hover:text-orange-500">Blog</a></li>
+                  <li><a href="/about" style={{ color: "#A0AEC0" }} className="hover:text-orange-500">About Us</a></li>
+                  <li><a href="/about" style={{ color: "#A0AEC0" }} className="hover:text-orange-500">Careers</a></li>
+                  <li><a href="/about" style={{ color: "#A0AEC0" }} className="hover:text-orange-500">Blog</a></li>
                 </ul>
               </div>
               
