@@ -106,7 +106,7 @@ const SignupPage = () => {
               SecureLogin
             </div>
             <h2 className="animate-fade-down">
-              Create Account
+              Create Lister Account
             </h2>
             <p className="animate-fade-down-delay">
               Sign up to get started
@@ -192,7 +192,7 @@ const SignupPage = () => {
           </form>
 
           <div className="login-option animate-fade-in-delay">
-            <p>Already have an account? <a href="#login" onClick={() => navigate('/login')}>Log in</a></p>
+            <p>Already have an account? <a href="#login" onClick={() => navigate('/listerlogin')}>Log in</a></p>
             <Link to="/" className="back-link">
               ← Home
             </Link>

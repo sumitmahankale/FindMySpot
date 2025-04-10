@@ -11,7 +11,8 @@ import ListerDashboard from './components/AdminListerDashboard.jsx';
 import ListerDashboardd from './components/ListerDashboard.jsx';
 import ForgotPassword from './components/ForgetPassword.jsx';
 import Animation from './components/UniqueLoginAnimation.jsx';
-
+import ListerSignup from './components/ListerSignup.jsx';
+import ListerLogin from './components/ListerLogin.jsx';
 
 const router=createBrowserRouter([
   {
@@ -58,7 +59,14 @@ const router=createBrowserRouter([
     path : "animation",
     element : <Animation/>,
   },
-  
+  {
+    path : "listersignup",
+    element : <ListerSignup/>,
+  },
+  {
+    path : "listerlogin",
+    element : <ListerLogin/>,
+  },
 ]);
 function App() {
   return (
