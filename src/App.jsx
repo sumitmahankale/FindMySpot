@@ -5,7 +5,7 @@ import LoginPage from './components/LoginPage';
 import ParkingApp from './components/ParkingApp';
 import SignUp from './components/SignupPage';
 import About from './components/About';
-import ListerPage from './components/ParkingListerPage';
+import ListerPage from './components/ParkingListerPage.jsx';
 import ParkingPage from './components/ParkingFinderPage';
 import ListerDashboard from './components/AdminListerDashboard.jsx';
 import ListerDashboardd from './components/ListerDashboard.jsx';
@@ -13,6 +13,7 @@ import ForgotPassword from './components/ForgetPassword.jsx';
 import Animation from './components/UniqueLoginAnimation.jsx';
 import ListerSignup from './components/ListerSignup.jsx';
 import ListerLogin from './components/ListerLogin.jsx';
+import AdminRequest from './components/AdminRequestPage.jsx';
 
 const router=createBrowserRouter([
   {
@@ -66,6 +67,10 @@ const router=createBrowserRouter([
   {
     path : "listerlogin",
     element : <ListerLogin/>,
+  },
+  {
+    path : "admin",
+    element : <AdminRequest/>,
   },
 ]);
 function App() {
