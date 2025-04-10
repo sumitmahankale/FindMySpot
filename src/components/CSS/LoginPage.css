@@ -437,9 +437,9 @@
   }
 }
 .hover-orange {
-  color: black;
+  color: var(--light-blue);
   text-decoration: none;
-  transition: color 0.3s ease;
+  transition: color 0.3s;
 }
 
 .hover-orange:hover {

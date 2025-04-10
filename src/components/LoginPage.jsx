@@ -2,18 +2,41 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './CSS/LoginPage.css';
 import { Link } from 'react-router-dom';
-
+import Swal from 'sweetalert2';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
   const navigate = useNavigate();
+
+  const showSuccessAlert = (message) => {
+    Swal.fire({
+      title: 'Success!',
+      text: message,
+      icon: 'success',
+      confirmButtonText: 'Continue',
+      confirmButtonColor: '#4CAF50',
+      timer: 2000,
+      timerProgressBar: true
+    }).then(() => {
+      // Navigate to parking page after alert is closed
+      navigate('/parking');
+    });
+  };
+
+  const showErrorAlert = (message) => {
+    Swal.fire({
+      title: 'Error!',
+      text: message,
+      icon: 'error',
+      confirmButtonText: 'Try Again',
+      confirmButtonColor: '#f44336'
+    });
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    setError('');
     setIsLoading(true);
 
     // Simulate API call
@@ -27,9 +50,10 @@ const LoginPage = () => {
         const username = email.split('@')[0];
         localStorage.setItem('username', username);
 
-        navigate('/parking');
+        // Show success alert and redirect on close
+        showSuccessAlert('Login successful!');
       } else {
-        setError('Invalid credentials. Email required and password must be at least 6 characters.');
+        showErrorAlert('Invalid credentials. Email required and password must be at least 6 characters.');
       }
     }, 1500);
   };
@@ -49,8 +73,6 @@ const LoginPage = () => {
               Sign in to access your account
             </p>
           </div>
-
-          {error && <div className="error-message">{error}</div>}
 
           <form onSubmit={handleSubmit} className="login-form animate-fade-in">
             <div className="form-group">
@@ -80,11 +102,9 @@ const LoginPage = () => {
             </div>
 
             <div className="form-options">
-            <a href="#loginn" onClick={() => navigate('/forgetpass')} className="hover-orange">
-  Forgot Password?
-</a>
-
-
+              <a href="#" onClick={() => navigate('/forgetpass')} className="hover-orange">
+                Forgot Password?
+              </a>
             </div>
 
             <button

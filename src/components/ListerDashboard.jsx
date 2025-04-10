@@ -186,7 +186,7 @@ const ListerDashboard = () => {
                   className="w-full rounded-md border-gray-300 shadow-sm p-2 border"
                   value={newEntry.name}
                   onChange={(e) => setNewEntry({...newEntry, name: e.target.value})}
-                  placeholder="e.g. John Doe"
+                  placeholder="e.g. sumit mahankale"
                 />
               </div>
               

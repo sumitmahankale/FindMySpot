@@ -91,7 +91,7 @@ const ForgotPassword = () => {
 
         <div className="forgot-image-container animate-slide-right">
           <img
-            src="/forget.png"
+            src="/forgetpass.png"
             alt="Forgot password illustration"
             className="forgot-image"
           />

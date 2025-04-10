@@ -10,6 +10,8 @@ import ParkingPage from './components/ParkingFinderPage';
 import ListerDashboard from './components/AdminListerDashboard.jsx';
 import ListerDashboardd from './components/ListerDashboard.jsx';
 import ForgotPassword from './components/ForgetPassword.jsx';
+import Animation from './components/UniqueLoginAnimation.jsx';
+
 
 const router=createBrowserRouter([
   {
@@ -52,6 +54,11 @@ const router=createBrowserRouter([
     path : "forgetpass",
     element : <ForgotPassword/>,
   },
+  {
+    path : "animation",
+    element : <Animation/>,
+  },
+  
 ]);
 function App() {
   return (
