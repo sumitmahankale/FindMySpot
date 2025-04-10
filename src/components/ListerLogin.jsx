@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './CSS/LoginPage.css';
+import './CSS/LoginPage.css'; // Assuming you have a similar CSS file for login
 import { Link } from 'react-router-dom';
 import Swal from 'sweetalert2';
 
-const LoginPage = () => {
+const ListerLoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -17,11 +17,10 @@ const LoginPage = () => {
       icon: 'success',
       confirmButtonText: 'Continue',
       confirmButtonColor: '#4CAF50',
-      timer: 2000,
+      timer: 3000,
       timerProgressBar: true
     }).then(() => {
-      // Navigate to parking page after alert is closed
-      navigate('/listerdashboard');
+      navigate('/Listerdashboard');
     });
   };
 
@@ -35,27 +34,52 @@ const LoginPage = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
+    // Simple validation
+    if (!email || !password) {
+      showErrorAlert('Email and password are required');
       setIsLoading(false);
+      return;
+    }
 
-      // Simple validation
-      if (email && password.length >= 6) {
-        localStorage.setItem('isAuthenticated', 'true');
-
-        const username = email.split('@')[0];
-        localStorage.setItem('username', username);
-
-        // Show success alert and redirect on close
-        showSuccessAlert('Login successful!');
-      } else {
-        showErrorAlert('Invalid credentials. Email required and password must be at least 6 characters.');
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/lister/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email,
+          password
+        })
+      });
+    
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to log in');
       }
-    }, 1500);
+      
+      // Store user data in localStorage
+      localStorage.setItem('isAuthenticated', 'true');
+      localStorage.setItem('username', data.username || email);
+      localStorage.setItem('fullName', data.fullName);
+      localStorage.setItem('businessName', data.businessName || '');
+      localStorage.setItem('role', 'lister');
+      localStorage.setItem('token', data.token);
+      
+      // Show success alert and redirect on close
+      showSuccessAlert('Logged in successfully!');
+      
+    } catch (err) {
+      showErrorAlert(err.message || 'Invalid email or password. Please try again.');
+      console.error('Login error:', err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -67,10 +91,10 @@ const LoginPage = () => {
               SecureLogin
             </div>
             <h2 className="animate-fade-down">
-              Welcome Back Lister
+              Lister Login
             </h2>
             <p className="animate-fade-down-delay">
-              Sign in to access your account
+              Welcome back! Log in to manage your parking spaces
             </p>
           </div>
 
@@ -99,12 +123,9 @@ const LoginPage = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
-            </div>
-
-            <div className="form-options">
-              <a href="#" onClick={() => navigate('/forgetpass')} className="hover-orange">
-                Forgot Password?
-              </a>
+              <div className="forgot-password">
+                <a href="#reset">Forgot Password?</a>
+              </div>
             </div>
 
             <button
@@ -115,26 +136,29 @@ const LoginPage = () => {
               {isLoading ? (
                 <div className="spinner"></div>
               ) : (
-                'Log In'
+                'Login'
               )}
             </button>
           </form>
 
-          <div className="register-option animate-fade-in-delay">
-            <p>Don't have an account? <Link to="/listersignup">Sign up</Link></p>
-          </div>
+          
+                    <div className="register-option animate-fade-in-delay">
+                      <p>Don't have an account? <Link to="/listersignup">Sign up</Link></p>
+                    </div>
+          
         </div>
 
         <div className="login-image-container animate-slide-right">
           <img
-            src="/login-image.png"
+            src="/Welcome.png"
             alt="Login illustration"
             className="login-image"
           />
         </div>
+        
       </div>
     </div>
   );
 };
 
-export default LoginPage;
+export default ListerLoginPage;

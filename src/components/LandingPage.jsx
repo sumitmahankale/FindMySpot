@@ -69,6 +69,10 @@ const LandingPage = () => {
   const handleabout = () => {
     navigateabout('/about');
   };
+
+  const handlelister = () => {
+    navigateabout('/listersignup');
+  };
   
   return (
     <div className="min-h-screen" style={{ background: "linear-gradient(to bottom, #0a1929, #0d2748)", color: "white" }}>
@@ -386,7 +390,9 @@ const LandingPage = () => {
               e.target.style.backgroundColor = "#FF7A00";
               e.target.style.boxShadow = "none";
             }}
+            onClick={handlelister}
           >
+            
             Get Started
           </button>
         </div>

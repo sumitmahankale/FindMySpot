@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import { MapPin } from 'lucide-react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -39,20 +40,42 @@ const ParkingListerPage = () => {
   });
   const [successMessage, setSuccessMessage] = useState("");
   const [mapCenter, setMapCenter] = useState([18.5204, 73.8567]); // Pune default
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const navigate = useNavigate();
+  
+  // Check authentication status on load
+  useEffect(() => {
+    const auth = localStorage.getItem('isAuthenticated');
+    const role = localStorage.getItem('role');
+    
+    if (!auth || role !== 'lister') {
+      navigate('/listerlogin');
+      return;
+    }
+    
+    setIsAuthenticated(true);
+    
+    // Prefill some fields from user data
+    const fullName = localStorage.getItem('fullName');
+    
+    
+    if (fullName) {
+      setNewListing(prev => ({ ...prev, name: fullName }));
+    }
+    
+    // Fetch existing spaces
+    fetchSpaces();
+  }, [navigate]);
   
   // Fetch existing spaces for reference
-  useEffect(() => {
-    const fetchSpaces = async () => {
-      try {
-        const response = await axios.get('http://localhost:5000/api/parking-spaces');
-        setSpaces(response.data);
-      } catch (error) {
-        console.error('Error fetching parking spaces:', error);
-      }
-    };
-    
-    fetchSpaces();
-  }, []);
+  const fetchSpaces = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/api/parking-spaces');
+      setSpaces(response.data);
+    } catch (error) {
+      console.error('Error fetching parking spaces:', error);
+    }
+  };
   
   // Handle map click to place new listing
   const handleMapClick = (coords) => {
@@ -74,23 +97,29 @@ const ParkingListerPage = () => {
       availability: newListing.availability || "Not specified",
       description: newListing.description || "No description provided",
       lat: selectedPoint.lat,
-      lng: selectedPoint.lng
+      lng: selectedPoint.lng,
+      listerId: localStorage.getItem('userId') // Add lister ID for tracking ownership
     };
 
     try {
-      await axios.post('http://localhost:5000/api/parking-spaces', listing);
+      const token = localStorage.getItem('token');
+      await axios.post('http://localhost:5000/api/parking-spaces', listing, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       
       // Update local state
       setSpaces([...spaces, { ...listing, id: Date.now() }]); // Temporary ID until we refresh
       setSelectedPoint(null);
-      setNewListing({ 
-        name: "", 
-        contact: "", 
+      setNewListing(prev => ({ 
+        ...prev,
         location: "",
         price: "",
         availability: "",
         description: ""
-      });
+        // Keep the name and contact as they are from the user profile
+      }));
       
       setSuccessMessage("Your parking space has been successfully listed!");
       
@@ -106,7 +135,7 @@ const ParkingListerPage = () => {
 
   // Try to get user's current location
   useEffect(() => {
-    if (navigator.geolocation) {
+    if (navigator.geolocation && isAuthenticated) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           setMapCenter([position.coords.latitude, position.coords.longitude]);
@@ -117,7 +146,7 @@ const ParkingListerPage = () => {
         }
       );
     }
-  }, []);
+  }, [isAuthenticated]);
 
   // Custom marker icon for selected point
   const selectedIcon = new L.Icon({
@@ -131,11 +160,16 @@ const ParkingListerPage = () => {
     className: 'selected-marker' // Can be used for custom styling
   });
 
+  if (!isAuthenticated) {
+    return null; // Don't render anything while checking authentication
+  }
+
   return (
     <div className="w-full max-w-6xl mx-auto p-4 bg-white shadow-xl rounded-xl">
       <div className="border-b pb-4 mb-6">
         <h1 className="text-2xl font-bold text-blue-800">Parking Space Lister Portal</h1>
-        <p className="text-gray-600">List your available parking spaces for others to find</p>
+        <p className="text-gray-600">Welcome, {localStorage.getItem('fullName')}! List your available parking spaces for others to find</p>
+        
       </div>
 
       {successMessage && (
