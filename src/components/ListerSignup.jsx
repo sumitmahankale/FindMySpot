@@ -38,7 +38,7 @@ const ListerSignupPage = () => {
       text: message,
       icon: 'success',
       confirmButtonText: 'Continue',
-      confirmButtonColor: '#28a745',
+      confirmButtonColor: 'var(--medium-blue)',
     }).then((result) => {
       if (result.isConfirmed) {
         navigate('/lister');

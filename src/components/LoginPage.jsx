@@ -10,30 +10,38 @@ const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  const showSuccessAlert = (message) => {
-    Swal.fire({
-      title: 'Success!',
-      text: message,
-      icon: 'success',
-      confirmButtonText: 'Continue',
-      confirmButtonColor: '#4CAF50',
-      timer: 2000,
-      timerProgressBar: true
-    }).then(() => {
-      // Navigate to parking page after alert is closed
-      navigate('/parking');
-    });
-  };
+  // Modify the showSuccessAlert function
+const showSuccessAlert = (message) => {
+  Swal.fire({
+    title: 'Success!',
+    text: message,
+    icon: 'success',
+    confirmButtonText: 'Continue',
+    confirmButtonColor: 'var(--medium-blue)', // Keep this green or change as needed
+    timer: 2000, // Keep the 2-second timer for auto-redirect
+    timerProgressBar: true,
+    // You can customize colors here
+    background: '#f8f9fa', // Light background
+    iconColor: '#4CAF50', // Green icon
+  }).then(() => {
+    // Keep the navigation logic
+    navigate('/parking');
+  });
+};
 
-  const showErrorAlert = (message) => {
-    Swal.fire({
-      title: 'Error!',
-      text: message,
-      icon: 'error',
-      confirmButtonText: 'Try Again',
-      confirmButtonColor: '#f44336'
-    });
-  };
+// Modify the showErrorAlert function
+const showErrorAlert = (message) => {
+  Swal.fire({
+    title: 'Error!',
+    text: message,
+    icon: 'error',
+    confirmButtonText: 'Try Again',
+    confirmButtonColor: '#f44336', // You can change this red color if needed
+    // Add more custom styling
+    background: '#f8f9fa', // Light background
+    iconColor: '#f44336', // Red icon
+  });
+};
 
   const handleSubmit = async (e) => {
     e.preventDefault();

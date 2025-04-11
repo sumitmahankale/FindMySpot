@@ -16,7 +16,7 @@ const ListerLoginPage = () => {
       text: message,
       icon: 'success',
       confirmButtonText: 'Continue',
-      confirmButtonColor: '#4CAF50',
+      confirmButtonColor: 'var(--medium-blue)',
       timer: 3000,
       timerProgressBar: true
     }).then(() => {
