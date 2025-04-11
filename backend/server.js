@@ -612,3 +612,127 @@ app.put('/api/parking-requests/:id/reject', authenticateToken, async (req, res) 
     res.status(500).json({ error: 'Failed to reject request', details: error.message });
   }
 });
+// Reset password endpoint
+app.post('/api/auth/reset-password', async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+    
+    if (!email || !newPassword) {
+      return res.status(400).json({ error: 'Email and new password are required' });
+    }
+
+    console.log('Password reset attempt for:', email);
+    
+    // Find user in User model
+    let user = await User.findOne({ where: { email } });
+    let userType = 'user';
+    
+    // If not found in User model, try Lister model
+    if (!user) {
+      user = await Lister.findOne({ where: { email } });
+      userType = 'lister';
+      
+      if (!user) {
+        return res.status(404).json({ error: 'No account found with this email' });
+      }
+    }
+    
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    
+    // Update user's password
+    await user.update({ password: hashedPassword });
+    
+    console.log(`Password reset successful for ${userType} with email:`, email);
+    
+    res.status(200).json({ message: 'Password reset successfully' });
+  } catch (error) {
+    console.error('Error resetting password:', error);
+    res.status(500).json({ error: 'Failed to reset password', details: error.message });
+  }
+});
+// Add this endpoint for lister password reset
+app.post('/api/auth/lister/reset-password', async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+    
+    if (!email || !newPassword) {
+      return res.status(400).json({ error: 'Email and new password are required' });
+    }
+
+    console.log('Lister password reset attempt for:', email);
+    
+    // Find lister in Lister model
+    const lister = await Lister.findOne({ where: { email } });
+    
+    if (!lister) {
+      return res.status(404).json({ error: 'No lister account found with this email' });
+    }
+    
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    
+    // Update lister's password
+    await lister.update({ password: hashedPassword });
+    
+    console.log('Lister password reset successful for email:', email);
+    
+    res.status(200).json({ message: 'Lister password reset successfully' });
+  } catch (error) {
+    console.error('Error resetting lister password:', error);
+    res.status(500).json({ error: 'Failed to reset lister password', details: error.message });
+  }
+});
+
+// Update the existing reset-password endpoint to differentiate between user and lister
+// You can keep this working as a general endpoint if you prefer
+app.post('/api/auth/reset-password', async (req, res) => {
+  try {
+    const { email, newPassword, userType } = req.body;
+    
+    if (!email || !newPassword) {
+      return res.status(400).json({ error: 'Email and new password are required' });
+    }
+
+    console.log('Password reset attempt for:', email);
+    
+    let user;
+    
+    // Check user type if provided, otherwise try both models
+    if (userType === 'lister') {
+      user = await Lister.findOne({ where: { email } });
+      if (!user) {
+        return res.status(404).json({ error: 'No lister account found with this email' });
+      }
+    } else if (userType === 'user') {
+      user = await User.findOne({ where: { email } });
+      if (!user) {
+        return res.status(404).json({ error: 'No user account found with this email' });
+      }
+    } else {
+      // Try both models if userType is not specified
+      user = await User.findOne({ where: { email } });
+      const userModel = user ? 'user' : 'lister';
+      
+      if (!user) {
+        user = await Lister.findOne({ where: { email } });
+        if (!user) {
+          return res.status(404).json({ error: 'No account found with this email' });
+        }
+      }
+    }
+    
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    
+    // Update user's password
+    await user.update({ password: hashedPassword });
+    
+    console.log(`Password reset successful for email:`, email);
+    
+    res.status(200).json({ message: 'Password reset successfully' });
+  } catch (error) {
+    console.error('Error resetting password:', error);
+    res.status(500).json({ error: 'Failed to reset password', details: error.message });
+  }
+});
