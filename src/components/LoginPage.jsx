@@ -35,27 +35,43 @@ const LoginPage = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      // Call the backend login API endpoint
+      const response = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password
+        }),
+      });
 
-      // Simple validation
-      if (email && password.length >= 6) {
-        localStorage.setItem('isAuthenticated', 'true');
-
-        const username = email.split('@')[0];
-        localStorage.setItem('username', username);
-
-        // Show success alert and redirect on close
-        showSuccessAlert('Login successful!');
-      } else {
-        showErrorAlert('Invalid credentials. Email required and password must be at least 6 characters.');
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Login failed');
       }
-    }, 1500);
+
+      // Store authentication data
+      localStorage.setItem('isAuthenticated', 'true');
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('username', data.username);
+      localStorage.setItem('fullName', data.fullName);
+
+      // Show success alert and redirect
+      showSuccessAlert('Login successful!');
+    } catch (error) {
+      console.error('Login error:', error);
+      showErrorAlert(error.message || 'Invalid credentials. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -122,6 +138,9 @@ const LoginPage = () => {
 
           <div className="register-option animate-fade-in-delay">
             <p>Don't have an account? <Link to="/signup">Sign up</Link></p>
+            <Link to="/" className="back-link">
+              ← Home
+            </Link>
           </div>
         </div>
 
