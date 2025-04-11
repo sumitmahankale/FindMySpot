@@ -14,6 +14,7 @@ import Animation from './components/UniqueLoginAnimation.jsx';
 import ListerSignup from './components/ListerSignup.jsx';
 import ListerLogin from './components/ListerLogin.jsx';
 import AdminRequest from './components/AdminRequestPage.jsx';
+import ListerForgetPass from './components/ListerForgetPassword.jsx';
 
 const router=createBrowserRouter([
   {
@@ -71,6 +72,10 @@ const router=createBrowserRouter([
   {
     path : "admin",
     element : <AdminRequest/>,
+  },
+  {
+    path : "listerforgetpass",
+    element : <ListerForgetPass/>,
   },
 ]);
 function App() {

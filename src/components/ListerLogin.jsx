@@ -125,7 +125,9 @@ const ListerLoginPage = () => {
               />
               <br></br>
               <div className="forgot-password">
-                <a href="#reset">Forgot Password?</a>
+              <a href="#" onClick={() => navigate('/listerforgetpass')} className="hover-orange">
+                Forgot Password?
+              </a>
               </div>
             </div>
 
@@ -142,7 +144,7 @@ const ListerLoginPage = () => {
             </button>
           </form>
 
-          
+
                     <div className="register-option animate-fade-in-delay">
                       <p>Don't have an account? <Link to="/listersignup">Sign up</Link></p>
                       <Link to="/" className="back-link">
