@@ -445,3 +445,43 @@
 .hover-orange:hover {
   color: #FF8C00;
 }
+/* Add these styles to your existing CSS file */
+
+/* Update the image container to have matching border radius */
+.login-image-container {
+  flex: 1;
+  background-color: var(--medium-blue);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  /* No border radius needed on the container's right side since it's already at the edge */
+}
+
+/* Add a matching border radius to the image itself */
+.login-image {
+  width: 90%;
+  height: auto;
+  object-fit: contain;
+  z-index: 1;
+  border-radius: 8px; /* Slightly smaller than container for a nice visual effect */
+}
+
+/* Ensure the container has proper rounded corners */
+.login-container {
+  display: flex;
+  width: 80%;
+  max-width: 1000px;
+  height: 600px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+/* On mobile, make sure the form has proper border radius when the image is hidden */
+@media (max-width: 768px) {
+  .login-form-container {
+    border-radius: 12px;
+  }
+}

@@ -453,3 +453,44 @@ min-height: 40px;
 #google-signin-button > div {
 width: 100% !important;
 }
+/* Add these styles to your existing SignUp.css file */
+
+/* Ensure the container has proper rounded corners */
+.signup-container {
+  display: flex;
+  width: 90%;
+  max-width: 1000px;
+  min-height: 550px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+/* Update the image container to have matching border radius */
+.signup-image-container {
+  flex: 1;
+  background-color: var(--medium-blue);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  /* No border radius needed on the container's right side since it's already at the edge */
+}
+
+/* Add a matching border radius to the image itself */
+.signup-image {
+  width: 85%;
+  height: auto;
+  object-fit: contain;
+  z-index: 1;
+  border-radius: 8px; /* Slightly smaller than container for a nice visual effect */
+  animation: float 6s ease-in-out infinite;
+}
+
+/* On mobile, make sure the form has proper border radius when the image is hidden */
+@media (max-width: 768px) {
+  .signup-form-container {
+    border-radius: 12px;
+  }
+}
