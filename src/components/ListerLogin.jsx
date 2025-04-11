@@ -123,6 +123,7 @@ const ListerLoginPage = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
+              <br></br>
               <div className="forgot-password">
                 <a href="#reset">Forgot Password?</a>
               </div>
@@ -153,7 +154,7 @@ const ListerLoginPage = () => {
 
         <div className="login-image-container animate-slide-right">
           <img
-            src="/Welcome.png"
+            src="/login-image.png"
             alt="Login illustration"
             className="login-image"
           />
