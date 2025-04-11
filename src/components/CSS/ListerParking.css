@@ -1,0 +1,157 @@
+/* Base color palette */
+:root {
+    --dark-blue: #1a2b47;
+    --medium-blue: #2d4263;
+    --light-blue: #3e5f8a;
+    --orange: #ff7d00;
+    --light-orange: #ff9a40;
+    --text-light: #f5f5f5;
+    --text-dark: #333333;
+    --background: #f9f9f9;
+  }
+  
+  /* Global styles */
+  body {
+    background-color: var(--background);
+    color: var(--text-dark);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  
+  /* Container styles */
+  .max-w-6xl {
+    max-width: 72rem;
+  }
+  
+  /* Header/Dashboard section */
+  .bg-white.shadow-lg {
+    border-left: 4px solid var(--orange);
+  }
+  
+  h1.text-2xl.font-bold.text-blue-800,
+  h2.text-xl.font-semibold.text-blue-700,
+  h2.text-xl.font-semibold.text-blue-800 {
+    color: var(--dark-blue);
+  }
+  
+  p.text-gray-600 {
+    color: var(--text-dark);
+  }
+  
+  /* Map container */
+  .h-96.rounded-lg.overflow-hidden.border-2.border-blue-200 {
+    border-color: var(--light-blue);
+  }
+  
+  /* Selected location indicator */
+  .mt-2.p-2.bg-green-50 {
+    background-color: rgba(255, 125, 0, 0.1);
+    border-color: var(--orange);
+    color: var(--dark-blue);
+  }
+  
+  /* Form section */
+  .bg-blue-50.p-6.rounded-lg.shadow-md {
+    background-color: #f0f4f9;
+    border-top: 3px solid var(--orange);
+  }
+  
+  /* Form inputs */
+  input.w-full.rounded-md,
+  textarea.w-full.rounded-md {
+    border-color: #d1d5db;
+    transition: border-color 0.2s;
+  }
+  
+  input.w-full.rounded-md:focus,
+  textarea.w-full.rounded-md:focus {
+    border-color: var(--light-blue);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(62, 95, 138, 0.1);
+  }
+  
+  /* Buttons */
+  .bg-blue-600 {
+    background-color: var(--medium-blue);
+  }
+  
+  .bg-blue-600:hover,
+  .hover\:bg-blue-700:hover {
+    background-color: var(--dark-blue);
+  }
+  
+  /* "List Without Map Selection" button */
+  button.bg-blue-600.hover\:bg-blue-700 {
+    background-color: var(--medium-blue);
+    transition: background-color 0.2s, transform 0.1s;
+  }
+  
+  button.bg-blue-600.hover\:bg-blue-700:hover {
+    background-color: var(--dark-blue);
+    transform: translateY(-1px);
+  }
+  
+  /* Form submit button */
+  button[type="submit"] {
+    background-color: var(--orange);
+    color: var(--text-light);
+    transition: background-color 0.3s;
+  }
+  
+  button[type="submit"]:hover:not(:disabled) {
+    background-color: var(--light-orange);
+  }
+  
+  button[type="submit"]:disabled {
+    background-color: #d1d5db;
+    cursor: not-allowed;
+  }
+  
+  /* Success message */
+  .bg-green-50.border.border-green-200 {
+    background-color: rgba(255, 125, 0, 0.05);
+    border-color: var(--light-orange);
+  }
+  
+  .text-green-800,
+  .text-green-600 {
+    color: var(--dark-blue);
+  }
+  
+  .bg-green-100 {
+    background-color: rgba(255, 125, 0, 0.2);
+  }
+  
+  .text-green-600 svg {
+    color: var(--orange);
+  }
+  
+  /* Success message button */
+  .bg-green-50 button.bg-blue-600 {
+    background-color: var(--orange);
+  }
+  
+  .bg-green-50 button.bg-blue-600:hover {
+    background-color: var(--light-orange);
+  }
+  
+  /* Error message */
+  .bg-red-100 {
+    background-color: #fee2e2;
+  }
+  
+  /* Custom marker styling */
+  .selected-marker {
+    filter: hue-rotate(25deg) saturate(1.5);
+  }
+  
+  /* Responsive improvements */
+  @media (max-width: 768px) {
+    .md\:flex-row {
+      flex-direction: column;
+    }
+    
+    .md\:w-3\/5,
+    .md\:w-2\/5 {
+      width: 100%;
+    }
+  }
