@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import Swal from 'sweetalert2';
 import './CSS/listersignup.css';
 
 const ListerSignupPage = () => {
@@ -21,6 +22,30 @@ const ListerSignupPage = () => {
     setFormData(prev => ({ ...prev, [id]: value }));
   };
 
+  const showErrorAlert = (message) => {
+    Swal.fire({
+      title: 'Error',
+      text: message,
+      icon: 'error',
+      confirmButtonText: 'OK',
+      confirmButtonColor: '#3085d6',
+    });
+  };
+
+  const showSuccessAlert = (message) => {
+    Swal.fire({
+      title: 'Success!',
+      text: message,
+      icon: 'success',
+      confirmButtonText: 'Continue',
+      confirmButtonColor: '#28a745',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        navigate('/lister');
+      }
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -31,23 +56,36 @@ const ListerSignupPage = () => {
     // Simple validation
     if (!email || !password || !confirmPassword || !fullName) {
       setError('Required fields cannot be empty');
+      showErrorAlert('Required fields cannot be empty');
       setIsLoading(false);
       return;
     }
 
     if (password.length < 6) {
       setError('Password must be at least 6 characters');
+      showErrorAlert('Password must be at least 6 characters');
       setIsLoading(false);
       return;
     }
 
     if (password !== confirmPassword) {
       setError('Passwords do not match');
+      showErrorAlert('Passwords do not match');
       setIsLoading(false);
       return;
     }
 
     try {
+      // Show loading alert
+      Swal.fire({
+        title: 'Creating your account',
+        html: 'Please wait...',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
       const response = await fetch('http://localhost:5000/api/auth/lister/register', {
         method: 'POST',
         headers: {
@@ -66,6 +104,9 @@ const ListerSignupPage = () => {
     
       const data = await response.json();
       
+      // Close loading alert
+      Swal.close();
+      
       if (!response.ok) {
         throw new Error(data.error || 'Failed to register lister');
       }
@@ -78,11 +119,12 @@ const ListerSignupPage = () => {
       localStorage.setItem('role', 'lister');
       localStorage.setItem('token', data.token || '');
       
-      alert('Lister account created successfully!');
-      navigate('/lister');
+      showSuccessAlert('Lister account created successfully!');
       
     } catch (err) {
-      setError(err.message || 'Error creating account. Please try again.');
+      const errorMessage = err.message || 'Error creating account. Please try again.';
+      setError(errorMessage);
+      showErrorAlert(errorMessage);
       console.error('Registration error:', err);
     } finally {
       setIsLoading(false);

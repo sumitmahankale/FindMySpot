@@ -264,8 +264,8 @@ const LandingPage = () => {
             {[
               { 
                 step: 1, 
-                title: "Download App", 
-                desc: "Get the FindMySpot app on iOS or Android",
+                title: "Create Account", 
+                desc: "Get yourself register on website",
                 icon: "M18 4l-4-4H6C4.9 0 4.01.9 4.01 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V6l-2-2zm-6 16c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"
               },
               { 
