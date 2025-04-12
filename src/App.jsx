@@ -8,7 +8,7 @@ import About from './components/About';
 import ListerPage from './components/ParkingListerPage.jsx';
 import ParkingPage from './components/ParkingFinderPage';
 import ListerDashboard from './components/AdminListerDashboard.jsx';
-import ListerDashboardd from './components/ListerDashboard.jsx';
+import ListerDashboardd from './components/NewListerDashboardPage.jsx';
 import ForgotPassword from './components/ForgetPassword.jsx';
 import Animation from './components/UniqueLoginAnimation.jsx';
 import ListerSignup from './components/ListerSignup.jsx';
