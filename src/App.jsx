@@ -13,11 +13,11 @@ import ForgotPassword from './components/ForgetPassword.jsx';
 import Animation from './components/UniqueLoginAnimation.jsx';
 import ListerSignup from './components/ListerSignup.jsx';
 import ListerLogin from './components/ListerLogin.jsx';
-import AdminRequest from './components/AdminRequestPage.jsx';
 import ListerForgetPass from './components/ListerForgetPassword.jsx';
 import TermsAndConditions from './components/UserTerms.jsx';
 import ListerTermsAndConditions from './components/ListerTermsAndConditions.jsx';
 import AdminLogin from './components/AdminLogin.jsx'
+import AdminDashboard from './components/AdminDashboard.jsx';
 const router=createBrowserRouter([
   {
     path : "/Login",
@@ -73,7 +73,7 @@ const router=createBrowserRouter([
   },
   {
     path : "admin",
-    element : <AdminRequest/>,
+    element : <AdminDashboard/>,
   },
   {
     path : "listerforgetpass",

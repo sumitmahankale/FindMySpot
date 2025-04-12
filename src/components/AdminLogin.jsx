@@ -27,7 +27,7 @@ const LoginPage = () => {
       background: '#f8f9fa',
       iconColor: '#4CAF50',
     }).then(() => {
-      navigate('/parking');
+      navigate('/admin');
     });
   };
 
@@ -112,9 +112,7 @@ const LoginPage = () => {
             </div>
 
             <div className="form-options">
-              <a href="#" onClick={() => navigate('/forgetpass')} className="hover-orange">
-                Forgot Password?
-              </a>
+              
             </div>
 
             <button
@@ -128,12 +126,13 @@ const LoginPage = () => {
                 'Admin Login'
               )}
             </button>
+            <Link to="/" className="back-link" align="center">
+              ← Home
+            </Link>
           </form>
 
           <div className="register-option animate-fade-in-delay">
-            <Link to="/" className="back-link">
-              ← Home
-            </Link>
+            
           </div>
         </div>
 
