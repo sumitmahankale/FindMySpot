@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Car, MessageSquare, Map, Layout, ChevronRight, Bell, Search, LogOut, Settings, HelpCircle } from 'lucide-react';
+import { Car, MessageSquare, Map, Layout, ChevronRight, Bell, LogOut, HelpCircle } from 'lucide-react';
 import ListerDashboard from './ListerDashboard';
 import { useNavigate } from 'react-router-dom';
 
@@ -18,15 +18,50 @@ const styles = {
 const ListerMainDashboard = () => {
   const [activeTab, setActiveTab] = useState('parking');
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [currentUser, setCurrentUser] = useState({
+    fullName: '',
+    businessName: '',
+    initials: '',
+    email: ''
+  });
   
   // Add page transition effect
   const [pageLoaded, setPageLoaded] = useState(false);
+  
+  const navigate = useNavigate();
+  
   useEffect(() => {
     setPageLoaded(true);
-  }, []);
+    
+    // Get user data from localStorage
+    const token = localStorage.getItem('token');
+    const fullName = localStorage.getItem('fullName');
+    const businessName = localStorage.getItem('businessName');
+    const username = localStorage.getItem('username'); // Email/username
+    
+    if (!token) {
+      navigate('/listerlogin');
+      return;
+    }
+    
+    // Set user data
+    const nameInitials = fullName 
+      ? fullName.split(' ').map(n => n[0]).join('').toUpperCase()
+      : username ? username[0].toUpperCase() : 'U';
+      
+    setCurrentUser({
+      fullName: fullName || 'User',
+      businessName: businessName || 'Parking Provider',
+      initials: nameInitials,
+      email: username || ''
+    });
+  }, [navigate]);
 
-  const navigate = useNavigate();
   const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('username');
+    localStorage.removeItem('fullName');
+    localStorage.removeItem('businessName');
     navigate('/listerlogin');
   };
 
@@ -117,18 +152,18 @@ const ListerMainDashboard = () => {
           {isCollapsed ? (
             <div className="w-10 h-10 rounded-full flex items-center justify-center"
                  style={{ backgroundColor: styles.lightBlue }}>
-              <span style={{ color: styles.textLight, fontWeight: 'bold' }}>RM</span>
+              <span style={{ color: styles.textLight, fontWeight: 'bold' }}>{currentUser.initials}</span>
             </div>
           ) : (
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <div className="w-10 h-10 rounded-full flex items-center justify-center mr-3 shadow-lg"
                      style={{ backgroundColor: styles.lightBlue }}>
-                  <span style={{ color: styles.textLight, fontWeight: 'bold' }}>RM</span>
+                  <span style={{ color: styles.textLight, fontWeight: 'bold' }}>{currentUser.initials}</span>
                 </div>
                 <div>
-                  <p className="font-medium" style={{ color: styles.textLight }}>Rahul Mehta</p>
-                  <p className="text-xs" style={{ color: styles.lightOrange }}>Parking Provider</p>
+                  <p className="font-medium" style={{ color: styles.textLight }}>{currentUser.fullName}</p>
+                  <p className="text-xs" style={{ color: styles.lightOrange }}>{currentUser.email}</p>
                 </div>
               </div>
               <button onClick={handleLogout} style={{ color: styles.lightOrange }}>
@@ -158,7 +193,9 @@ const ListerMainDashboard = () => {
               <span className="absolute top-1 right-1 h-2 w-2 rounded-full" style={{ backgroundColor: styles.orange }}></span>
             </button>
             <div className="px-3" style={{ borderLeft: '1px solid #eee' }}>
-              <p className="text-sm font-medium" style={{ color: styles.textDark }}>Welcome back</p>
+              <p className="text-sm font-medium" style={{ color: styles.textDark }}>
+                Welcome back, {currentUser.fullName.split(' ')[0]}
+              </p>
               <p className="text-xs" style={{ color: styles.lightBlue }}>Last login: Today, 10:30 AM</p>
             </div>
           </div>
