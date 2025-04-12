@@ -24,6 +24,23 @@ const ListerMainDashboard = () => {
     initials: '',
     email: ''
   });
+  const [lastLogin, setLastLogin] = useState('Today, 10:30 AM');
+  const [spaceDetails, setSpaceDetails] = useState({
+    totalSpots: 0,
+    occupiedSpots: 0,
+    availableSpots: 0,
+    address: '',
+    operationalHours: {
+      weekday: '',
+      weekend: ''
+    },
+    pricing: {
+      hourly: { weekday: 0, weekend: 0 },
+      daily: { weekday: 0, weekend: 0 },
+      monthly: { weekday: 0, weekend: 0 }
+    }
+  });
+  const [isLoading, setIsLoading] = useState(true);
   
   // Add page transition effect
   const [pageLoaded, setPageLoaded] = useState(false);
@@ -38,6 +55,7 @@ const ListerMainDashboard = () => {
     const fullName = localStorage.getItem('fullName');
     const businessName = localStorage.getItem('businessName');
     const username = localStorage.getItem('username'); // Email/username
+    const lastLoginTime = localStorage.getItem('lastLogin');
     
     if (!token) {
       navigate('/listerlogin');
@@ -55,6 +73,83 @@ const ListerMainDashboard = () => {
       initials: nameInitials,
       email: username || ''
     });
+    
+    // Format and set last login time
+    if (lastLoginTime) {
+      const loginDate = new Date(lastLoginTime);
+      const today = new Date();
+      
+      let formattedDate;
+      if (loginDate.toDateString() === today.toDateString()) {
+        formattedDate = `Today, ${loginDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+      } else {
+        formattedDate = loginDate.toLocaleDateString() + ', ' + 
+                        loginDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+      }
+      
+      setLastLogin(formattedDate);
+    }
+    
+    // Update current login time in localStorage
+    localStorage.setItem('lastLogin', new Date().toISOString());
+    
+    // Fetch space details for this lister
+    const fetchSpaceDetails = async () => {
+      try {
+        setIsLoading(true);
+        
+        // Make API call to get lister's parking spaces
+        // This is a placeholder - replace with your actual API endpoint
+        const response = await fetch('/api/lister/spaces', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          
+          // Process the data
+          if (data && data.length > 0) {
+            const space = data[0]; // Get first space or aggregate multiple spaces
+            
+            setSpaceDetails({
+              totalSpots: space.totalSpots || 12,
+              occupiedSpots: space.occupiedSpots || 8,
+              availableSpots: (space.totalSpots || 12) - (space.occupiedSpots || 8),
+              address: space.address || '123 Liberty Avenue, Downtown District\nMumbai, Maharashtra 400001',
+              operationalHours: {
+                weekday: space.weekdayHours || 'Monday to Friday: 7:00 AM - 10:00 PM',
+                weekend: space.weekendHours || 'Weekends: 8:00 AM - 8:00 PM'
+              },
+              pricing: {
+                hourly: { 
+                  weekday: space.pricing?.hourly?.weekday || 50, 
+                  weekend: space.pricing?.hourly?.weekend || 60 
+                },
+                daily: { 
+                  weekday: space.pricing?.daily?.weekday || 300, 
+                  weekend: space.pricing?.daily?.weekend || 400 
+                },
+                monthly: { 
+                  weekday: space.pricing?.monthly?.weekday || 5000, 
+                  weekend: space.pricing?.monthly?.weekend || 5000 
+                }
+              }
+            });
+          }
+        } else {
+          console.error('Failed to fetch space details');
+          // Use default data if API call fails
+        }
+      } catch (error) {
+        console.error('Error fetching space details:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchSpaceDetails();
   }, [navigate]);
 
   const handleLogout = () => {
@@ -63,6 +158,12 @@ const ListerMainDashboard = () => {
     localStorage.removeItem('fullName');
     localStorage.removeItem('businessName');
     navigate('/listerlogin');
+  };
+
+  const handleUpdateAvailability = async () => {
+    // Implement availability update logic
+    // This would typically open a modal or navigate to an update form
+    alert('Update availability feature will be implemented soon!');
   };
 
   return (
@@ -196,7 +297,7 @@ const ListerMainDashboard = () => {
               <p className="text-sm font-medium" style={{ color: styles.textDark }}>
                 Welcome back, {currentUser.fullName.split(' ')[0]}
               </p>
-              <p className="text-xs" style={{ color: styles.lightBlue }}>Last login: Today, 10:30 AM</p>
+              <p className="text-xs" style={{ color: styles.lightBlue }}>Last login: {lastLogin}</p>
             </div>
           </div>
         </header>
@@ -272,7 +373,10 @@ const ListerMainDashboard = () => {
               </div>
             ) : activeTab === 'spaces' ? (
               <div className="bg-white rounded-lg shadow-md p-6">
-                <h2 className="text-2xl font-bold mb-4" style={{ color: styles.darkBlue }}>My Space Details</h2>
+                <h2 className="text-2xl font-bold mb-4" style={{ color: styles.darkBlue }}>
+                  My Space Details
+                  {isLoading && <span className="ml-2 text-sm font-normal text-gray-500">(Loading...)</span>}
+                </h2>
                 
                 <div className="space-y-6">
                   <div className="p-4 rounded-lg" style={{ backgroundColor: styles.background }}>
@@ -282,15 +386,15 @@ const ListerMainDashboard = () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="p-4 rounded-lg bg-white shadow">
                         <p className="text-sm" style={{ color: styles.textDark }}>Total Spots</p>
-                        <p className="text-2xl font-bold" style={{ color: styles.orange }}>12</p>
+                        <p className="text-2xl font-bold" style={{ color: styles.orange }}>{spaceDetails.totalSpots}</p>
                       </div>
                       <div className="p-4 rounded-lg bg-white shadow">
                         <p className="text-sm" style={{ color: styles.textDark }}>Currently Occupied</p>
-                        <p className="text-2xl font-bold" style={{ color: styles.orange }}>8</p>
+                        <p className="text-2xl font-bold" style={{ color: styles.orange }}>{spaceDetails.occupiedSpots}</p>
                       </div>
                       <div className="p-4 rounded-lg bg-white shadow">
                         <p className="text-sm" style={{ color: styles.textDark }}>Available</p>
-                        <p className="text-2xl font-bold" style={{ color: styles.orange }}>4</p>
+                        <p className="text-2xl font-bold" style={{ color: styles.orange }}>{spaceDetails.availableSpots}</p>
                       </div>
                     </div>
                   </div>
@@ -302,13 +406,14 @@ const ListerMainDashboard = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
                         <p className="text-sm font-medium mb-1" style={{ color: styles.textDark }}>Address</p>
-                        <p>123 Liberty Avenue, Downtown District</p>
-                        <p>Mumbai, Maharashtra 400001</p>
+                        {spaceDetails.address.split('\n').map((line, i) => (
+                          <p key={i}>{line}</p>
+                        ))}
                       </div>
                       <div>
                         <p className="text-sm font-medium mb-1" style={{ color: styles.textDark }}>Operational Hours</p>
-                        <p>Monday to Friday: 7:00 AM - 10:00 PM</p>
-                        <p>Weekends: 8:00 AM - 8:00 PM</p>
+                        <p>{spaceDetails.operationalHours.weekday}</p>
+                        <p>{spaceDetails.operationalHours.weekend}</p>
                       </div>
                     </div>
                   </div>
@@ -334,21 +439,41 @@ const ListerMainDashboard = () => {
                       <tbody className="divide-y divide-gray-200">
                         <tr>
                           <td className="px-4 py-3 text-sm">Hourly</td>
-                          <td className="px-4 py-3 text-sm">₹50</td>
-                          <td className="px-4 py-3 text-sm">₹60</td>
+                          <td className="px-4 py-3 text-sm">₹{spaceDetails.pricing.hourly.weekday}</td>
+                          <td className="px-4 py-3 text-sm">₹{spaceDetails.pricing.hourly.weekend}</td>
                         </tr>
                         <tr>
                           <td className="px-4 py-3 text-sm">Daily</td>
-                          <td className="px-4 py-3 text-sm">₹300</td>
-                          <td className="px-4 py-3 text-sm">₹400</td>
+                          <td className="px-4 py-3 text-sm">₹{spaceDetails.pricing.daily.weekday}</td>
+                          <td className="px-4 py-3 text-sm">₹{spaceDetails.pricing.daily.weekend}</td>
                         </tr>
                         <tr>
                           <td className="px-4 py-3 text-sm">Monthly</td>
-                          <td className="px-4 py-3 text-sm">₹5000</td>
-                          <td className="px-4 py-3 text-sm">₹5000</td>
+                          <td className="px-4 py-3 text-sm">₹{spaceDetails.pricing.monthly.weekday}</td>
+                          <td className="px-4 py-3 text-sm">₹{spaceDetails.pricing.monthly.weekend}</td>
                         </tr>
                       </tbody>
                     </table>
+                  </div>
+                  
+                  <div className="border-t pt-6">
+                    <h3 className="text-lg font-semibold mb-4" style={{ color: styles.mediumBlue }}>
+                      Current Status
+                    </h3>
+                    <div className="bg-gray-100 p-4 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium" style={{ color: styles.textDark }}>Space Status</p>
+                          <p className="mt-1 text-lg font-semibold" style={{ color: spaceDetails.availableSpots > 0 ? '#22c55e' : '#ef4444' }}>
+                            {spaceDetails.availableSpots > 0 ? 'Available' : 'Fully Occupied'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium" style={{ color: styles.textDark }}>Last Updated</p>
+                          <p className="mt-1">{new Date().toLocaleString()}</p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                   
                   <div className="flex justify-end space-x-4 pt-4">
@@ -364,6 +489,7 @@ const ListerMainDashboard = () => {
                     <button 
                       className="px-4 py-2 rounded-lg text-white font-medium transition-all duration-200"
                       style={{ backgroundColor: styles.orange }}
+                      onClick={handleUpdateAvailability}
                     >
                       Update Availability
                     </button>
