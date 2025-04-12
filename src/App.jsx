@@ -17,7 +17,7 @@ import AdminRequest from './components/AdminRequestPage.jsx';
 import ListerForgetPass from './components/ListerForgetPassword.jsx';
 import TermsAndConditions from './components/UserTerms.jsx';
 import ListerTermsAndConditions from './components/ListerTermsAndConditions.jsx';
-
+import AdminLogin from './components/AdminLogin.jsx'
 const router=createBrowserRouter([
   {
     path : "/Login",
@@ -86,6 +86,10 @@ const router=createBrowserRouter([
   {
     path : "listerterms",
     element : <ListerTermsAndConditions/>,
+  },
+  {
+    path : "adminlogin",
+    element : <AdminLogin/>,
   },
 ]);
 function App() {

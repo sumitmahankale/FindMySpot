@@ -87,10 +87,11 @@ const LandingPage = () => {
           />
         </div>
         <div className="flex items-center space-x-6">
+        <a href="/adminlogin" className="hover:text-yellow-500" style={{ transition: "color 0.3s" }}>Admin</a>
           <a href="#become-lister" className="hover:text-yellow-500" style={{ transition: "color 0.3s" }}>Lister </a>
           <a href="#features" className="hover:text-yellow-500" style={{ transition: "color 0.3s" }}>Features</a>
           <a href="#how-it-works" className="hover:text-yellow-500" style={{ transition: "color 0.3s" }}>How It Works</a>
-          <a href="#pricing" className="hover:text-yellow-500" style={{ transition: "color 0.3s" }}>Pricing</a>
+          
           <button style={{ 
               backgroundColor: "#FF7A00", 
               padding: "0.5rem 1.5rem", 

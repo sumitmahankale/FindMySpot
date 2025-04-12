@@ -73,7 +73,7 @@
 
 .highlight {
   background: linear-gradient(to right, var(--orange), var(--light-orange));
-  -webkit-background-clip: text;
+
   -webkit-text-fill-color: transparent;
   font-weight: 600;
 }
