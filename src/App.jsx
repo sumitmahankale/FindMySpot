@@ -15,6 +15,8 @@ import ListerSignup from './components/ListerSignup.jsx';
 import ListerLogin from './components/ListerLogin.jsx';
 import AdminRequest from './components/AdminRequestPage.jsx';
 import ListerForgetPass from './components/ListerForgetPassword.jsx';
+import TermsAndConditions from './components/UserTerms.jsx';
+import ListerTermsAndConditions from './components/ListerTermsAndConditions.jsx';
 
 const router=createBrowserRouter([
   {
@@ -76,6 +78,14 @@ const router=createBrowserRouter([
   {
     path : "listerforgetpass",
     element : <ListerForgetPass/>,
+  },
+  {
+    path : "terms",
+    element : <TermsAndConditions/>,
+  },
+  {
+    path : "listerterms",
+    element : <ListerTermsAndConditions/>,
   },
 ]);
 function App() {

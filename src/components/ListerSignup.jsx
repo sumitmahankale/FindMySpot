@@ -242,7 +242,7 @@ const ListerSignupPage = () => {
               <div className="terms-agreement">
                 <input type="checkbox" id="terms" required />
                 <label htmlFor="terms">
-                  I agree to the <a href="#terms" className="terms-link">Terms of Service</a>
+                  I agree to the <a href="/listerterms" className="terms-link">Terms of Service</a>
                 </label>
               </div>
 
