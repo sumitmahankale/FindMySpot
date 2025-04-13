@@ -41,6 +41,7 @@ const ListerSignupPage = () => {
       confirmButtonColor: 'var(--medium-blue)',
     }).then((result) => {
       if (result.isConfirmed) {
+        // Redirect to parking lister page
         navigate('/lister');
       }
     });
@@ -111,15 +112,18 @@ const ListerSignupPage = () => {
         throw new Error(data.error || 'Failed to register lister');
       }
       
-      // Store user data in localStorage
+      // Store user data in localStorage with additional details
       localStorage.setItem('isAuthenticated', 'true');
       localStorage.setItem('username', data.username || email);
       localStorage.setItem('fullName', data.fullName || fullName);
       localStorage.setItem('businessName', data.businessName || businessName);
       localStorage.setItem('role', 'lister');
       localStorage.setItem('token', data.token || '');
+      localStorage.setItem('userId', data.listerId || ''); // Important: Store the lister ID
+      localStorage.setItem('phone', phone || '');
+      localStorage.setItem('email', email || '');
       
-      showSuccessAlert('Lister account created successfully!');
+      showSuccessAlert('Lister account created successfully! Now you can list your parking spaces.');
       
     } catch (err) {
       const errorMessage = err.message || 'Error creating account. Please try again.';
@@ -136,7 +140,7 @@ const ListerSignupPage = () => {
       <div className="signup-container">
         <div className="signup-form-container animate-slide-left">
           <div className="signup-header">
-            <div className="logo animate-scale">SecureLogin</div>
+            <div className="logo animate-scale">FindMySpot</div>
             <h2 className="animate-fade-down">Create Lister Account</h2>
             <p className="animate-fade-down-delay">Sign up to start listing your parking spaces</p>
           </div>
