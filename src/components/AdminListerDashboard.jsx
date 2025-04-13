@@ -1,4 +1,3 @@
-// ListerDashboard.jsx - Complete dashboard for parking space listers
 import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import { Edit, Trash2, AlertCircle, X, MapPin } from 'lucide-react';
@@ -15,6 +14,8 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
+const API_BASE_URL = 'http://localhost:5000';
+
 const ListerDashboard = () => {
   const [userSpaces, setUserSpaces] = useState([]);
   const [selectedSpace, setSelectedSpace] = useState(null);
@@ -28,18 +29,57 @@ const ListerDashboard = () => {
     contact: ''
   });
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Get stored user data at component mount and set it to state
+  useEffect(() => {
+    const getUserData = () => {
+     
+      let userData = null;
+      
+      try {
+        userData = JSON.parse(localStorage.getItem('user'));
+       
+        console.log('User data loaded:', userData);
+      } catch (error) {
+        console.error('Error parsing user data from localStorage:', error);
+      }
+    };
+    
+    getUserData();
+  }, []);
   
   // Fetch user's spaces
   useEffect(() => {
     const fetchUserSpaces = async () => {
+      setIsLoading(true);
       try {
-        // In a real app, this would filter by the logged-in user ID
-        const response = await axios.get('http://localhost:5000/api/parking-spaces');
-        // For demo, let's pretend all spaces belong to the current user
+        const token = localStorage.getItem('token');
+        const userData = JSON.parse(localStorage.getItem('user'));
+        console.log('User data from localStorage:', userData);
+        
+        let response;
+        
+        if (userData && userData.role === 'lister' && userData.listerId) {
+          // If user is a lister, fetch their spaces
+          console.log(`Fetching spaces for lister ID: ${userData.listerId}`);
+          
+          response = await axios.get(`${API_BASE_URL}/api/lister/${userData.listerId}/parking-spaces`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+        } else {
+          // If user is admin or regular user, fetch all spaces
+          console.log('Fetching all parking spaces');
+          response = await axios.get(`${API_BASE_URL}/api/parking-spaces`);
+        }
+        
+        console.log('Fetched spaces:', response.data);
         setUserSpaces(response.data);
       } catch (error) {
         console.error('Error fetching your parking spaces:', error);
         showNotification('Failed to load your parking spaces', 'error');
+      } finally {
+        setIsLoading(false);
       }
     };
     
@@ -68,9 +108,13 @@ const ListerDashboard = () => {
     if (!selectedSpace) return;
     
     try {
-      await axios.put(`http://localhost:5000/api/parking-spaces/${selectedSpace.id}`, {
-        ...editFormData
-      });
+      const token = localStorage.getItem('token');
+      
+      await axios.put(
+        `${API_BASE_URL}/api/parking-spaces/${selectedSpace.id}`, 
+        { ...editFormData },
+        { headers: { Authorization: `Bearer ${token}` }}
+      );
       
       // Update local state
       const updatedSpaces = userSpaces.map(space => 
@@ -83,7 +127,11 @@ const ListerDashboard = () => {
       showNotification('Parking space updated successfully!', 'success');
     } catch (error) {
       console.error('Error updating parking space:', error);
-      showNotification('Failed to update parking space', 'error');
+      if (error.response && error.response.status === 403) {
+        showNotification('You are not authorized to update this parking space', 'error');
+      } else {
+        showNotification('Failed to update parking space', 'error');
+      }
     }
   };
   
@@ -91,7 +139,12 @@ const ListerDashboard = () => {
     if (!selectedSpace) return;
     
     try {
-      await axios.delete(`http://localhost:5000/api/parking-spaces/${selectedSpace.id}`);
+      const token = localStorage.getItem('token');
+      
+      await axios.delete(
+        `${API_BASE_URL}/api/parking-spaces/${selectedSpace.id}`,
+        { headers: { Authorization: `Bearer ${token}` }}
+      );
       
       // Update local state
       const updatedSpaces = userSpaces.filter(space => space.id !== selectedSpace.id);
@@ -101,7 +154,11 @@ const ListerDashboard = () => {
       showNotification('Parking space removed successfully!', 'success');
     } catch (error) {
       console.error('Error deleting parking space:', error);
-      showNotification('Failed to delete parking space', 'error');
+      if (error.response && error.response.status === 403) {
+        showNotification('You are not authorized to delete this parking space', 'error');
+      } else {
+        showNotification('Failed to delete parking space', 'error');
+      }
     }
   };
   
@@ -110,6 +167,53 @@ const ListerDashboard = () => {
     setTimeout(() => {
       setNotification({ show: false, message: '', type: '' });
     }, 5000);
+  };
+  
+  // Fixed canEditDelete function
+  const canEditDelete = () => {
+    if (!selectedSpace) return false;
+    
+    try {
+      const userData = JSON.parse(localStorage.getItem('user'));
+      
+      if (!userData) {
+        console.log('No user data found in localStorage');
+        return false;
+      }
+      
+      // Debug logs
+      console.log('Current user:', userData);
+      console.log('Selected space:', selectedSpace);
+      console.log('User role:', userData.role);
+      console.log('User listerId:', userData.listerId);
+      console.log('Space listerId:', selectedSpace.listerId);
+      
+      // Admin can edit/delete any space
+      if (userData.role === 'admin') {
+        console.log('User is admin - edit/delete allowed');
+        return true;
+      }
+      
+      // Lister can only edit/delete their own spaces
+      if (userData.role === 'lister') {
+        // Convert IDs to numbers for consistent comparison
+        const userListerId = Number(userData.listerId);
+        const spaceListerId = Number(selectedSpace.listerId);
+        
+        console.log('Comparing lister IDs:', userListerId, spaceListerId);
+        
+        if (userListerId === spaceListerId) {
+          console.log('Lister owns this space - edit/delete allowed');
+          return true;
+        }
+      }
+      
+      console.log('Permission denied for edit/delete');
+      return false;
+    } catch (error) {
+      console.error('Error in canEditDelete function:', error);
+      return false;
+    }
   };
 
   return (
@@ -131,6 +235,13 @@ const ListerDashboard = () => {
           </div>
         )}
         
+        {/* Loading Indicator */}
+        {isLoading && (
+          <div className="p-4 text-center">
+            <p className="text-blue-600">Loading your parking spaces...</p>
+          </div>
+        )}
+        
         {/* Content Area */}
         <div className="flex flex-col md:flex-row">
           {/* Left side - list of spaces */}
@@ -139,7 +250,7 @@ const ListerDashboard = () => {
               <h2 className="text-lg font-semibold text-gray-700">Your Listed Spaces</h2>
             </div>
             
-            {userSpaces.length === 0 ? (
+            {!isLoading && userSpaces.length === 0 ? (
               <div className="p-6 text-center text-gray-500">
                 <p>You haven't listed any parking spaces yet.</p>
               </div>
@@ -166,20 +277,22 @@ const ListerDashboard = () => {
               <div>
                 <div className="flex justify-between items-center p-4 border-b">
                   <h2 className="text-xl font-bold text-gray-800">{selectedSpace.location}</h2>
-                  <div className="flex space-x-2">
-                    <button 
-                      className="flex items-center px-3 py-2 bg-blue-900 text-white rounded hover:bg-blue-700"
-                      onClick={() => setIsEditModalOpen(true)}
-                    >
-                      <Edit size={16} className="mr-1" /> Edit
-                    </button>
-                    <button 
-                      className="flex items-center px-3 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-                      onClick={() => setIsDeleteModalOpen(true)}
-                    >
-                      <Trash2 size={16} className="mr-1" /> Remove
-                    </button>
-                  </div>
+                  {canEditDelete() && (
+                    <div className="flex space-x-2">
+                      <button 
+                        className="flex items-center px-3 py-2 bg-blue-900 text-white rounded hover:bg-blue-700"
+                        onClick={() => setIsEditModalOpen(true)}
+                      >
+                        <Edit size={16} className="mr-1" /> Edit
+                      </button>
+                      <button 
+                        className="flex items-center px-3 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                        onClick={() => setIsDeleteModalOpen(true)}
+                      >
+                        <Trash2 size={16} className="mr-1" /> Remove
+                      </button>
+                    </div>
+                  )}
                 </div>
                 
                 {/* Space Details Content */}
@@ -195,6 +308,7 @@ const ListerDashboard = () => {
                       <div>
                         <p className="text-sm"><span className="text-gray-500">Listed On:</span> {new Date(selectedSpace.createdAt).toLocaleDateString()}</p>
                         <p className="text-sm"><span className="text-gray-500">Last Updated:</span> {new Date(selectedSpace.updatedAt).toLocaleDateString()}</p>
+                        <p className="text-sm"><span className="text-gray-500">Lister ID:</span> {selectedSpace.listerId || 'Not assigned'}</p>
                       </div>
                     </div>
                     <div className="mt-2">
