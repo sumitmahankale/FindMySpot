@@ -1,12 +1,10 @@
 require('dotenv').config();
-// server.js - Main entry point for the backend server
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const { Sequelize, DataTypes } = require('sequelize');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -25,8 +23,7 @@ const sequelize = new Sequelize({
   logging: false // set to console.log to see SQL queries
 });
 
-// Define User model
-// Define User model
+// JWT Authentication middleware
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -43,6 +40,8 @@ const authenticateToken = (req, res, next) => {
     res.status(400).json({ error: 'Invalid token' });
   }
 };
+
+// Define User model
 const User = sequelize.define('User', {
   id: {
     type: DataTypes.INTEGER,
@@ -65,7 +64,43 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING,
     allowNull: false
   }
-  // The isActive field has been removed
+});
+
+// Define Lister model
+const Lister = sequelize.define('Lister', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  email: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true,
+    validate: {
+      isEmail: true
+    }
+  },
+  fullName: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  businessName: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  phone: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  address: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  password: {
+    type: DataTypes.STRING,
+    allowNull: false
+  }
 });
 
 // Define ParkingSpace model
@@ -110,8 +145,84 @@ const ParkingSpace = sequelize.define('ParkingSpace', {
   isActive: {
     type: DataTypes.BOOLEAN,
     defaultValue: true
+  },
+  listerId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'Listers',
+      key: 'id'
+    }
   }
 });
+
+// Define ParkingRequest model
+const ParkingRequest = sequelize.define('ParkingRequest', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  listerName: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  listerEmail: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  businessName: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  location: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  price: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  availability: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  description: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  contact: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  lat: {
+    type: DataTypes.FLOAT,
+    allowNull: false
+  },
+  lng: {
+    type: DataTypes.FLOAT,
+    allowNull: false
+  },
+  status: {
+    type: DataTypes.ENUM('pending', 'approved', 'rejected'),
+    defaultValue: 'pending'
+  },
+  listerId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'Listers',
+      key: 'id'
+    }
+  }
+});
+
+// Define relationships
+Lister.hasMany(ParkingSpace, { foreignKey: 'listerId' });
+ParkingSpace.belongsTo(Lister, { foreignKey: 'listerId' });
+
+Lister.hasMany(ParkingRequest, { foreignKey: 'listerId' });
+ParkingRequest.belongsTo(Lister, { foreignKey: 'listerId' });
 
 // User Registration endpoint
 app.post('/api/auth/register', async (req, res) => {
@@ -131,8 +242,6 @@ app.post('/api/auth/register', async (req, res) => {
     if (existingUser) {
       return res.status(400).json({ error: 'User with this email already exists' });
     }
-    
-    // Continue with registration...
     
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -197,195 +306,6 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-// API Routes for Parking Spaces
-
-// Get all parking spaces
-app.get('/api/parking-spaces', async (req, res) => {
-  try {
-    const parkingSpaces = await ParkingSpace.findAll({
-      where: { isActive: true },
-      order: [['createdAt', 'DESC']]
-    });
-    res.json(parkingSpaces);
-  } catch (error) {
-    console.error('Error fetching parking spaces:', error);
-    res.status(500).json({ error: 'Failed to fetch parking spaces' });
-  }
-});
-
-// Get a specific parking space
-app.get('/api/parking-spaces/:id', async (req, res) => {
-  try {
-    const parkingSpace = await ParkingSpace.findByPk(req.params.id);
-    if (!parkingSpace) {
-      return res.status(404).json({ error: 'Parking space not found' });
-    }
-    res.json(parkingSpace);
-  } catch (error) {
-    console.error('Error fetching parking space:', error);
-    res.status(500).json({ error: 'Failed to fetch parking space' });
-  }
-});
-
-// Create a new parking space
-app.post('/api/parking-spaces', async (req, res) => {
-  try {
-    const newSpace = await ParkingSpace.create(req.body);
-    res.status(201).json(newSpace);
-  } catch (error) {
-    console.error('Error creating parking space:', error);
-    res.status(400).json({ error: 'Failed to create parking space', details: error.message });
-  }
-});
-
-// Update a parking space
-app.put('/api/parking-spaces/:id', async (req, res) => {
-  try {
-    const parkingSpace = await ParkingSpace.findByPk(req.params.id);
-    if (!parkingSpace) {
-      return res.status(404).json({ error: 'Parking space not found' });
-    }
-    await parkingSpace.update(req.body);
-    res.json(parkingSpace);
-  } catch (error) {
-    console.error('Error updating parking space:', error);
-    res.status(400).json({ error: 'Failed to update parking space', details: error.message });
-  }
-});
-
-// Delete a parking space
-app.delete('/api/parking-spaces/:id', async (req, res) => {
-  try {
-    const parkingSpace = await ParkingSpace.findByPk(req.params.id);
-    if (!parkingSpace) {
-      return res.status(404).json({ error: 'Parking space not found' });
-    }
-    await parkingSpace.destroy();
-    res.json({ message: 'Parking space successfully deleted' });
-  } catch (error) {
-    console.error('Error deleting parking space:', error);
-    res.status(500).json({ error: 'Failed to delete parking space' });
-  }
-});
-
-// Search parking spaces by location name or coordinates
-app.get('/api/search-parking', async (req, res) => {
-  try {
-    const { query, lat, lng, radius } = req.query;
-    let whereClause = { isActive: true };
-    
-    if (query) {
-      whereClause.location = {
-        [Sequelize.Op.like]: `%${query}%`
-      };
-    }
-    
-    // If coordinates are provided, find spaces within the radius
-    if (lat && lng && radius) {
-      // This is a simplified distance calculation
-      // For production, consider using a proper geospatial query
-      const spaces = await ParkingSpace.findAll({
-        where: whereClause
-      });
-      
-      // Filter spaces by distance (Haversine formula)
-      const filteredSpaces = spaces.filter(space => {
-        const distance = calculateDistance(
-          parseFloat(lat), 
-          parseFloat(lng), 
-          space.lat, 
-          space.lng
-        );
-        return distance <= parseFloat(radius);
-      });
-      
-      return res.json(filteredSpaces);
-    }
-    
-    const parkingSpaces = await ParkingSpace.findAll({
-      where: whereClause,
-      order: [['createdAt', 'DESC']]
-    });
-    
-    res.json(parkingSpaces);
-  } catch (error) {
-    console.error('Error searching parking spaces:', error);
-    res.status(500).json({ error: 'Failed to search parking spaces' });
-  }
-});
-
-// Helper function to calculate distance between two coordinates (Haversine formula)
-function calculateDistance(lat1, lon1, lat2, lon2) {
-  const R = 6371; // Radius of the earth in km
-  const dLat = deg2rad(lat2 - lat1);
-  const dLon = deg2rad(lon2 - lon1);
-  const a = 
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
-    Math.sin(dLon/2) * Math.sin(dLon/2); 
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
-  const distance = R * c; // Distance in km
-  return distance;
-}
-
-function deg2rad(deg) {
-  return deg * (Math.PI/180);
-}
-
-// Initialize database and start server
-(async () => {
-  try {
-    await sequelize.authenticate();
-    console.log('Database connection established successfully.');
-    
-    // Sync models with database (creates tables if they don't exist)
-    await sequelize.sync();
-    console.log('Database synchronized successfully.');
-    
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-    });
-  } catch (error) {
-    console.error('Unable to connect to the database:', error);
-  }
-})();
-// Define Lister model
-const Lister = sequelize.define('Lister', {
-  id: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true
-  },
-  email: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    unique: true,
-    validate: {
-      isEmail: true
-    }
-  },
-  fullName: {
-    type: DataTypes.STRING,
-    allowNull: false
-  },
-  businessName: {
-    type: DataTypes.STRING,
-    allowNull: true
-  },
-  phone: {
-    type: DataTypes.STRING,
-    allowNull: true
-  },
-  address: {
-    type: DataTypes.STRING,
-    allowNull: true
-  },
-  password: {
-    type: DataTypes.STRING,
-    allowNull: false
-  }
-});
-
 // Lister Registration endpoint
 app.post('/api/auth/lister/register', async (req, res) => {
   try {
@@ -429,7 +349,8 @@ app.post('/api/auth/lister/register', async (req, res) => {
       token,
       username: lister.email,
       fullName: lister.fullName,
-      businessName: lister.businessName
+      businessName: lister.businessName,
+      listerId: lister.id  // Include lister ID in response
     });
   } catch (error) {
     console.error('Error registering lister:', error);
@@ -466,6 +387,7 @@ app.post('/api/auth/lister/login', async (req, res) => {
       username: lister.email,
       fullName: lister.fullName,
       businessName: lister.businessName,
+      listerId: lister.id,  // Include lister ID in response
       role: 'lister'
     });
   } catch (error) {
@@ -473,58 +395,110 @@ app.post('/api/auth/lister/login', async (req, res) => {
     res.status(500).json({ error: 'Failed to log in', details: error.message });
   }
 });
-// Add these to your server.js file
 
-// Define ParkingRequest model
-const ParkingRequest = sequelize.define('ParkingRequest', {
-  id: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true
-  },
-  listerName: {
-    type: DataTypes.STRING,
-    allowNull: false
-  },
-  listerEmail: {
-    type: DataTypes.STRING,
-    allowNull: false
-  },
-  businessName: {
-    type: DataTypes.STRING,
-    allowNull: true
-  },
-  location: {
-    type: DataTypes.STRING,
-    allowNull: false
-  },
-  price: {
-    type: DataTypes.STRING,
-    allowNull: false
-  },
-  availability: {
-    type: DataTypes.STRING,
-    allowNull: false
-  },
-  description: {
-    type: DataTypes.TEXT,
-    allowNull: true
-  },
-  contact: {
-    type: DataTypes.STRING,
-    allowNull: false
-  },
-  lat: {
-    type: DataTypes.FLOAT,
-    allowNull: false
-  },
-  lng: {
-    type: DataTypes.FLOAT,
-    allowNull: false
-  },
-  status: {
-    type: DataTypes.ENUM('pending', 'approved', 'rejected'),
-    defaultValue: 'pending'
+// Get all parking spaces
+app.get('/api/parking-spaces', async (req, res) => {
+  try {
+    const parkingSpaces = await ParkingSpace.findAll({
+      where: { isActive: true },
+      order: [['createdAt', 'DESC']]
+    });
+    res.json(parkingSpaces);
+  } catch (error) {
+    console.error('Error fetching parking spaces:', error);
+    res.status(500).json({ error: 'Failed to fetch parking spaces' });
+  }
+});
+
+// Get a specific parking space
+app.get('/api/parking-spaces/:id', async (req, res) => {
+  try {
+    const parkingSpace = await ParkingSpace.findByPk(req.params.id);
+    if (!parkingSpace) {
+      return res.status(404).json({ error: 'Parking space not found' });
+    }
+    res.json(parkingSpace);
+  } catch (error) {
+    console.error('Error fetching parking space:', error);
+    res.status(500).json({ error: 'Failed to fetch parking space' });
+  }
+});
+
+// Get parking spaces by lister ID
+app.get('/api/lister/:listerId/parking-spaces', authenticateToken, async (req, res) => {
+  try {
+    const { listerId } = req.params;
+    
+    // Verify that the authenticated user is the lister or an admin
+    if (req.user.id !== parseInt(listerId) && req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized access to lister parking spaces' });
+    }
+    
+    const parkingSpaces = await ParkingSpace.findAll({
+      where: { 
+        listerId: listerId,
+        isActive: true 
+      },
+      order: [['createdAt', 'DESC']]
+    });
+    
+    res.json(parkingSpaces);
+  } catch (error) {
+    console.error('Error fetching lister parking spaces:', error);
+    res.status(500).json({ error: 'Failed to fetch lister parking spaces' });
+  }
+});
+
+// Create a new parking space
+app.post('/api/parking-spaces', async (req, res) => {
+  try {
+    const newSpace = await ParkingSpace.create(req.body);
+    res.status(201).json(newSpace);
+  } catch (error) {
+    console.error('Error creating parking space:', error);
+    res.status(400).json({ error: 'Failed to create parking space', details: error.message });
+  }
+});
+
+// Update a parking space
+app.put('/api/parking-spaces/:id', authenticateToken, async (req, res) => {
+  try {
+    const parkingSpace = await ParkingSpace.findByPk(req.params.id);
+    if (!parkingSpace) {
+      return res.status(404).json({ error: 'Parking space not found' });
+    }
+    
+    // Check if the authenticated user is the lister who owns this space or an admin
+    if (req.user.id !== parkingSpace.listerId && req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized to update this parking space' });
+    }
+    
+    await parkingSpace.update(req.body);
+    res.json(parkingSpace);
+  } catch (error) {
+    console.error('Error updating parking space:', error);
+    res.status(400).json({ error: 'Failed to update parking space', details: error.message });
+  }
+});
+
+// Delete a parking space
+app.delete('/api/parking-spaces/:id', authenticateToken, async (req, res) => {
+  try {
+    const parkingSpace = await ParkingSpace.findByPk(req.params.id);
+    if (!parkingSpace) {
+      return res.status(404).json({ error: 'Parking space not found' });
+    }
+    
+    // Check if the authenticated user is the lister who owns this space or an admin
+    if (req.user.id !== parkingSpace.listerId && req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized to delete this parking space' });
+    }
+    
+    await parkingSpace.destroy();
+    res.json({ message: 'Parking space successfully deleted' });
+  } catch (error) {
+    console.error('Error deleting parking space:', error);
+    res.status(500).json({ error: 'Failed to delete parking space' });
   }
 });
 
@@ -536,7 +510,13 @@ app.post('/api/parking-requests', authenticateToken, async (req, res) => {
       return res.status(401).json({ error: 'Authentication required' });
     }
     
-    const newRequest = await ParkingRequest.create(req.body);
+    // Add the lister ID from the authenticated user to the request
+    const requestData = {
+      ...req.body,
+      listerId: req.user.id
+    };
+    
+    const newRequest = await ParkingRequest.create(requestData);
     res.status(201).json(newRequest);
   } catch (error) {
     console.error('Error creating parking request:', error);
@@ -551,12 +531,38 @@ app.get('/api/parking-requests', authenticateToken, async (req, res) => {
     // For now, we'll return all pending requests
     const requests = await ParkingRequest.findAll({
       where: { status: 'pending' },
-      order: [['createdAt', 'DESC']]
+      order: [['createdAt', 'DESC']],
+      include: [{
+        model: Lister,
+        attributes: ['id', 'email', 'fullName', 'businessName', 'phone']
+      }]
     });
     res.json(requests);
   } catch (error) {
     console.error('Error fetching parking requests:', error);
     res.status(500).json({ error: 'Failed to fetch parking requests' });
+  }
+});
+
+// Get parking requests by lister ID
+app.get('/api/lister/:listerId/parking-requests', authenticateToken, async (req, res) => {
+  try {
+    const { listerId } = req.params;
+    
+    // Verify that the authenticated user is the lister or an admin
+    if (req.user.id !== parseInt(listerId) && req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized access to lister parking requests' });
+    }
+    
+    const requests = await ParkingRequest.findAll({
+      where: { listerId: listerId },
+      order: [['createdAt', 'DESC']]
+    });
+    
+    res.json(requests);
+  } catch (error) {
+    console.error('Error fetching lister parking requests:', error);
+    res.status(500).json({ error: 'Failed to fetch lister parking requests' });
   }
 });
 
@@ -573,7 +579,7 @@ app.put('/api/parking-requests/:id/approve', authenticateToken, async (req, res)
     // Update request status
     await request.update({ status: 'approved' });
     
-    // Create the parking space from the request
+    // Create the parking space from the request, including the lister ID
     await ParkingSpace.create({
       name: request.listerName,
       contact: request.contact,
@@ -583,7 +589,8 @@ app.put('/api/parking-requests/:id/approve', authenticateToken, async (req, res)
       description: request.description,
       lat: request.lat,
       lng: request.lng,
-      isActive: true
+      isActive: true,
+      listerId: request.listerId // Associate space with lister
     });
     
     res.json({ message: 'Parking request approved and space created successfully' });
@@ -612,80 +619,62 @@ app.put('/api/parking-requests/:id/reject', authenticateToken, async (req, res) 
     res.status(500).json({ error: 'Failed to reject request', details: error.message });
   }
 });
-// Reset password endpoint
-app.post('/api/auth/reset-password', async (req, res) => {
-  try {
-    const { email, newPassword } = req.body;
-    
-    if (!email || !newPassword) {
-      return res.status(400).json({ error: 'Email and new password are required' });
-    }
 
-    console.log('Password reset attempt for:', email);
+// Search parking spaces by location name or coordinates
+app.get('/api/search-parking', async (req, res) => {
+  try {
+    const { query, lat, lng, radius } = req.query;
+    let whereClause = { isActive: true };
     
-    // Find user in User model
-    let user = await User.findOne({ where: { email } });
-    let userType = 'user';
+    if (query) {
+      whereClause.location = {
+        [Sequelize.Op.like]: `%${query}%`
+      };
+    }
     
-    // If not found in User model, try Lister model
-    if (!user) {
-      user = await Lister.findOne({ where: { email } });
-      userType = 'lister';
+    // If coordinates are provided, find spaces within the radius
+    if (lat && lng && radius) {
+      // This is a simplified distance calculation
+      // For production, consider using a proper geospatial query
+      const spaces = await ParkingSpace.findAll({
+        where: whereClause,
+        include: [{
+          model: Lister,
+          attributes: ['id', 'fullName', 'businessName', 'phone']
+        }]
+      });
       
-      if (!user) {
-        return res.status(404).json({ error: 'No account found with this email' });
-      }
+      // Filter spaces by distance (Haversine formula)
+      const filteredSpaces = spaces.filter(space => {
+        const distance = calculateDistance(
+          parseFloat(lat), 
+          parseFloat(lng), 
+          space.lat, 
+          space.lng
+        );
+        return distance <= parseFloat(radius);
+      });
+      
+      return res.json(filteredSpaces);
     }
     
-    // Hash new password
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const parkingSpaces = await ParkingSpace.findAll({
+      where: whereClause,
+      order: [['createdAt', 'DESC']],
+      include: [{
+        model: Lister,
+        attributes: ['id', 'fullName', 'businessName', 'phone']
+      }]
+    });
     
-    // Update user's password
-    await user.update({ password: hashedPassword });
-    
-    console.log(`Password reset successful for ${userType} with email:`, email);
-    
-    res.status(200).json({ message: 'Password reset successfully' });
+    res.json(parkingSpaces);
   } catch (error) {
-    console.error('Error resetting password:', error);
-    res.status(500).json({ error: 'Failed to reset password', details: error.message });
-  }
-});
-// Add this endpoint for lister password reset
-app.post('/api/auth/lister/reset-password', async (req, res) => {
-  try {
-    const { email, newPassword } = req.body;
-    
-    if (!email || !newPassword) {
-      return res.status(400).json({ error: 'Email and new password are required' });
-    }
-
-    console.log('Lister password reset attempt for:', email);
-    
-    // Find lister in Lister model
-    const lister = await Lister.findOne({ where: { email } });
-    
-    if (!lister) {
-      return res.status(404).json({ error: 'No lister account found with this email' });
-    }
-    
-    // Hash new password
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    
-    // Update lister's password
-    await lister.update({ password: hashedPassword });
-    
-    console.log('Lister password reset successful for email:', email);
-    
-    res.status(200).json({ message: 'Lister password reset successfully' });
-  } catch (error) {
-    console.error('Error resetting lister password:', error);
-    res.status(500).json({ error: 'Failed to reset lister password', details: error.message });
+    console.error('Error searching parking spaces:', error);
+    res.status(500).json({ error: 'Failed to search parking spaces' });
   }
 });
 
-// Update the existing reset-password endpoint to differentiate between user and lister
-// You can keep this working as a general endpoint if you prefer
+// Reset password endpoint
 app.post('/api/auth/reset-password', async (req, res) => {
   try {
     const { email, newPassword, userType } = req.body;
@@ -712,7 +701,6 @@ app.post('/api/auth/reset-password', async (req, res) => {
     } else {
       // Try both models if userType is not specified
       user = await User.findOne({ where: { email } });
-      const userModel = user ? 'user' : 'lister';
       
       if (!user) {
         user = await Lister.findOne({ where: { email } });
@@ -736,3 +724,39 @@ app.post('/api/auth/reset-password', async (req, res) => {
     res.status(500).json({ error: 'Failed to reset password', details: error.message });
   }
 });
+
+// Helper function to calculate distance between two coordinates (Haversine formula)
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Radius of the earth in km
+  const dLat = deg2rad(lat2 - lat1);
+  const dLon = deg2rad(lon2 - lon1);
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2); 
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+  const distance = R * c; // Distance in km
+  return distance;
+}
+
+function deg2rad(deg) {
+  return deg * (Math.PI/180);
+}
+
+// Initialize database and start server
+(async () => {
+  try {
+    await sequelize.authenticate();
+    console.log('Database connection established successfully.');
+    
+    // Sync models with database (creates tables if they don't exist)
+    await sequelize.sync({ alter: true });
+    console.log('Database synchronized successfully.');
+    
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error('Unable to connect to the database:', error);
+  }
+})();
