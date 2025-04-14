@@ -91,6 +91,7 @@ const router=createBrowserRouter([
     path : "adminlogin",
     element : <AdminLogin/>,
   },
+  
 ]);
 function App() {
   return (

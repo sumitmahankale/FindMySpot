@@ -2,6 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { Check, X, Info, RefreshCw, AlertTriangle, Search, Filter } from 'lucide-react';
 import axios from 'axios';
 import './CSS/ListerDashboard.css';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+
+// Fix for Leaflet default icon issue
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
 
 const AdminRequestsPage = () => {
   const [requests, setRequests] = useState([]);
@@ -12,6 +23,7 @@ const AdminRequestsPage = () => {
   const [filterStatus, setFilterStatus] = useState('pending');
   const [isProcessing, setIsProcessing] = useState(false);
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
+  const [mapKey, setMapKey] = useState(0); // Key to force map re-render
   
   // Fetch parking space requests
   const fetchRequests = async () => {
@@ -50,9 +62,16 @@ const AdminRequestsPage = () => {
       });
       
       // Refresh the list after approval
-      fetchRequests();
-      if (showDetails) setShowDetails(false);
+      await fetchRequests();
       showNotification('Request approved successfully!', 'success');
+      
+      // Update the selected request if it's currently being viewed
+      if (selectedRequest && selectedRequest.id === id) {
+        const updatedRequest = requests.find(r => r.id === id);
+        if (updatedRequest) {
+          setSelectedRequest({...updatedRequest, status: 'approved'});
+        }
+      }
     } catch (error) {
       console.error('Error approving request:', error);
       showNotification('Error approving request. Please try again.', 'error');
@@ -71,9 +90,16 @@ const AdminRequestsPage = () => {
       });
       
       // Refresh the list after rejection
-      fetchRequests();
-      if (showDetails) setShowDetails(false);
+      await fetchRequests();
       showNotification('Request rejected successfully.', 'success');
+      
+      // Update the selected request if it's currently being viewed
+      if (selectedRequest && selectedRequest.id === id) {
+        const updatedRequest = requests.find(r => r.id === id);
+        if (updatedRequest) {
+          setSelectedRequest({...updatedRequest, status: 'rejected'});
+        }
+      }
     } catch (error) {
       console.error('Error rejecting request:', error);
       showNotification('Error rejecting request. Please try again.', 'error');
@@ -85,18 +111,26 @@ const AdminRequestsPage = () => {
   const viewDetails = (request) => {
     setSelectedRequest(request);
     setShowDetails(true);
+    setMapKey(prevKey => prevKey + 1); // Force map to re-render when showing details
+    
+    // Prevent body scrolling when modal is open
+    document.body.style.overflow = 'hidden';
   };
   
   const closeDetails = () => {
     setShowDetails(false);
+    setSelectedRequest(null);
+    
+    // Restore body scrolling when modal is closed
+    document.body.style.overflow = 'auto';
   };
 
   // Filter requests based on search term and status
   const filteredRequests = requests.filter(request => {
     const matchesSearch = 
-      request.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.listerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.listerEmail.toLowerCase().includes(searchTerm.toLowerCase());
+      (request.location?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (request.listerName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (request.listerEmail?.toLowerCase() || '').includes(searchTerm.toLowerCase());
     
     const matchesFilter = filterStatus === 'all' || request.status === filterStatus;
     
@@ -105,6 +139,8 @@ const AdminRequestsPage = () => {
 
   // Format date to be more readable
   const formatDate = (dateString) => {
+    if (!dateString) return 'Unknown date';
+    
     const date = new Date(dateString);
     const today = new Date();
     const yesterday = new Date(today);
@@ -121,10 +157,49 @@ const AdminRequestsPage = () => {
     }
   };
 
+  // A simple Map component for the location preview
+  const LocationMap = ({ lat, lng }) => {
+    if (!lat || !lng) return <div className="flex items-center justify-center h-full bg-gray-100 text-gray-500">Coordinates not available</div>;
+    
+    return (
+      <MapContainer 
+        center={[lat, lng]} 
+        zoom={15} 
+        style={{ height: '200px', width: '100%', borderRadius: '0.375rem' }}
+        key={mapKey}
+      >
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        />
+        <Marker position={[lat, lng]}>
+          <Popup>
+            Parking Location
+          </Popup>
+        </Marker>
+      </MapContainer>
+    );
+  };
+
+  // Create modal portal div if it doesn't exist
+  useEffect(() => {
+    let modalRoot = document.getElementById('modal-root');
+    if (!modalRoot) {
+      modalRoot = document.createElement('div');
+      modalRoot.id = 'modal-root';
+      document.body.appendChild(modalRoot);
+    }
+    
+    return () => {
+      // Clean up - restore scroll and check if we should remove modal root
+      document.body.style.overflow = 'auto';
+    };
+  }, []);
+
   return (
     <div className="w-full max-w-7xl mx-auto p-4">
       {notification.show && (
-        <div className={`fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
+        <div className={`fixed top-4 right-4 p-4 rounded-lg shadow-lg z-[2000] ${
           notification.type === 'success' ? 'bg-green-100 border-l-4 border-green-500 text-green-700' :
           notification.type === 'error' ? 'bg-red-100 border-l-4 border-red-500 text-red-700' :
           'bg-blue-100 border-l-4 border-blue-500 text-blue-700'
@@ -180,7 +255,7 @@ const AdminRequestsPage = () => {
               
               <button 
                 onClick={fetchRequests}
-                className="flex items-center justify-center text-blue-900 hover:text-blue-700 px-4 py-2 rounded border border-blue-300 hover:border-blue-500"
+                className="flex items-center justify-center text-blue-900 hover:text-blue-700 px-4 py-2 rounded border border-blue-300 hover:border-blue-500 transition-colors"
               >
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Refresh
@@ -229,9 +304,13 @@ const AdminRequestsPage = () => {
                     
                     <div className="flex space-x-2">
                       <button 
-                        onClick={() => viewDetails(request)}
-                        className="px-3 py-1 text-blue-900 border border-gray-300 rounded hover:bg-gray-50"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          viewDetails(request);
+                        }}
+                        className="px-3 py-1 text-blue-900 border border-blue-300 rounded hover:bg-blue-50 transition-colors"
                         title="View Details"
+                        aria-label="View details"
                       >
                         <Info className="w-4 h-4" />
                       </button>
@@ -239,18 +318,26 @@ const AdminRequestsPage = () => {
                       {request.status === 'pending' && (
                         <>
                           <button 
-                            onClick={() => handleApprove(request.id)}
-                            className="px-3 py-1 text-green-600 border border-green-300 rounded hover:bg-green-50"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleApprove(request.id);
+                            }}
+                             className="px-3 py-1 text-blue-600 border border-blue-300 rounded hover:bg-blue-50 transition-colors"
                             title="Approve Request"
                             disabled={isProcessing}
+                            aria-label="Approve request"
                           >
                             <Check className="w-4 h-4" />
                           </button>
                           <button 
-                            onClick={() => handleReject(request.id)}
-                            className="px-3 py-1 text-red-600 border border-red-300 rounded hover:bg-red-50"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleReject(request.id);
+                            }}
+                            className="px-3 py-1 text-red-600 border border-red-300 rounded hover:bg-red-50 transition-colors"
                             title="Reject Request"
                             disabled={isProcessing}
+                            aria-label="Reject request"
                           >
                             <X className="w-4 h-4" />
                           </button>
@@ -291,102 +378,125 @@ const AdminRequestsPage = () => {
         </div>
       </div>
       
-      {/* Request Detail Modal */}
-      {showDetails && selectedRequest && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-90vh overflow-y-auto relative">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">{selectedRequest.location}</h2>
-              <button onClick={closeDetails} className="hover:bg-gray-100 p-1 rounded">
-                <X size={24} />
-              </button>
-            </div>
-            
-            <div className="space-y-4">
-              {/* Status Badge */}
-              <div className="mb-4">
-                {selectedRequest.status === 'pending' && (
-                  <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-medium">
-                    Pending Review
-                  </span>
-                )}
-                {selectedRequest.status === 'approved' && (
-                  <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-medium">
-                    Approved
-                  </span>
-                )}
-                {selectedRequest.status === 'rejected' && (
-                  <span className="bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-medium">
-                    Rejected
-                  </span>
-                )}
-              </div>
-              
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="font-medium text-gray-700 mb-1">Lister Information</h3>
-                <p className="text-sm"><span className="text-gray-500">Name:</span> {selectedRequest.listerName}</p>
-                <p className="text-sm"><span className="text-gray-500">Email:</span> {selectedRequest.listerEmail}</p>
-                <p className="text-sm"><span className="text-gray-500">Phone:</span> {selectedRequest.contact}</p>
-                {selectedRequest.businessName && (
-                  <p className="text-sm"><span className="text-gray-500">Business:</span> {selectedRequest.businessName}</p>
-                )}
-              </div>
-              
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="font-medium text-gray-700 mb-1">Space Details</h3>
-                <p className="text-sm"><span className="text-gray-500">Location:</span> {selectedRequest.location}</p>
-                <p className="text-sm"><span className="text-gray-500">Price:</span> {selectedRequest.price}</p>
-                <p className="text-sm"><span className="text-gray-500">Availability:</span> {selectedRequest.availability}</p>
-                <p className="text-sm"><span className="text-gray-500">Coordinates:</span> {selectedRequest.lat}, {selectedRequest.lng}</p>
-                <p className="text-sm"><span className="text-gray-500">Submitted:</span> {new Date(selectedRequest.createdAt).toLocaleString()}</p>
-              </div>
-              
-              {selectedRequest.description && (
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h3 className="font-medium text-gray-700 mb-1">Description</h3>
-                  <p className="text-sm">{selectedRequest.description}</p>
+      {/* Modal Portal - Higher z-index and completely separate from the rest of the UI */}
+      {showDetails && (
+        <div className="fixed inset-0 z-[9999]" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+          {/* Modal Backdrop - Separate layer */}
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+            onClick={closeDetails}
+            aria-hidden="true"
+          ></div>
+          
+          {/* Modal Content - Separate layer with higher z-index */}
+          <div className="fixed inset-0 z-[10000] overflow-y-auto">
+            <div className="flex min-h-screen items-center justify-center p-4">
+              <div 
+                className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto relative"
+                onClick={e => e.stopPropagation()}
+              >
+                <div className="sticky top-0 z-[10] bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+                  <h2 id="modal-title" className="text-xl font-bold text-blue-900 truncate">
+                    {selectedRequest?.location || 'Request Details'}
+                  </h2>
+                  <button 
+                    onClick={closeDetails} 
+                    className="hover:bg-gray-100 p-1 rounded-full transition-colors"
+                    aria-label="Close details"
+                  >
+                    <X size={20} />
+                  </button>
                 </div>
-              )}
-              
-              {/* Map Preview */}
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="font-medium text-gray-700 mb-1">Location Preview</h3>
-                <div className="h-48 bg-gray-200 rounded overflow-hidden">
-                  <img 
-                    src={`https://maps.googleapis.com/maps/api/staticmap?center=${selectedRequest.lat},${selectedRequest.lng}&zoom=15&size=600x300&maptype=roadmap&markers=color:red%7C${selectedRequest.lat},${selectedRequest.lng}&key=YOUR_API_KEY`} 
-                    alt="Location Map"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <p className="text-xs text-gray-500 mt-1">Map preview - for reference only</p>
-              </div>
-              
-              <div className="flex justify-end space-x-3 pt-4">
-                <button 
-                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-                  onClick={closeDetails}
-                >
-                  Close
-                </button>
                 
-                {selectedRequest.status === 'pending' && (
-                  <>
-                    <button 
-                      className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
-                      onClick={() => handleReject(selectedRequest.id)}
-                      disabled={isProcessing}
-                    >
-                      {isProcessing ? 'Processing...' : 'Reject'}
-                    </button>
-                    <button 
-                      className="px-4 py-2 bg-blue-900 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-                      onClick={() => handleApprove(selectedRequest.id)}
-                      disabled={isProcessing}
-                    >
-                      {isProcessing ? 'Processing...' : 'Approve'}
-                    </button>
-                  </>
-                )}
+                <div className="p-6 space-y-4">
+                  {/* Status Badge */}
+                  <div className="mb-4">
+                    {selectedRequest?.status === 'pending' && (
+                      <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-medium">
+                        Pending Review
+                      </span>
+                    )}
+                    {selectedRequest?.status === 'approved' && (
+                      <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-medium">
+                        Approved
+                      </span>
+                    )}
+                    {selectedRequest?.status === 'rejected' && (
+                      <span className="bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-medium">
+                        Rejected
+                      </span>
+                    )}
+                  </div>
+                  
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h3 className="font-medium text-gray-700 mb-2">Lister Information</h3>
+                    <p className="text-sm mb-1"><span className="text-gray-500 font-medium">Name:</span> {selectedRequest?.listerName}</p>
+                    <p className="text-sm mb-1"><span className="text-gray-500 font-medium">Email:</span> {selectedRequest?.listerEmail}</p>
+                    <p className="text-sm mb-1"><span className="text-gray-500 font-medium">Phone:</span> {selectedRequest?.contact}</p>
+                    {selectedRequest?.businessName && (
+                      <p className="text-sm"><span className="text-gray-500 font-medium">Business:</span> {selectedRequest.businessName}</p>
+                    )}
+                  </div>
+                  
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h3 className="font-medium text-gray-700 mb-2">Space Details</h3>
+                    <p className="text-sm mb-1"><span className="text-gray-500 font-medium">Location:</span> {selectedRequest?.location}</p>
+                    <p className="text-sm mb-1"><span className="text-gray-500 font-medium">Price:</span> {selectedRequest?.price}</p>
+                    <p className="text-sm mb-1"><span className="text-gray-500 font-medium">Availability:</span> {selectedRequest?.availability}</p>
+                    <p className="text-sm mb-1"><span className="text-gray-500 font-medium">Coordinates:</span> {selectedRequest?.lat}, {selectedRequest?.lng}</p>
+                    <p className="text-sm"><span className="text-gray-500 font-medium">Submitted:</span> {selectedRequest?.createdAt ? new Date(selectedRequest.createdAt).toLocaleString() : 'Unknown'}</p>
+                  </div>
+                  
+                  {selectedRequest?.description && (
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h3 className="font-medium text-gray-700 mb-2">Description</h3>
+                      <p className="text-sm">{selectedRequest.description}</p>
+                    </div>
+                  )}
+                  
+                  {/* Leaflet Map */}
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h3 className="font-medium text-gray-700 mb-2">Location Preview</h3>
+                    <div className="h-48 rounded overflow-hidden border border-gray-200">
+                      {selectedRequest && <LocationMap lat={selectedRequest.lat} lng={selectedRequest.lng} />}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">Map preview - for reference only</p>
+                  </div>
+                </div>
+                
+                <div className="sticky bottom-0 z-[10] bg-white border-t border-gray-200 px-6 py-4 flex justify-end space-x-3">
+                  <button 
+                    className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+                    onClick={closeDetails}
+                  >
+                    Close
+                  </button>
+                  
+                  {selectedRequest?.status === 'pending' && (
+                    <>
+                      <button 
+                        className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (selectedRequest) handleReject(selectedRequest.id);
+                        }}
+                        disabled={isProcessing}
+                      >
+                        {isProcessing ? 'Processing...' : 'Reject'}
+                      </button>
+                      <button 
+                        className="px-4 py-2 bg-blue-900 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (selectedRequest) handleApprove(selectedRequest.id);
+                        }}
+                        disabled={isProcessing}
+                      >
+                        {isProcessing ? 'Processing...' : 'Approve'}
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           </div>
