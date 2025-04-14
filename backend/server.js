@@ -350,7 +350,8 @@ app.post('/api/auth/lister/register', async (req, res) => {
       username: lister.email,
       fullName: lister.fullName,
       businessName: lister.businessName,
-      listerId: lister.id  // Include lister ID in response
+      listerId: lister.id,  // Include lister ID in response
+      role: 'lister'
     });
   } catch (error) {
     console.error('Error registering lister:', error);
@@ -460,20 +461,24 @@ app.post('/api/parking-spaces', async (req, res) => {
   }
 });
 
-// Update a parking space
-app.put('/api/parking-spaces/:id', authenticateToken, async (req, res) => {
+/// Update a parking space - No auth required
+app.put('/api/parking-spaces/:id', async (req, res) => {
   try {
-    const parkingSpace = await ParkingSpace.findByPk(req.params.id);
+    const { id } = req.params;
+    console.log(`Update attempt for parking space ID: ${id}`);
+    
+    const parkingSpace = await ParkingSpace.findByPk(id);
     if (!parkingSpace) {
       return res.status(404).json({ error: 'Parking space not found' });
     }
     
-    // Check if the authenticated user is the lister who owns this space or an admin
-    if (req.user.id !== parkingSpace.listerId && req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Unauthorized to update this parking space' });
-    }
+    console.log('Found parking space:', { id: parkingSpace.id, listerId: parkingSpace.listerId });
+    console.log('Updating parking space with data:', req.body);
     
+    // Update the parking space - no auth check
     await parkingSpace.update(req.body);
+    
+    console.log('Update successful');
     res.json(parkingSpace);
   } catch (error) {
     console.error('Error updating parking space:', error);
@@ -481,20 +486,24 @@ app.put('/api/parking-spaces/:id', authenticateToken, async (req, res) => {
   }
 });
 
-// Delete a parking space
-app.delete('/api/parking-spaces/:id', authenticateToken, async (req, res) => {
+// Delete a parking space - No auth required
+app.delete('/api/parking-spaces/:id', async (req, res) => {
   try {
-    const parkingSpace = await ParkingSpace.findByPk(req.params.id);
+    const { id } = req.params;
+    console.log(`Delete attempt for parking space ID: ${id}`);
+    
+    const parkingSpace = await ParkingSpace.findByPk(id);
     if (!parkingSpace) {
       return res.status(404).json({ error: 'Parking space not found' });
     }
     
-    // Check if the authenticated user is the lister who owns this space or an admin
-    if (req.user.id !== parkingSpace.listerId && req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Unauthorized to delete this parking space' });
-    }
+    console.log('Found parking space:', { id: parkingSpace.id, listerId: parkingSpace.listerId });
+    console.log('Deleting parking space');
     
+    // Delete the parking space - no auth check
     await parkingSpace.destroy();
+    
+    console.log('Delete successful');
     res.json({ message: 'Parking space successfully deleted' });
   } catch (error) {
     console.error('Error deleting parking space:', error);
