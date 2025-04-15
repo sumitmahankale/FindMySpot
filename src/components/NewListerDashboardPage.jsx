@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Car, MessageSquare, Map, Layout, ChevronRight, Bell, LogOut, HelpCircle, Edit, Trash2, AlertTriangle } from 'lucide-react';
+import { Car, MessageSquare, Map, Layout, ChevronRight, Bell, LogOut, HelpCircle, Edit, Trash2, AlertTriangle, Navigation, MapPin } from 'lucide-react';
 import ListerDashboard from './ListerDashboard';
 import { useNavigate } from 'react-router-dom';
-
+import Swal from 'sweetalert2'; // 💡 Import SweetAlert2
+import 'sweetalert2/dist/sweetalert2.min.css'; // Optional for styling
 // Custom CSS variables
 const styles = {
   darkBlue: '#1a2b47',
@@ -14,6 +15,7 @@ const styles = {
   textDark: '#333333',
   background: '#f9f9f9',
 };
+
 
 const ListerMainDashboard = () => {
   const [activeTab, setActiveTab] = useState('parking');
@@ -131,23 +133,37 @@ const ListerMainDashboard = () => {
       fetchParkingSpaces();
     }
   }, [activeTab]);
-  
-  // Fetch parking spaces when switching to the spaces tab
-  useEffect(() => {
-    if (activeTab === 'spaces') {
-      fetchParkingSpaces();
-    }
-  }, [activeTab]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('username');
-    localStorage.removeItem('fullName');
-    localStorage.removeItem('businessName');
-    localStorage.removeItem('listerId');
-    navigate('/listerlogin');
+  // Function to handle opening location in Google Maps
+  const openLocationInGoogleMaps = (lat, lng, ) => {
+    const url = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+    window.open(url, '_blank');
   };
 
+  // Function to open location in Leaflet Map
+  const handleLogoutPopup = () => {
+    localStorage.removeItem('token');
+      localStorage.removeItem('username');
+      localStorage.removeItem('fullName');
+      localStorage.removeItem('businessName');
+      localStorage.removeItem('listerId');
+      Swal.fire({
+        title: 'Are you sure?',
+        text: "You will be logged out of your session.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#1a2b47',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, logout!',
+        background: '#f9fafb'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          navigate('/listerlogin');
+        }
+      });
+    };
+
+ 
   return (
     <div className={`flex h-screen overflow-hidden ${pageLoaded ? 'opacity-100' : 'opacity-0'}`} 
          style={{ 
@@ -249,7 +265,7 @@ const ListerMainDashboard = () => {
                   <p className="text-xs" style={{ color: styles.lightOrange }}>{currentUser.email}</p>
                 </div>
               </div>
-              <button onClick={handleLogout} style={{ color: styles.lightOrange }}>
+              <button onClick={handleLogoutPopup} style={{ color: styles.lightOrange }}>
                 <LogOut className="h-5 w-5" />
               </button>
             </div>
@@ -411,13 +427,7 @@ const ListerMainDashboard = () => {
                       <p className="text-sm text-gray-500">
                         Showing {parkingSpaces.length} parking space{parkingSpaces.length !== 1 ? 's' : ''}
                       </p>
-                      <button 
-                        className="px-4 py-2 rounded-md text-white flex items-center"
-                        style={{ backgroundColor: styles.orange }}
-                        onClick={() => setActiveTab('parking')}
-                      >
-                        <span className="mr-2">+</span> Add New Space
-                      </button>
+                     
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -473,21 +483,17 @@ const ListerMainDashboard = () => {
                               </div>
                             </div>
                             
+                            {/* REPLACED THE EDIT AND REMOVE BUTTONS WITH VIEW LOCATION AND VIEW LEAFLET MAP BUTTONS */}
                             <div className="border-t pt-3 flex justify-between">
                               <button 
-                                className="px-3 py-1 rounded flex items-center text-sm"
+                                className="px-30 py-1 rounded flex items-center text-sm"
                                 style={{ color: styles.mediumBlue }}
+                                onClick={() => openLocationInGoogleMaps(space.lat, space.lng, space.name)}
                               >
-                                <Edit size={16} className="mr-1" />
-                                Edit
+                                <Navigation size={16} className="mr-1" />
+                                View Location
                               </button>
-                              <button 
-                                className="px-3 py-1 rounded flex items-center text-sm"
-                                style={{ color: '#EF4444' }}
-                              >
-                                <Trash2 size={16} className="mr-1" />
-                                Remove
-                              </button>
+                             
                             </div>
                           </div>
                         </div>
