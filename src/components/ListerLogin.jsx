@@ -70,6 +70,10 @@ const ListerLoginPage = () => {
       localStorage.setItem('businessName', data.businessName || '');
       localStorage.setItem('role', 'lister');
       localStorage.setItem('token', data.token);
+      localStorage.setItem('listerId', data.listerId);
+      localStorage.setItem('lastLogin', new Date().toISOString());
+      
+      console.log('Login successful! Stored listerId:', data.listerId);
       
       // Show success alert and redirect on close
       showSuccessAlert('Logged in successfully!');
@@ -125,9 +129,9 @@ const ListerLoginPage = () => {
               />
               <br></br>
               <div className="forgot-password">
-              <a href="#" onClick={() => navigate('/listerforgetpass')} className="hover-orange">
-                Forgot Password?
-              </a>
+                <a href="#" onClick={() => navigate('/listerforgetpass')} className="hover-orange">
+                  Forgot Password?
+                </a>
               </div>
             </div>
 
@@ -144,14 +148,12 @@ const ListerLoginPage = () => {
             </button>
           </form>
 
-
-                    <div className="register-option animate-fade-in-delay">
-                      <p>Don't have an account? <Link to="/listersignup">Sign up</Link></p>
-                      <Link to="/" className="back-link">
-                                                ← Home
-                                              </Link>
-                    </div>
-          
+          <div className="register-option animate-fade-in-delay">
+            <p>Don't have an account? <Link to="/listersignup">Sign up</Link></p>
+            <Link to="/" className="back-link">
+              ← Home
+            </Link>
+          </div>
         </div>
 
         <div className="login-image-container animate-slide-right">
@@ -161,7 +163,6 @@ const ListerLoginPage = () => {
             className="login-image"
           />
         </div>
-        
       </div>
     </div>
   );

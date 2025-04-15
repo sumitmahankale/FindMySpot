@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Car, MessageSquare, Map, Layout, ChevronRight, Bell, LogOut, HelpCircle } from 'lucide-react';
+import { Car, MessageSquare, Map, Layout, ChevronRight, Bell, LogOut, HelpCircle, Edit, Trash2, AlertTriangle } from 'lucide-react';
 import ListerDashboard from './ListerDashboard';
 import { useNavigate } from 'react-router-dom';
 
@@ -22,10 +22,13 @@ const ListerMainDashboard = () => {
     fullName: '',
     businessName: '',
     initials: '',
-    email: ''
+    email: '',
+    listerId: null
   });
   const [lastLogin, setLastLogin] = useState('Today, 10:30 AM');
- 
+  const [parkingSpaces, setParkingSpaces] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
   
   // Add page transition effect
   const [pageLoaded, setPageLoaded] = useState(false);
@@ -41,6 +44,7 @@ const ListerMainDashboard = () => {
     const businessName = localStorage.getItem('businessName');
     const username = localStorage.getItem('username'); // Email/username
     const lastLoginTime = localStorage.getItem('lastLogin');
+    const listerId = localStorage.getItem('listerId');
     
     if (!token) {
       navigate('/listerlogin');
@@ -56,7 +60,8 @@ const ListerMainDashboard = () => {
       fullName: fullName || 'User',
       businessName: businessName || 'Parking Provider',
       initials: nameInitials,
-      email: username || ''
+      email: username || '',
+      listerId: listerId
     });
     
     // Format and set last login time
@@ -78,18 +83,68 @@ const ListerMainDashboard = () => {
     // Update current login time in localStorage
     localStorage.setItem('lastLogin', new Date().toISOString());
     
-    // Set loading to false after a delay to simulate data fetch
-    setTimeout(() => {
-     
-    }, 1000);
-    
   }, [navigate]);
+
+  // New function to fetch parking spaces
+  const fetchParkingSpaces = async () => {
+    const listerId = localStorage.getItem('listerId');
+    const token = localStorage.getItem('token');
+    
+    if (!listerId || !token) {
+      setError("User credentials not found. Please log in again.");
+      return;
+    }
+    
+    console.log(`Attempting to fetch parking spaces for lister ID: ${listerId}`);
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const response = await fetch(`http://localhost:5000/api/lister/${listerId}/parking-spaces`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to fetch parking spaces: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log(`Successfully fetched ${data.length} parking spaces:`, data);
+      setParkingSpaces(data);
+    } catch (err) {
+      console.error("Error fetching parking spaces:", err);
+      setError(err.message || "Failed to load your parking spaces");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Make sure to call this function when the component mounts and when the tab changes
+  useEffect(() => {
+    if (activeTab === 'spaces') {
+      fetchParkingSpaces();
+    }
+  }, [activeTab]);
+  
+  // Fetch parking spaces when switching to the spaces tab
+  useEffect(() => {
+    if (activeTab === 'spaces') {
+      fetchParkingSpaces();
+    }
+  }, [activeTab]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('username');
     localStorage.removeItem('fullName');
     localStorage.removeItem('businessName');
+    localStorage.removeItem('listerId');
     navigate('/listerlogin');
   };
 
@@ -301,38 +356,145 @@ const ListerMainDashboard = () => {
             ) : activeTab === 'spaces' ? (
               <div className="bg-white rounded-lg shadow-md p-6">
                 <h2 className="text-2xl font-bold mb-4" style={{ color: styles.darkBlue }}>
-                  My Space Details
+                  My Parking Spaces
                 </h2>
                 
-                {/* Modified content - "We are working on your space details" message */}
-                <div className="flex flex-col items-center justify-center py-16 text-center">
-                  <div className="w-24 h-24 mb-6 rounded-full flex items-center justify-center"
-                       style={{ backgroundColor: styles.background }}>
-                    <Map size={48} style={{ color: styles.orange }} />
-                  </div>
-                  <h3 className="text-xl font-semibold mb-3" style={{ color: styles.mediumBlue }}>
-                    We are working on your space details
-                  </h3>
-                  <p className="text-gray-500 max-w-md mb-6">
-                    Our team is currently processing your parking space information.
-                    This should be available soon.
-                  </p>
-                  <div className="w-full max-w-md h-2 rounded-full overflow-hidden bg-gray-200">
-                    <div className="h-2 rounded-full" 
+                {/* Render parking spaces data */}
+                {isLoading ? (
+                  <div className="flex flex-col items-center justify-center py-16">
+                    <div className="w-16 h-16 border-4 border-t-4 rounded-full animate-spin mb-4"
                          style={{ 
-                           width: '60%', 
-                           backgroundColor: styles.orange,
-                           animation: 'progress 1.5s ease-in-out infinite'
+                           borderColor: `${styles.background}`, 
+                           borderTopColor: `${styles.orange}`
                          }}></div>
+                    <p style={{ color: styles.mediumBlue }}>Loading your parking spaces...</p>
                   </div>
-                  <style jsx>{`
-                    @keyframes progress {
-                      0% { width: 40%; }
-                      50% { width: 80%; }
-                      100% { width: 40%; }
-                    }
-                  `}</style>
-                </div>
+                ) : error ? (
+                  <div className="flex flex-col items-center justify-center py-16 text-center">
+                    <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4"
+                         style={{ backgroundColor: '#FEE2E2' }}>
+                      <AlertTriangle size={32} style={{ color: '#EF4444' }} />
+                    </div>
+                    <h3 className="text-xl font-semibold mb-2" style={{ color: '#EF4444' }}>
+                      Error Loading Data
+                    </h3>
+                    <p className="text-gray-600 max-w-md mb-4">{error}</p>
+                    <button 
+                      onClick={fetchParkingSpaces}
+                      className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">
+                      Try Again
+                    </button>
+                  </div>
+                ) : parkingSpaces.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-16 text-center">
+                    <div className="w-24 h-24 mb-6 rounded-full flex items-center justify-center"
+                         style={{ backgroundColor: styles.background }}>
+                      <Map size={48} style={{ color: styles.orange }} />
+                    </div>
+                    <h3 className="text-xl font-semibold mb-3" style={{ color: styles.mediumBlue }}>
+                      No Parking Spaces Found
+                    </h3>
+                    <p className="text-gray-500 max-w-md mb-6">
+                      You haven't added any parking spaces yet or your parking space requests are still pending approval.
+                    </p>
+                    <button 
+                      className="px-6 py-3 rounded-lg text-white font-bold transition-all duration-200"
+                      style={{ backgroundColor: styles.orange }}
+                      onClick={() => setActiveTab('parking')}
+                    >
+                      Add New Parking Space
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    <div className="flex justify-between items-center">
+                      <p className="text-sm text-gray-500">
+                        Showing {parkingSpaces.length} parking space{parkingSpaces.length !== 1 ? 's' : ''}
+                      </p>
+                      <button 
+                        className="px-4 py-2 rounded-md text-white flex items-center"
+                        style={{ backgroundColor: styles.orange }}
+                        onClick={() => setActiveTab('parking')}
+                      >
+                        <span className="mr-2">+</span> Add New Space
+                      </button>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {parkingSpaces.map(space => (
+                        <div 
+                          key={space.id} 
+                          className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100 hover:shadow-lg transition-shadow"
+                        >
+                          <div className="h-40 bg-gray-200 relative">
+                            {/* Here you could add an image if available */}
+                            <div 
+                              className="absolute inset-0 flex items-center justify-center"
+                              style={{ backgroundColor: styles.lightBlue }}
+                            >
+                              <Car size={48} style={{ color: styles.textLight }} />
+                            </div>
+                            <div 
+                              className="absolute bottom-0 left-0 right-0 p-3"
+                              style={{ 
+                                background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)',
+                                color: styles.textLight
+                              }}
+                            >
+                              <h3 className="font-bold text-lg truncate">{space.name}</h3>
+                              <p className="text-sm truncate">{space.location}</p>
+                            </div>
+                          </div>
+                          
+                          <div className="p-4">
+                            <div className="flex justify-between items-center mb-3">
+                              <span 
+                                className="px-3 py-1 rounded-full text-xs font-medium"
+                                style={{ 
+                                  backgroundColor: space.isActive ? '#DCF5DC' : '#FEE2E2',
+                                  color: space.isActive ? '#166534' : '#B91C1C'
+                                }}
+                              >
+                                {space.isActive ? 'Active' : 'Inactive'}
+                              </span>
+                              <span className="font-bold" style={{ color: styles.orange }}>
+                                {space.price}
+                              </span>
+                            </div>
+                            
+                            <div className="space-y-2 mb-4">
+                              <div className="flex items-start">
+                                <span className="text-gray-500 text-sm w-24">Availability:</span>
+                                <span className="text-gray-700 text-sm flex-1">{space.availability}</span>
+                              </div>
+                              <div className="flex items-start">
+                                <span className="text-gray-500 text-sm w-24">Contact:</span>
+                                <span className="text-gray-700 text-sm flex-1">{space.contact}</span>
+                              </div>
+                            </div>
+                            
+                            <div className="border-t pt-3 flex justify-between">
+                              <button 
+                                className="px-3 py-1 rounded flex items-center text-sm"
+                                style={{ color: styles.mediumBlue }}
+                              >
+                                <Edit size={16} className="mr-1" />
+                                Edit
+                              </button>
+                              <button 
+                                className="px-3 py-1 rounded flex items-center text-sm"
+                                style={{ color: '#EF4444' }}
+                              >
+                                <Trash2 size={16} className="mr-1" />
+                                Remove
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="bg-white rounded-lg shadow-md p-6">
