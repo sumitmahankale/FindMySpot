@@ -5,13 +5,13 @@ import {
 } from 'lucide-react';
 import Swal from 'sweetalert2';
 
-// Custom CSS variables (matching the existing style palette)
+// Updated color palette to match AdminRequestsPage
 const styles = {
-  darkBlue: '#1a2b47',
-  mediumBlue: '#2d4263',
-  lightBlue: '#3e5f8a',
-  orange: '#ff7d00',
-  lightOrange: '#ff9a40',
+  darkBlue: '#0c2d6b',  // Darker blue for headings
+  mediumBlue: '#1e40af', // Medium blue for subheadings
+  lightBlue: '#3b82f6',  // Light blue for highlights
+  primaryBlue: '#1e3a8a', // Primary blue (blue-900)
+  accentBlue: '#2563eb',  // Accent blue for interactive elements
   textLight: '#f5f5f5',
   textDark: '#333333',
   background: '#f9f9f9',
@@ -114,7 +114,7 @@ const AdminQueryManagement = ({ activeTab }) => {
         title: 'Response Required',
         text: 'Please provide a response before marking as resolved or closed',
         icon: 'warning',
-        confirmButtonColor: styles.orange
+        confirmButtonColor: styles.accentBlue
       });
       return;
     }
@@ -144,7 +144,7 @@ const AdminQueryManagement = ({ activeTab }) => {
         title: 'Success!',
         text: `Query has been updated successfully`,
         icon: 'success',
-        confirmButtonColor: styles.orange
+        confirmButtonColor: styles.accentBlue
       });
       
       // Update the queries state with the updated query
@@ -161,7 +161,7 @@ const AdminQueryManagement = ({ activeTab }) => {
         title: 'Error',
         text: err.message || 'Failed to update query. Please try again.',
         icon: 'error',
-        confirmButtonColor: styles.orange
+        confirmButtonColor: styles.accentBlue
       });
     } finally {
       setIsSubmitting(false);
@@ -205,7 +205,7 @@ const AdminQueryManagement = ({ activeTab }) => {
     <div className="space-y-4">
       <div className="mb-6">
         <div className="flex items-center mb-4 justify-between">
-          <h3 className="text-lg font-semibold" style={{ color: styles.mediumBlue }}>
+          <h3 className="text-lg font-semibold" style={{ color: styles.primaryBlue }}>
             All Support Queries
           </h3>
           
@@ -214,7 +214,7 @@ const AdminQueryManagement = ({ activeTab }) => {
             className="p-2 rounded-full hover:bg-gray-100 transition-colors"
             title="Refresh queries"
           >
-            <RefreshCw size={18} style={{ color: styles.mediumBlue }} />
+            <RefreshCw size={18} style={{ color: styles.accentBlue }} />
           </button>
         </div>
         
@@ -230,7 +230,7 @@ const AdminQueryManagement = ({ activeTab }) => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
-              style={{ focusRing: `2px ${styles.orange}` }}
+              style={{ focusRing: `2px ${styles.accentBlue}` }}
             />
           </div>
           
@@ -244,7 +244,7 @@ const AdminQueryManagement = ({ activeTab }) => {
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 appearance-none bg-white"
-                style={{ minWidth: '200px', focusRing: `2px ${styles.orange}` }}
+                style={{ minWidth: '200px', focusRing: `2px ${styles.accentBlue}` }}
               >
                 <option value="all">All Status ({getQueryCountByStatus('all')})</option>
                 <option value="pending">Pending ({getQueryCountByStatus('pending')})</option>
@@ -263,7 +263,7 @@ const AdminQueryManagement = ({ activeTab }) => {
       {isLoading ? (
         <div className="flex justify-center py-12">
           <div className="w-12 h-12 border-t-4 border-b-4 rounded-full animate-spin" 
-               style={{ borderColor: styles.orange }}></div>
+               style={{ borderColor: styles.accentBlue }}></div>
         </div>
       ) : error ? (
         <div className="text-center py-8">
@@ -271,14 +271,15 @@ const AdminQueryManagement = ({ activeTab }) => {
           <p className="text-red-500 mb-4">{error}</p>
           <button 
             onClick={fetchAllQueries}
-            className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+            className="px-4 py-2 text-white rounded-md hover:bg-blue-700 transition-colors"
+            style={{ backgroundColor: styles.accentBlue }}
           >
             Try Again
           </button>
         </div>
       ) : filteredQueries.length === 0 ? (
         <div className="text-center py-12 border border-dashed border-gray-300 rounded-lg">
-          <FileText size={48} className="mx-auto mb-4" style={{ color: styles.lightBlue }} />
+          <FileText size={48} className="mx-auto mb-4" style={{ color: styles.accentBlue }} />
           <h3 className="text-lg font-medium mb-2" style={{ color: styles.textDark }}>No Queries Found</h3>
           <p className="text-gray-500">
             {searchTerm || statusFilter !== 'all' ? 
@@ -289,7 +290,7 @@ const AdminQueryManagement = ({ activeTab }) => {
             <button 
               onClick={() => { setSearchTerm(''); setStatusFilter('all'); }}
               className="mt-4 px-4 py-2 rounded-md text-white font-medium"
-              style={{ backgroundColor: styles.orange }}
+              style={{ backgroundColor: styles.accentBlue }}
             >
               Clear Filters
             </button>
@@ -334,7 +335,7 @@ const AdminQueryManagement = ({ activeTab }) => {
                       <span>Submitted: {formatDate(query.createdAt)}</span>
                     </div>
                     <div className="flex items-center text-sm">
-                      <span className="font-medium" style={{ color: styles.darkBlue }}>
+                      <span className="font-medium" style={{ color: styles.primaryBlue }}>
                         {query.Lister?.businessName || 'Unknown Business'}
                       </span>
                       <span className="mx-2">•</span>
@@ -354,16 +355,16 @@ const AdminQueryManagement = ({ activeTab }) => {
                         e.stopPropagation();
                         handleViewQuery(query);
                       }}
-                      className="px-3 py-1 text-xs font-medium rounded-lg transition-all duration-200"
-                      style={{ backgroundColor: styles.orange, color: '#fff' }}
+                      className="px-3 py-1 text-xs font-medium rounded-lg transition-all duration-200 text-white"
+                      style={{ backgroundColor: styles.primaryBlue }}
                     >
                       <MessageSquare size={14} className="inline mr-1" />
                       Respond
                     </button>
                     {expandedQueryId === query.id ? (
-                      <ChevronDown size={18} style={{ color: styles.mediumBlue }} />
+                      <ChevronDown size={18} style={{ color: styles.accentBlue }} />
                     ) : (
-                      <ChevronRight size={18} style={{ color: styles.mediumBlue }} />
+                      <ChevronRight size={18} style={{ color: styles.accentBlue }} />
                     )}
                   </div>
                 </div>
@@ -372,13 +373,13 @@ const AdminQueryManagement = ({ activeTab }) => {
               {expandedQueryId === query.id && (
                 <div className="p-4 border-t bg-gray-50">
                   <div className="mb-3">
-                    <div className="text-sm font-medium mb-1" style={{ color: styles.mediumBlue }}>Description:</div>
+                    <div className="text-sm font-medium mb-1" style={{ color: styles.primaryBlue }}>Description:</div>
                     <p className="text-sm text-gray-700 whitespace-pre-wrap">{query.description}</p>
                   </div>
                   
                   {query.adminResponse && (
                     <div className="mb-3">
-                      <div className="text-sm font-medium mb-1" style={{ color: styles.orange }}>Admin Response:</div>
+                      <div className="text-sm font-medium mb-1" style={{ color: styles.accentBlue }}>Admin Response:</div>
                       <p className="text-sm bg-white p-3 rounded border whitespace-pre-wrap">{query.adminResponse}</p>
                     </div>
                   )}
@@ -390,7 +391,7 @@ const AdminQueryManagement = ({ activeTab }) => {
                         handleViewQuery(query);
                       }}
                       className="text-sm font-medium"
-                      style={{ color: styles.orange }}
+                      style={{ color: styles.accentBlue }}
                     >
                       View & Respond
                     </button>
@@ -413,7 +414,7 @@ const AdminQueryManagement = ({ activeTab }) => {
           <button 
             onClick={() => setSelectedQuery(null)}
             className="flex items-center text-sm font-medium"
-            style={{ color: styles.mediumBlue }}
+            style={{ color: styles.primaryBlue }}
           >
             <ChevronLeft size={18} className="mr-1" />
             Back to List
@@ -427,7 +428,7 @@ const AdminQueryManagement = ({ activeTab }) => {
           <div className="p-6 border-b">
             <div className="flex justify-between items-start">
               <div>
-                <h2 className="text-xl font-bold mb-1" style={{ color: styles.textDark }}>
+                <h2 className="text-xl font-bold mb-1" style={{ color: styles.primaryBlue }}>
                   {selectedQuery.subject}
                 </h2>
                 <div className="flex items-center text-sm text-gray-500">
@@ -452,7 +453,7 @@ const AdminQueryManagement = ({ activeTab }) => {
           
           {/* Lister information */}
           <div className="p-4 bg-gray-50 border-b">
-            <h3 className="text-sm font-medium mb-2" style={{ color: styles.mediumBlue }}>Lister Information:</h3>
+            <h3 className="text-sm font-medium mb-2" style={{ color: styles.primaryBlue }}>Lister Information:</h3>
             <div className="flex flex-wrap gap-4">
               <div>
                 <span className="text-xs text-gray-500">Business Name</span>
@@ -484,7 +485,7 @@ const AdminQueryManagement = ({ activeTab }) => {
           {/* Query content */}
           <div className="p-6">
             <div className="mb-6">
-              <h3 className="text-sm font-medium mb-2" style={{ color: styles.mediumBlue }}>Query Details:</h3>
+              <h3 className="text-sm font-medium mb-2" style={{ color: styles.primaryBlue }}>Query Details:</h3>
               <div className="p-4 bg-gray-50 rounded-lg border whitespace-pre-wrap">
                 {selectedQuery.description}
               </div>
@@ -492,7 +493,7 @@ const AdminQueryManagement = ({ activeTab }) => {
             
             {selectedQuery.attachmentUrl && (
               <div className="mb-6">
-                <h3 className="text-sm font-medium mb-2" style={{ color: styles.mediumBlue }}>Attachment:</h3>
+                <h3 className="text-sm font-medium mb-2" style={{ color: styles.primaryBlue }}>Attachment:</h3>
                 <div className="flex items-center p-3 bg-gray-50 rounded-lg border">
                   <Paperclip size={16} className="mr-2 text-gray-500" />
                   <a 
@@ -510,12 +511,12 @@ const AdminQueryManagement = ({ activeTab }) => {
             {/* Response form */}
             <form onSubmit={handleUpdateQueryStatus}>
               <div className="mb-4">
-                <h3 className="text-sm font-medium mb-2" style={{ color: styles.orange }}>Admin Response:</h3>
+                <h3 className="text-sm font-medium mb-2" style={{ color: styles.accentBlue }}>Admin Response:</h3>
                 <textarea 
                   value={responseText}
                   onChange={(e) => setResponseText(e.target.value)}
                   className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 h-32"
-                  style={{ focusRing: `2px ${styles.orange}` }}
+                  style={{ focusRing: `2px ${styles.accentBlue}` }}
                   placeholder="Type your response to the lister here..."
                 ></textarea>
               </div>
@@ -523,7 +524,7 @@ const AdminQueryManagement = ({ activeTab }) => {
               <div className="border-t pt-4">
                 <div className="flex flex-wrap justify-between items-center">
                   <div className="space-y-2 sm:space-y-0 sm:space-x-2 flex flex-wrap">
-                    <h3 className="text-sm font-medium w-full sm:w-auto flex items-center" style={{ color: styles.mediumBlue }}>
+                    <h3 className="text-sm font-medium w-full sm:w-auto flex items-center" style={{ color: styles.primaryBlue }}>
                       Update Status:
                     </h3>
                     {Object.keys(statusColors).map(status => (
@@ -550,7 +551,7 @@ const AdminQueryManagement = ({ activeTab }) => {
                     type="submit"
                     disabled={isSubmitting}
                     className="mt-4 sm:mt-0 w-full sm:w-auto px-6 py-2 text-white font-medium rounded-lg disabled:opacity-70"
-                    style={{ backgroundColor: styles.orange }}
+                    style={{ backgroundColor: styles.primaryBlue }}
                   >
                     {isSubmitting ? (
                       <>
@@ -572,19 +573,17 @@ const AdminQueryManagement = ({ activeTab }) => {
 
   // Main render
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 animate-fade-in">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold" style={{ color: styles.darkBlue }}>
-          Query Management
-        </h2>
-        <div className="flex items-center">
-          <span className="px-3 py-1 bg-gray-100 text-gray-600 text-sm rounded-full">
-            {queries.length} Total Queries
-          </span>
+    <div className="w-full max-w-7xl mx-auto p-4">
+      <div className="bg-white shadow-xl rounded-xl overflow-hidden">
+        <div className="bg-blue-900 text-white p-6">
+          <h2 className="text-2xl font-bold">Query Management</h2>
+          <p className="text-blue-100">Review and respond to support queries</p>
+        </div>
+        
+        <div className="p-6">
+          {selectedQuery ? renderQueryDetailView() : renderQueryList()}
         </div>
       </div>
-      
-      {selectedQuery ? renderQueryDetailView() : renderQueryList()}
     </div>
   );
 };
