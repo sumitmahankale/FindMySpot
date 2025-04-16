@@ -4,6 +4,7 @@ import ListerDashboard from './ListerDashboard';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2'; // 💡 Import SweetAlert2
 import 'sweetalert2/dist/sweetalert2.min.css'; // Optional for styling
+import ListerQueryComponent from './ListerQuery';
 // Custom CSS variables
 const styles = {
   darkBlue: '#1a2b47',
@@ -312,63 +313,7 @@ const ListerMainDashboard = () => {
             {activeTab === 'parking' ? (
               <ListerDashboard />
             ) : activeTab === 'query' ? (
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h2 className="text-2xl font-bold mb-4" style={{ color: styles.darkBlue }}>Raise a Query</h2>
-                
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1" style={{ color: styles.textDark }}>
-                      Subject <span style={{ color: styles.orange }}>*</span>
-                    </label>
-                    <input 
-                      type="text" 
-                      className="w-full rounded-md border-gray-300 shadow-sm p-2 border"
-                      placeholder="Brief description of your issue"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium mb-1" style={{ color: styles.textDark }}>
-                      Category <span style={{ color: styles.orange }}>*</span>
-                    </label>
-                    <select className="w-full rounded-md border-gray-300 shadow-sm p-2 border">
-                      <option>Technical Issue</option>
-                      <option>Billing Question</option>
-                      <option>Feature Request</option>
-                      <option>Other</option>
-                    </select>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium mb-1" style={{ color: styles.textDark }}>
-                      Description <span style={{ color: styles.orange }}>*</span>
-                    </label>
-                    <textarea 
-                      className="w-full rounded-md border-gray-300 shadow-sm p-2 border h-40"
-                      placeholder="Please provide details about your query..."
-                    ></textarea>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium mb-1" style={{ color: styles.textDark }}>
-                      Attachments
-                    </label>
-                    <div className="border border-dashed border-gray-300 rounded-md p-6 text-center">
-                      <p className="text-sm text-gray-500">Drag & drop files here, or click to browse</p>
-                      <input type="file" className="hidden" />
-                    </div>
-                  </div>
-                  
-                  <div className="pt-2">
-                    <button 
-                      className="px-6 py-3 rounded-lg text-white font-bold transition-all duration-200"
-                      style={{ backgroundColor: styles.orange }}
-                    >
-                      Submit Query
-                    </button>
-                  </div>
-                </div>
-              </div>
+              <ListerQueryComponent activeTab={activeTab} />
             ) : activeTab === 'spaces' ? (
               <div className="bg-white rounded-lg shadow-md p-6">
                 <h2 className="text-2xl font-bold mb-4" style={{ color: styles.darkBlue }}>

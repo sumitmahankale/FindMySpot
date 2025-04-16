@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Map, Layout, ChevronRight, LogOut, Settings } from 'lucide-react';
+import { Users, Map, Layout, ChevronRight, LogOut, Settings, MessageSquare } from 'lucide-react';
 import AdminRequestsPage from './AdminRequestPage';
 import ListerDashboard from './AdminListerDashboard';
+import AdminQueryManagement from './AdminQueryManagement';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2'; // 💡 Import SweetAlert2
 import 'sweetalert2/dist/sweetalert2.min.css'; // Optional for styling
@@ -72,6 +73,14 @@ const AdminDashboard = () => {
           </button>
 
           <button
+            className={`flex items-center w-full px-6 py-4 text-left transition-all duration-200 ${activeTab === 'queries' ? 'bg-blue-800 border-l-4 border-white' : 'hover:bg-blue-800 hover:border-l-4 hover:border-blue-400'}`}
+            onClick={() => setActiveTab('queries')}
+          >
+            <MessageSquare className={`${isCollapsed ? 'mx-auto' : 'mr-3'} h-5 w-5`} />
+            {!isCollapsed && <span className="transition-opacity duration-200">Lister Queries</span>}
+          </button>
+
+          <button
             className={`flex items-center w-full px-6 py-4 text-left transition-all duration-200 ${activeTab === 'settings' ? 'bg-blue-800 border-l-4 border-white' : 'hover:bg-blue-800 hover:border-l-4 hover:border-blue-400'}`}
             onClick={() => setActiveTab('settings')}
           >
@@ -118,6 +127,8 @@ const AdminDashboard = () => {
               <AdminRequestsPage />
             ) : activeTab === 'spaces' ? (
               <ListerDashboard />
+            ) : activeTab === 'queries' ? (
+              <AdminQueryManagement />
             ) : (
               <div className="bg-white rounded-lg shadow-md p-6">
                 <h2 className="text-2xl font-bold mb-4">Settings</h2>

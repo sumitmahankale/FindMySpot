@@ -18,6 +18,8 @@ import TermsAndConditions from './components/UserTerms.jsx';
 import ListerTermsAndConditions from './components/ListerTermsAndConditions.jsx';
 import AdminLogin from './components/AdminLogin.jsx'
 import AdminDashboard from './components/AdminDashboard.jsx';
+import ListerQueryComponent from './components/ListerQuery.jsx';
+import AdminQueryManagement from './components/AdminQueryManagement.jsx';
 const router=createBrowserRouter([
   {
     path : "/Login",
@@ -91,7 +93,14 @@ const router=createBrowserRouter([
     path : "adminlogin",
     element : <AdminLogin/>,
   },
-  
+  {
+    path : "listerquery",
+    element : <ListerQueryComponent/>,
+  },
+  {
+    path : "adminquery",
+    element : <AdminQueryManagement/>,
+  },
 ]);
 function App() {
   return (
