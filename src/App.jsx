@@ -20,6 +20,7 @@ import AdminLogin from './components/AdminLogin.jsx'
 import AdminDashboard from './components/AdminDashboard.jsx';
 import ListerQueryComponent from './components/ListerQuery.jsx';
 import AdminQueryManagement from './components/AdminQueryManagement.jsx';
+
 const router=createBrowserRouter([
   {
     path : "/Login",
@@ -105,8 +106,11 @@ const router=createBrowserRouter([
 function App() {
   return (
     <div className="App">
+      
       <RouterProvider router={router} />
+  
     </div>
+    
   );
 }
 
