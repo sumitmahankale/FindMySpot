@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom'
-
+import './CSS/LandingPage.css';
+import { useRef } from 'react';
 const LandingPage = () => {
   const [isAnimated, setIsAnimated] = useState(false);
   const [headingText, setHeadingText] = useState('');
@@ -10,6 +11,122 @@ const LandingPage = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   
+
+  const [visibleSections, setVisibleSections] = useState({
+    features: false,
+    howItWorks: false,
+    cta: false,
+    lister: false
+  });
+  
+  const featuresRef = useRef(null);
+  const howItWorksRef = useRef(null);
+  const ctaRef = useRef(null);
+  const listerRef = useRef(null);
+  
+  // Function to handle "How It Works" button click
+  const handleHowItWorksClick = () => {
+    // Reset animation state
+    setVisibleSections(prev => ({ ...prev, howItWorks: false }));
+    
+    // Scroll to the section
+    howItWorksRef.current.scrollIntoView({ behavior: 'smooth' });
+    
+    // Delay setting the animation state to allow for reset
+    setTimeout(() => {
+      setVisibleSections(prev => ({ ...prev, howItWorks: true }));
+    }, 100);
+  };
+  
+  // Handle heading animation
+  useEffect(() => {
+    setIsAnimated(true);
+    
+    // Letter-by-letter animation for the heading
+    const animateHeading = () => {
+      if (isPaused) return;
+      
+      if (currentIndex <= fullHeading.length) {
+        if (currentIndex < mainText.length) {
+          // Animating the main text portion
+          setHeadingText(mainText.substring(0, currentIndex));
+        } else {
+          // Animating the highlighted text portion
+          const highlightedIndex = currentIndex - mainText.length;
+          // Use display: inline-block to ensure text stays on same line
+          setHeadingText(
+            mainText + 
+            `<span style="color: #FF7A00; display: inline;">${highlightedText.substring(0, highlightedIndex)}</span>`
+          );
+        }
+        
+        setCurrentIndex(prevIndex => prevIndex + 1);
+      } else {
+        // Text is complete, start pause
+        setIsPaused(true);
+        
+        // After 3 seconds, reset and start over
+        setTimeout(() => {
+          setCurrentIndex(0);
+          setHeadingText('');
+          setIsPaused(false);
+        }, 3000);
+      }
+    };
+    
+    // Set interval for the letter animation
+    const letterAnimationInterval = setInterval(animateHeading, 150);
+    
+    // Clean up interval
+    return () => clearInterval(letterAnimationInterval);
+  }, [currentIndex, isPaused, mainText, highlightedText, fullHeading]);
+
+  // Handle scroll animations without using observer
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY + window.innerHeight;
+      
+      // Check if features section is visible
+      if (featuresRef.current && scrollPosition > featuresRef.current.offsetTop + 100) {
+        setVisibleSections(prev => ({ ...prev, features: true }));
+      }
+      
+      // Check if how it works section is visible
+      if (howItWorksRef.current && scrollPosition > howItWorksRef.current.offsetTop + 100) {
+        setVisibleSections(prev => ({ ...prev, howItWorks: true }));
+      }
+      
+      // Check if CTA section is visible
+      if (ctaRef.current && scrollPosition > ctaRef.current.offsetTop + 100) {
+        setVisibleSections(prev => ({ ...prev, cta: true }));
+      }
+      
+      // Check if lister section is visible
+      if (listerRef.current && scrollPosition > listerRef.current.offsetTop + 100) {
+        setVisibleSections(prev => ({ ...prev, lister: true }));
+      }
+      
+      // Header scroll effect
+      const header = document.querySelector('.header');
+      if (header) {
+        if (window.scrollY > 50) {
+          header.classList.add('scrolled');
+        } else {
+          header.classList.remove('scrolled');
+        }
+      }
+    };
+    
+    // Initial check
+    handleScroll();
+    
+    // Add scroll event listener
+    window.addEventListener('scroll', handleScroll);
+    
+    // Clean up
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   useEffect(() => {
     setIsAnimated(true);
     
@@ -114,7 +231,7 @@ const LandingPage = () => {
         <a href="/adminlogin" className="hover:text-yellow-500" style={{ transition: "color 0.3s" }}>Admin</a>
           <a href="#become-lister" className="hover:text-yellow-500" style={{ transition: "color 0.3s" }}>Lister </a>
           <a href="#features" className="hover:text-yellow-500" style={{ transition: "color 0.3s" }}>Features</a>
-          <a href="#how-it-works" className="hover:text-yellow-500" style={{ transition: "color 0.3s" }}>How It Works</a>
+          <a href="#how-it-works" className="hover:text-yellow-500" style={{ transition: "color 0.3s" }} onClick={handleHowItWorksClick}>How It Works</a>
           
           <button style={{ 
               backgroundColor: "#FF7A00", 
@@ -217,6 +334,7 @@ const LandingPage = () => {
 
       {/* Features Section */}
       <div id="features" style={{ backgroundColor: "rgba(10, 25, 41, 0.8)", padding: "5rem 0",}}>
+        
         <div className="container mx-auto px-6">
           <h2 className="text-3xl font-bold mb-12 text-center">
             Features That Make Parking <span style={{ color: "#FF7A00" }}>Effortless</span>
@@ -278,14 +396,14 @@ const LandingPage = () => {
         </div>
       </div>
 
-      {/* How It Works */}
-      <div id="how-it-works" style={{ padding: "5rem 0" }}>
+       {/* How It Works */}
+      <div id="how-it-works" ref={howItWorksRef} style={{ padding: "5rem 0" }}>
         <div className="container mx-auto px-6">
           <h2 className="text-3xl font-bold mb-12 text-center">
             How <span style={{ color: "#FF7A00" }}>FindMySpot</span> Works
           </h2>
           
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "2rem" }} >
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "2rem" }}>
             {[
               { 
                 step: 1, 
@@ -312,8 +430,14 @@ const LandingPage = () => {
                 icon: "M11 17h2v-1h1c.55 0 1-.45 1-1v-3c0-.55-.45-1-1-1h-3v-1h4V8h-2V7h-2v1h-1c-.55 0-1 .45-1 1v3c0 .55.45 1 1 1h3v1H9v2h2v1zm9-13H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4V6h16v12z"
               }
             ].map((item, index) => (
-              <div key={index} className="text-center">
-                <div style={{ 
+              <div key={index} 
+                className={`step-item ${visibleSections.howItWorks ? 'active' : ''} slide-in-right`}
+                style={{ 
+                  textAlign: "center",
+                  transitionDelay: `${0.1 * (index + 1)}s`
+                }}
+              >
+                <div className="step-circle" style={{ 
                   backgroundColor: "#0d2748", 
                   height: "5rem", 
                   width: "5rem", 
@@ -333,10 +457,10 @@ const LandingPage = () => {
                     justifyContent: "center",
                     position: "relative"
                   }}>
-                    <svg viewBox="0 0 24 24" className="h-8 w-8" style={{ color: "#FF7A00" }} fill="currentColor">
+                    <svg viewBox="0 0 24 24" className="h-8 w-8 floating-icon" style={{ color: "#FF7A00" }} fill="currentColor">
                       <path d={item.icon} />
                     </svg>
-                    <div style={{ 
+                    <div className="step-number" style={{ 
                       position: "absolute", 
                       top: "-0.5rem", 
                       right: "-0.5rem", 
@@ -362,7 +486,6 @@ const LandingPage = () => {
           </div>
         </div>
       </div>
-
       {/* CTA */}
       <div style={{ padding: "5rem 0" }}>
         <div className="container mx-auto px-6 text-center">
@@ -423,7 +546,6 @@ const LandingPage = () => {
           </button>
         </div>
       </div>
-      
       {/* Footer */}
       <footer style={{ backgroundColor: "#071423", padding: "3rem 0" }}>
         <div className="container mx-auto px-6">
