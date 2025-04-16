@@ -73,7 +73,31 @@ const LandingPage = () => {
   const handlelister = () => {
     navigateabout('/listersignup');
   };
+  document.addEventListener('DOMContentLoaded', function() {
+    // Header scroll effect
+    window.addEventListener('scroll', function() {
+      const header = document.querySelector('.header');
+      if (window.scrollY > 50) {
+        header.classList.add('scrolled');
+      } else {
+        header.classList.remove('scrolled');
+      }
+    });
   
+    // Scroll animation observer
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('active');
+        }
+      });
+    }, { threshold: 0.1 });
+  
+    // Observe all elements with animation classes
+    document.querySelectorAll('.fade-in, .slide-in-left, .slide-in-right').forEach(el => {
+      observer.observe(el);
+    });
+  });
   return (
     <div className="min-h-screen" style={{ background: "linear-gradient(to bottom, #0a1929, #0d2748)", color: "white" }}>
       
