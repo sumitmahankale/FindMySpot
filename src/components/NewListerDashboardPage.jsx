@@ -468,8 +468,8 @@ const ListerMainDashboard = () => {
                                 {space.isActive ? 'Active' : 'Inactive'}
                               </span>
                               <span className="font-bold" style={{ color: styles.orange }}>
-                                {space.price}
-                              </span>
+  ₹{space.price}
+</span>
                             </div>
                             
                             <div className="space-y-2 mb-4">
@@ -484,17 +484,16 @@ const ListerMainDashboard = () => {
                             </div>
                             
                             {/* REPLACED THE EDIT AND REMOVE BUTTONS WITH VIEW LOCATION AND VIEW LEAFLET MAP BUTTONS */}
-                            <div className="border-t pt-3 flex justify-between">
-                              <button 
-                                className="px-30 py-1 rounded flex items-center text-sm"
-                                style={{ color: styles.mediumBlue }}
-                                onClick={() => openLocationInGoogleMaps(space.lat, space.lng, space.name)}
-                              >
-                                <Navigation size={16} className="mr-1" />
-                                View Location
-                              </button>
-                             
-                            </div>
+                            <div className="border-t pt-3 flex justify-center">
+  <button 
+    className="px-4 py-1 rounded flex items-center text-sm"
+    style={{ color: styles.mediumBlue }}
+    onClick={() => openLocationInGoogleMaps(space.lat, space.lng, space.name)}
+  >
+    <Navigation size={16} className="mr-1" />
+    View Location
+  </button>
+</div>
                           </div>
                         </div>
                       ))}
