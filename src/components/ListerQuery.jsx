@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Inbox, CheckCircle, Clock, AlertCircle, Send, X, Paperclip, ChevronDown, ChevronRight, RefreshCw } from 'lucide-react';
 import Swal from 'sweetalert2';
+import { useNavigate } from 'react-router-dom';
 
 // Custom CSS variables (matching the existing style palette)
 const styles = {
@@ -40,6 +41,8 @@ const ListerQueryComponent = ({ activeTab }) => {
   // Get lister ID from localStorage
   const listerId = localStorage.getItem('listerId');
   const token = localStorage.getItem('token');
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (activeTab === 'query') {
@@ -104,6 +107,16 @@ const ListerQueryComponent = ({ activeTab }) => {
       return;
     }
 
+    if (!listerId) {
+      Swal.fire({
+        title: 'Authentication Required',
+        text: 'You must be logged in to submit a query. Your lister ID is missing.',
+        icon: 'error',
+        confirmButtonColor: styles.orange
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     setError(null);
 
@@ -124,7 +137,8 @@ const ListerQueryComponent = ({ activeTab }) => {
         },
         body: JSON.stringify({
           ...formData,
-          attachmentUrl
+          attachmentUrl,
+          listerId // Explicitly include listerId for more reliable tracking
         })
       });
 
@@ -296,142 +310,125 @@ const ListerQueryComponent = ({ activeTab }) => {
   const renderQueryHistory = () => (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center">
-          <h3 className="text-lg font-semibold" style={{ color: styles.mediumBlue }}>Previous Queries</h3>
-          <span className="ml-2 px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
-            {queries.length} total
-          </span>
-        </div>
+        <button 
+          onClick={() => setViewMode('form')}
+          className="text-blue-600 hover:text-blue-800 font-medium flex items-center"
+        >
+          <ChevronLeft size={16} className="mr-1" /> New Query
+        </button>
         
-        <div className="flex items-center space-x-2">
-          <button 
-            onClick={fetchQueries}
-            className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-            title="Refresh queries"
-          >
-            <RefreshCw size={18} style={{ color: styles.mediumBlue }} />
-          </button>
-          
-          <button 
-            onClick={() => setViewMode('form')}
-            className="px-4 py-2 rounded-lg text-white font-medium flex items-center"
-            style={{ backgroundColor: styles.orange }}
-          >
-            <Send className="mr-2 h-4 w-4" />
-            New Query
-          </button>
-        </div>
+        <button 
+          onClick={fetchQueries} 
+          className="flex items-center text-sm text-blue-600 hover:text-blue-800"
+          disabled={isLoading}
+        >
+          <RefreshCw size={14} className={`mr-1 ${isLoading ? 'animate-spin' : ''}`} />
+          Refresh
+        </button>
       </div>
       
       {isLoading ? (
-        <div className="flex justify-center py-12">
-          <div className="w-12 h-12 border-t-4 border-b-4 rounded-full animate-spin" 
-               style={{ borderColor: styles.orange }}></div>
+        <div className="flex justify-center items-center py-16">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: styles.orange }}></div>
         </div>
       ) : error ? (
-        <div className="text-center py-8">
-          <AlertCircle size={48} className="mx-auto mb-4" style={{ color: '#EF4444' }} />
-          <p className="text-red-500 mb-4">{error}</p>
-          <button 
-            onClick={fetchQueries}
-            className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
-          >
-            Try Again
-          </button>
+        <div className="bg-red-50 border border-red-100 text-red-600 p-4 rounded-lg">
+          <p className="flex items-center">
+            <AlertTriangle size={18} className="mr-2" />
+            {error}
+          </p>
+          {(!listerId || !token) && (
+            <button 
+              className="mt-2 text-sm font-medium text-red-600 hover:text-red-800"
+              onClick={() => navigate('/listerlogin')}
+            >
+              Go to Login
+            </button>
+          )}
         </div>
       ) : queries.length === 0 ? (
-        <div className="text-center py-12 border border-dashed border-gray-300 rounded-lg">
-          <Inbox size={48} className="mx-auto mb-4" style={{ color: styles.lightBlue }} />
-          <h3 className="text-lg font-medium mb-2" style={{ color: styles.textDark }}>No Queries Found</h3>
-          <p className="text-gray-500 mb-4">You haven't submitted any queries yet.</p>
-          <button 
-            onClick={() => setViewMode('form')}
-            className="px-4 py-2 rounded-md text-white font-medium"
-            style={{ backgroundColor: styles.orange }}
-          >
-            Create Your First Query
-          </button>
+        <div className="text-center py-16 border border-dashed border-gray-300 rounded-lg bg-gray-50">
+          <Inbox size={48} className="mx-auto mb-3" style={{ color: styles.lightBlue }} />
+          <h3 className="text-lg font-medium mb-1" style={{ color: styles.mediumBlue }}>No queries found</h3>
+          <p className="text-gray-500">You haven't submitted any queries yet.</p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-4">
           {queries.map(query => (
             <div 
-              key={query.id} 
-              className="border rounded-lg overflow-hidden bg-white transition-all duration-200 hover:shadow-md"
+              key={query.id}
+              className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow"
             >
               <div 
-                className="p-4 cursor-pointer flex justify-between items-center"
+                className="p-4 cursor-pointer"
                 onClick={() => toggleQueryDetails(query.id)}
               >
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2">
-                    <span 
-                      className="px-3 py-1 rounded-full text-xs font-medium flex items-center space-x-1"
-                      style={{ 
-                        backgroundColor: statusColors[query.status].bg,
-                        color: statusColors[query.status].text
-                      }}
-                    >
-                      {statusColors[query.status].icon}
-                      <span className="ml-1 capitalize">{query.status}</span>
-                    </span>
-                    <h3 
-                      className="font-medium text-base truncate" 
-                      style={{ color: styles.textDark }}
-                    >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="font-medium mb-1 flex items-center" style={{ color: styles.darkBlue }}>
                       {query.subject}
                     </h3>
+                    
+                    <div className="flex items-center text-sm text-gray-500 space-x-3">
+                      <span>
+                        {formatDate(query.createdAt)}
+                      </span>
+                      <span>•</span>
+                      <span className="capitalize">
+                        {query.category}
+                      </span>
+                      {/* Add query ID for reference */}
+                      <span>•</span>
+                      <span className="text-xs">
+                        ID: {query.id}
+                      </span>
+                    </div>
                   </div>
-                  <div className="text-xs text-gray-500 mt-1 flex items-center">
-                    <span>Category: {query.category}</span>
-                    <span className="mx-2">•</span>
-                    <span>Submitted: {formatDate(query.createdAt)}</span>
+                  
+                  <div className="flex items-center">
+                    <span 
+                      className="px-2 py-1 text-xs rounded-full flex items-center mr-2"
+                      style={{ 
+                        backgroundColor: statusColors[query.status]?.bg,
+                        color: statusColors[query.status]?.text
+                      }}
+                    >
+                      {statusColors[query.status]?.icon}
+                      <span className="ml-1 capitalize">{query.status}</span>
+                    </span>
+                    
+                    {expandedQueryId === query.id ? 
+                      <ChevronDown size={16} className="text-gray-400" /> : 
+                      <ChevronRight size={16} className="text-gray-400" />
+                    }
                   </div>
-                </div>
-                
-                <div className="flex items-center space-x-2">
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleViewQuery(query);
-                    }}
-                    className="px-3 py-1 text-xs font-medium rounded-lg transition-all duration-200"
-                    style={{ backgroundColor: styles.background, color: styles.mediumBlue }}
-                  >
-                    View Details
-                  </button>
-                  {expandedQueryId === query.id ? (
-                    <ChevronDown size={18} style={{ color: styles.mediumBlue }} />
-                  ) : (
-                    <ChevronRight size={18} style={{ color: styles.mediumBlue }} />
-                  )}
                 </div>
               </div>
               
               {expandedQueryId === query.id && (
                 <div className="p-4 border-t bg-gray-50">
-                  <div className="mb-3">
-                    <div className="text-sm font-medium mb-1" style={{ color: styles.mediumBlue }}>Description:</div>
-                    <p className="text-sm text-gray-700">{query.description}</p>
+                  <div className="mb-4">
+                    <h4 className="text-sm font-medium mb-2" style={{ color: styles.darkBlue }}>Description:</h4>
+                    <p className="text-gray-700 whitespace-pre-wrap text-sm">{query.description}</p>
                   </div>
                   
                   {query.adminResponse && (
-                    <div className="mb-3">
-                      <div className="text-sm font-medium mb-1" style={{ color: styles.orange }}>Admin Response:</div>
-                      <p className="text-sm bg-white p-3 rounded border">{query.adminResponse}</p>
+                    <div className="border-t border-gray-200 pt-3 mt-3">
+                      <h4 className="text-sm font-medium mb-2" style={{ color: styles.orange }}>
+                        Response:
+                      </h4>
+                      <p className="bg-orange-50 p-3 rounded-md text-gray-700 text-sm whitespace-pre-wrap">
+                        {query.adminResponse}
+                      </p>
                     </div>
                   )}
                   
-                  <div className="flex justify-end">
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleViewQuery(query);
-                      }}
-                      className="text-sm font-medium"
-                      style={{ color: styles.orange }}
+                  <div className="mt-4 flex justify-end">
+                    <button
+                      onClick={() => handleViewQuery(query)}
+                      className="text-sm px-3 py-1 bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition-colors"
                     >
-                      View Full Details
+                      View Details
                     </button>
                   </div>
                 </div>
