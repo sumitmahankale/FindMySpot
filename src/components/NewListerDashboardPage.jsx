@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { Car, MessageSquare, Map, Layout, ChevronRight, Bell, LogOut, HelpCircle, Edit, Trash2, AlertTriangle, Navigation, MapPin } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Car, MessageSquare, Map, Layout, ChevronRight, Bell, LogOut, HelpCircle, AlertTriangle, Navigation } from 'lucide-react';
 import ListerDashboard from './ListerDashboard';
 import { useNavigate } from 'react-router-dom';
-import Swal from 'sweetalert2'; // 💡 Import SweetAlert2
-import 'sweetalert2/dist/sweetalert2.min.css'; // Optional for styling
+import Swal from 'sweetalert2';
+import 'sweetalert2/dist/sweetalert2.min.css';
 import ListerQueryComponent from './ListerQuery';
+
 // Custom CSS variables
 const styles = {
   darkBlue: '#1a2b47',
@@ -17,10 +18,9 @@ const styles = {
   background: '#f9f9f9',
 };
 
-
 const ListerMainDashboard = () => {
   const [activeTab, setActiveTab] = useState('parking');
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true); // Start collapsed like AdminDashboard
   const [currentUser, setCurrentUser] = useState({
     fullName: '',
     businessName: '',
@@ -32,9 +32,10 @@ const ListerMainDashboard = () => {
   const [parkingSpaces, setParkingSpaces] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  
-  // Add page transition effect
   const [pageLoaded, setPageLoaded] = useState(false);
+  const [hoverTimeout, setHoverTimeout] = useState(null);
+  const [contentAnimating, setContentAnimating] = useState(false);
+  const sidebarRef = useRef(null);
   
   const navigate = useNavigate();
   
@@ -86,9 +87,37 @@ const ListerMainDashboard = () => {
     // Update current login time in localStorage
     localStorage.setItem('lastLogin', new Date().toISOString());
     
-  }, [navigate]);
+    // Clean up any timeout when component unmounts
+    return () => {
+      if (hoverTimeout) clearTimeout(hoverTimeout);
+    };
+  }, [navigate, hoverTimeout]);
 
-  // New function to fetch parking spaces
+  // Similar hover functions as AdminDashboard
+  const handleMouseEnter = () => {
+    if (hoverTimeout) clearTimeout(hoverTimeout);
+    setIsCollapsed(false);
+  };
+
+  const handleMouseLeave = () => {
+    const timeout = setTimeout(() => {
+      setIsCollapsed(true);
+    }, 400); // Slightly longer delay before collapsing sidebar for smoother experience
+    setHoverTimeout(timeout);
+  };
+
+  const handleTabClick = (tab) => {
+    if (activeTab === tab) return;
+    
+    setContentAnimating(true);
+    setTimeout(() => {
+      setActiveTab(tab);
+      setTimeout(() => {
+        setContentAnimating(false);
+      }, 50);
+    }, 250);
+  };
+
   const fetchParkingSpaces = async () => {
     const listerId = localStorage.getItem('listerId');
     const token = localStorage.getItem('token');
@@ -128,152 +157,187 @@ const ListerMainDashboard = () => {
     }
   };
   
-  // Make sure to call this function when the component mounts and when the tab changes
   useEffect(() => {
     if (activeTab === 'spaces') {
       fetchParkingSpaces();
     }
   }, [activeTab]);
 
-  // Function to handle opening location in Google Maps
-  const openLocationInGoogleMaps = (lat, lng, ) => {
+  const openLocationInGoogleMaps = (lat, lng) => {
     const url = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
     window.open(url, '_blank');
   };
 
-  // Function to open location in Leaflet Map
   const handleLogoutPopup = () => {
-    localStorage.removeItem('token');
-      localStorage.removeItem('username');
-      localStorage.removeItem('fullName');
-      localStorage.removeItem('businessName');
-      localStorage.removeItem('listerId');
-      Swal.fire({
-        title: 'Are you sure?',
-        text: "You will be logged out of your session.",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#1a2b47',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Yes, logout!',
-        background: '#f9fafb'
-      }).then((result) => {
-        if (result.isConfirmed) {
+    Swal.fire({
+      title: 'Are you sure?',
+      text: "You will be logged out of your session.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#1a2b47',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, logout!',
+      background: '#f9fafb',
+      showClass: {
+        popup: 'animate__animated animate__fadeIn animate__faster'
+      },
+      hideClass: {
+        popup: 'animate__animated animate__fadeOut animate__faster'
+      }
+    }).then((result) => {
+      if (result.isConfirmed) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('username');
+        localStorage.removeItem('fullName');
+        localStorage.removeItem('businessName');
+        localStorage.removeItem('listerId');
+        
+        document.body.classList.add('fade-out');
+        setTimeout(() => {
           navigate('/listerlogin');
-        }
-      });
-    };
+        }, 400);
+      }
+    });
+  };
 
- 
   return (
-    <div className={`flex h-screen overflow-hidden ${pageLoaded ? 'opacity-100' : 'opacity-0'}`} 
-         style={{ 
-           transition: 'opacity 0.5s ease-in-out',
-           backgroundColor: styles.background 
-         }}>
+    <div 
+      className={`flex h-screen overflow-hidden ${pageLoaded ? 'opacity-100' : 'opacity-0'}`} 
+      style={{ 
+        transition: 'opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1)',
+        backgroundColor: styles.background 
+      }}
+    >
       {/* Side Navigation */}
       <div 
-        className={`${isCollapsed ? 'w-20' : 'w-64'} text-white shadow-xl transition-all duration-300 ease-in-out flex flex-col`}
-        style={{ backgroundColor: styles.darkBlue }}
+        ref={sidebarRef}
+        className={`${isCollapsed ? 'w-20' : 'w-64'} text-white shadow-xl flex flex-col z-10`}
+        style={{ 
+          backgroundColor: styles.darkBlue,
+          transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
+        }}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
-        <div className={`p-6 flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'}`}
-             style={{ borderBottom: `1px solid ${styles.mediumBlue}` }}>
-          {!isCollapsed && (
-            <div>
-              <h1 className="text-xl font-bold" style={{ color: styles.textLight }}>Lister Dashboard</h1>
-              <p className="text-sm" style={{ color: styles.lightOrange }}>Parking Provider</p>
-            </div>
-          )}
-          {isCollapsed && <Layout className="h-6 w-6" style={{ color: styles.textLight }} />}
-          <button 
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="h-8 w-8 flex items-center justify-center rounded-full transition-colors duration-200"
-            style={{ backgroundColor: styles.mediumBlue }}
+        <div 
+          className={`p-6 flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'}`}
+          style={{ borderBottom: `1px solid ${styles.mediumBlue}` }}
+        >
+          <div 
+            className={`overflow-hidden ${isCollapsed ? 'w-0' : 'w-full'}`}
+            style={{ transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)', whiteSpace: 'nowrap' }}
           >
-            <ChevronRight 
-              className={`h-5 w-5 transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`} 
-              style={{ color: styles.textLight }}
-            />
-          </button>
-        </div>
-        
-        <nav className="mt-6 flex-1">
-          <button
-            className={`flex items-center w-full px-6 py-4 text-left transition-all duration-200`}
-            style={{ 
-              backgroundColor: activeTab === 'parking' ? styles.mediumBlue : 'transparent',
-              borderLeft: activeTab === 'parking' ? `4px solid ${styles.orange}` : 'none',
-            }}
-            onClick={() => setActiveTab('parking')}
-          >
-            <Car className={`${isCollapsed ? 'mx-auto' : 'mr-3'} h-5 w-5`} style={{ color: styles.textLight }} />
-            {!isCollapsed && <span className="transition-opacity duration-200" style={{ color: styles.textLight }}>Parking Management</span>}
-          </button>
+            <h1 className="text-xl font-bold" style={{ color: styles.textLight }}>Lister Dashboard</h1>
+            <p className="text-sm" style={{ color: styles.lightOrange }}>Parking Provider</p>
+          </div>
+          
+          {isCollapsed && <Layout className="h-6 w-6" style={{ opacity: isCollapsed ? 1 : 0, transition: 'opacity 0.3s ease', color: styles.textLight }} />}
           
           <button
-            className={`flex items-center w-full px-6 py-4 text-left transition-all duration-200`}
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="h-8 w-8 flex items-center justify-center rounded-full transition-colors duration-300"
             style={{ 
-              backgroundColor: activeTab === 'query' ? styles.mediumBlue : 'transparent',
-              borderLeft: activeTab === 'query' ? `4px solid ${styles.orange}` : 'none',
+              backgroundColor: styles.mediumBlue,
+              transform: isCollapsed ? 'rotate(180deg)' : 'rotate(0deg)',
+              transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease'
             }}
-            onClick={() => setActiveTab('query')}
           >
-            <MessageSquare className={`${isCollapsed ? 'mx-auto' : 'mr-3'} h-5 w-5`} style={{ color: styles.textLight }} />
-            {!isCollapsed && <span className="transition-opacity duration-200" style={{ color: styles.textLight }}>Raise Query</span>}
+            <ChevronRight className="h-5 w-5" style={{ color: styles.textLight }} />
           </button>
+        </div>
 
-          <button
-            className={`flex items-center w-full px-6 py-4 text-left transition-all duration-200`}
-            style={{ 
-              backgroundColor: activeTab === 'spaces' ? styles.mediumBlue : 'transparent',
-              borderLeft: activeTab === 'spaces' ? `4px solid ${styles.orange}` : 'none',
-            }}
-            onClick={() => setActiveTab('spaces')}
-          >
-            <Map className={`${isCollapsed ? 'mx-auto' : 'mr-3'} h-5 w-5`} style={{ color: styles.textLight }} />
-            {!isCollapsed && <span className="transition-opacity duration-200" style={{ color: styles.textLight }}>My Space Details</span>}
-          </button>
-
-          <button
-            className={`flex items-center w-full px-6 py-4 text-left transition-all duration-200`}
-            style={{ 
-              backgroundColor: activeTab === 'help' ? styles.mediumBlue : 'transparent',
-              borderLeft: activeTab === 'help' ? `4px solid ${styles.orange}` : 'none',
-            }}
-            onClick={() => setActiveTab('help')}
-          >
-            <HelpCircle className={`${isCollapsed ? 'mx-auto' : 'mr-3'} h-5 w-5`} style={{ color: styles.textLight }} />
-            {!isCollapsed && <span className="transition-opacity duration-200" style={{ color: styles.textLight }}>Help</span>}
-          </button>
+        <nav className="mt-6 flex-1">
+          {[
+            { id: 'parking', label: 'Parking Management', Icon: Car },
+            { id: 'query', label: 'Raise Query', Icon: MessageSquare },
+            { id: 'spaces', label: 'My Space Details', Icon: Map },
+            { id: 'help', label: 'Help', Icon: HelpCircle }
+          ].map((item, index) => (
+            <button
+              key={item.id}
+              className={`flex items-center w-full px-6 py-4 text-left transition-all duration-300 ease-in-out`}
+              style={{ 
+                backgroundColor: activeTab === item.id ? styles.mediumBlue : 'transparent',
+                borderLeft: activeTab === item.id ? `4px solid ${styles.orange}` : 'none',
+                animationDelay: `${index * 0.1}s`,
+                animation: pageLoaded ? 'slideIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards' : 'none'
+              }}
+              onClick={() => handleTabClick(item.id)}
+            >
+              <item.Icon 
+                className={`${isCollapsed ? 'mx-auto' : 'mr-3'} h-5 w-5`}
+                style={{ 
+                  color: styles.textLight,
+                  transition: 'margin 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                  ...(activeTab === item.id && { 
+                    filter: 'drop-shadow(0 0 3px rgba(255, 255, 255, 0.5))'
+                  })
+                }}
+              />
+              <span 
+                className={`whitespace-nowrap overflow-hidden ${isCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'}`}
+                style={{ 
+                  color: styles.textLight,
+                  transition: 'opacity 0.4s ease, width 0.3s cubic-bezier(0.4, 0, 0.2, 1)' 
+                }}
+              >
+                {item.label}
+              </span>
+            </button>
+          ))}
         </nav>
-        
-        <div className={`px-6 py-4 w-full ${isCollapsed ? 'flex justify-center' : ''}`}
-             style={{ borderTop: `1px solid ${styles.mediumBlue}` }}>
-          {isCollapsed ? (
-            <div className="w-10 h-10 rounded-full flex items-center justify-center"
-                 style={{ backgroundColor: styles.lightBlue }}>
-              <span style={{ color: styles.textLight, fontWeight: 'bold' }}>{currentUser.initials}</span>
-            </div>
-          ) : (
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center mr-3 shadow-lg"
-                     style={{ backgroundColor: styles.lightBlue }}>
-                  <span style={{ color: styles.textLight, fontWeight: 'bold' }}>{currentUser.initials}</span>
-                </div>
-                <div>
-                  <p className="font-medium" style={{ color: styles.textLight }}>{currentUser.fullName}</p>
-                  <p className="text-xs" style={{ color: styles.lightOrange }}>{currentUser.email}</p>
-                </div>
+
+        <div 
+          className={`px-6 py-4 border-t border-blue-800 w-full ${isCollapsed ? 'flex justify-center' : ''}`}
+          style={{ borderColor: styles.mediumBlue }}
+        >
+          <div 
+            className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} w-full`}
+          >
+            <div className="flex items-center overflow-hidden">
+              <div 
+                className="min-w-10 h-10 rounded-full flex items-center justify-center shadow-lg"
+                style={{ 
+                  backgroundColor: styles.lightBlue,
+                  transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)' 
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+                onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+              >
+                <span style={{ color: styles.textLight, fontWeight: 'bold' }}>{currentUser.initials}</span>
               </div>
-              <button onClick={handleLogoutPopup} style={{ color: styles.lightOrange }}>
+              
+              <div 
+                className={`ml-3 ${isCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'} truncate max-w-32`}
+                style={{ 
+                  transition: 'opacity 0.4s ease, width 0.3s cubic-bezier(0.4, 0, 0.2, 1)', 
+                  whiteSpace: 'nowrap', 
+                  overflow: 'hidden' 
+                }}
+              >
+                <p className="font-medium truncate" style={{ color: styles.textLight }}>{currentUser.fullName}</p>
+                <p className="text-xs truncate" style={{ color: styles.lightOrange }}>{currentUser.email}</p>
+              </div>
+            </div>
+            
+            {!isCollapsed && (
+              <button 
+                className="flex-shrink-0 ml-2"
+                style={{ 
+                  color: styles.lightOrange,
+                  transition: 'color 0.3s ease, transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)' 
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.transform = 'rotate(12deg)'}
+                onMouseLeave={(e) => e.currentTarget.style.transform = 'rotate(0deg)'}
+                onClick={handleLogoutPopup}
+              >
                 <LogOut className="h-5 w-5" />
               </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
-      
+
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
@@ -304,11 +368,7 @@ const ListerMainDashboard = () => {
         {/* Dashboard Content */}
         <div className="flex-1 overflow-y-auto p-6" style={{ backgroundColor: styles.background }}>
           <div 
-            className="transition-all duration-300 ease-in-out" 
-            style={{ 
-              opacity: pageLoaded ? 1 : 0,
-              transform: pageLoaded ? 'translateY(0)' : 'translateY(10px)'
-            }}
+            className={`transition-all duration-500 ease-in-out ${contentAnimating ? 'opacity-0 transform translate-y-4' : 'opacity-100 transform translate-y-0'}`}
           >
             {activeTab === 'parking' ? (
               <ListerDashboard />
@@ -361,7 +421,7 @@ const ListerMainDashboard = () => {
                     <button 
                       className="px-6 py-3 rounded-lg text-white font-bold transition-all duration-200"
                       style={{ backgroundColor: styles.orange }}
-                      onClick={() => setActiveTab('parking')}
+                      onClick={() => handleTabClick('parking')}
                     >
                       Add New Parking Space
                     </button>
@@ -372,7 +432,6 @@ const ListerMainDashboard = () => {
                       <p className="text-sm text-gray-500">
                         Showing {parkingSpaces.length} parking space{parkingSpaces.length !== 1 ? 's' : ''}
                       </p>
-                     
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -380,9 +439,13 @@ const ListerMainDashboard = () => {
                         <div 
                           key={space.id} 
                           className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100 hover:shadow-lg transition-shadow"
+                          style={{ 
+                            animation: 'fadeInUp 0.6s ease-out',
+                            animationDelay: `${parkingSpaces.indexOf(space) * 0.1}s`,
+                            animationFillMode: 'both'
+                          }}
                         >
                           <div className="h-40 bg-gray-200 relative">
-                            {/* Here you could add an image if available */}
                             <div 
                               className="absolute inset-0 flex items-center justify-center"
                               style={{ backgroundColor: styles.lightBlue }}
@@ -413,8 +476,8 @@ const ListerMainDashboard = () => {
                                 {space.isActive ? 'Active' : 'Inactive'}
                               </span>
                               <span className="font-bold" style={{ color: styles.orange }}>
-  ₹{space.price}
-</span>
+                                ₹{space.price}
+                              </span>
                             </div>
                             
                             <div className="space-y-2 mb-4">
@@ -428,17 +491,16 @@ const ListerMainDashboard = () => {
                               </div>
                             </div>
                             
-                            {/* REPLACED THE EDIT AND REMOVE BUTTONS WITH VIEW LOCATION AND VIEW LEAFLET MAP BUTTONS */}
                             <div className="border-t pt-3 flex justify-center">
-  <button 
-    className="px-4 py-1 rounded flex items-center text-sm"
-    style={{ color: styles.mediumBlue }}
-    onClick={() => openLocationInGoogleMaps(space.lat, space.lng, space.name)}
-  >
-    <Navigation size={16} className="mr-1" />
-    View Location
-  </button>
-</div>
+                              <button 
+                                className="px-4 py-1 rounded flex items-center text-sm"
+                                style={{ color: styles.mediumBlue }}
+                                onClick={() => openLocationInGoogleMaps(space.lat, space.lng)}
+                              >
+                                <Navigation size={16} className="mr-1" />
+                                View Location
+                              </button>
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -449,81 +511,67 @@ const ListerMainDashboard = () => {
             ) : (
               <div className="bg-white rounded-lg shadow-md p-6">
                 <h2 className="text-2xl font-bold mb-4" style={{ color: styles.darkBlue }}>Help & Support</h2>
+                <p className="text-gray-600 mb-6">Our support team is available Monday to Friday, 9:00 AM to 6:00 PM.</p>
                 
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-semibold mb-3" style={{ color: styles.mediumBlue }}>
-                      Frequently Asked Questions
-                    </h3>
-                    <div className="space-y-3">
-                      {[
-                        "How do I update my parking space availability?",
-                        "Can I modify my pricing based on demand?",
-                        "How do I view my earnings history?",
-                        "What happens if a user damages my property?",
-                        "How do I handle a dispute with a customer?"
-                      ].map((question, idx) => (
-                        <div key={idx} className="p-4 rounded-lg cursor-pointer transition-all hover:shadow-md"
-                             style={{ backgroundColor: styles.background }}>
-                          <div className="flex justify-between items-center">
-                            <p className="font-medium" style={{ color: styles.textDark }}>{question}</p>
-                            <ChevronRight size={18} style={{ color: styles.orange }} />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  <div className="border-t pt-6">
-                    <h3 className="text-lg font-semibold mb-3" style={{ color: styles.mediumBlue }}>
-                      Contact Support
-                    </h3>
-                    <p className="mb-4" style={{ color: styles.textDark }}>
-                      Need more help? Our support team is available Monday to Friday, 9:00 AM to 6:00 PM.
-                    </p>
-                    <div className="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-4">
-                      <button 
-                        className="px-4 py-3 rounded-lg flex items-center justify-center transition-all duration-200"
-                        style={{ 
-                          backgroundColor: styles.darkBlue,
-                          color: styles.textLight
-                        }}
-                      >
-                        <MessageSquare className="mr-2 h-5 w-5" />
-                        Live Chat
-                      </button>
-                      <button 
-                        className="px-4 py-3 rounded-lg flex items-center justify-center transition-all duration-200"
-                        style={{ 
-                          backgroundColor: styles.orange,
-                          color: styles.textLight
-                        }}
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                        </svg>
-                        Email Support
-                      </button>
-                      <button 
-                        className="px-4 py-3 rounded-lg flex items-center justify-center transition-all duration-200"
-                        style={{ 
-                          backgroundColor: styles.lightBlue,
-                          color: styles.textLight
-                        }}
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                        </svg>
-                        Call Support
-                      </button>
-                    </div>
-                  </div>
+                <div className="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-4">
+                  <button 
+                    className="px-4 py-3 rounded-lg flex items-center justify-center transition-all duration-200"
+                    style={{ 
+                      backgroundColor: styles.darkBlue,
+                      color: styles.textLight
+                    }}
+                  >
+                    <MessageSquare className="mr-2 h-5 w-5" />
+                    Contact Support
+                  </button>
                 </div>
               </div>
             )}
           </div>
         </div>
       </div>
+
+      {/* CSS Animations */}
+      <style jsx>{`
+        @keyframes slideIn {
+          from {
+            opacity: 0;
+            transform: translateX(-15px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+        
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        .fade-out {
+          animation: fadeOut 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+          opacity: 0;
+        }
+        
+        @keyframes fadeOut {
+          from { opacity: 1; }
+          to { opacity: 0; }
+        }
+        
+        /* Ensure transitions feel smooth */
+        * {
+          backface-visibility: hidden;
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+        }
+      `}</style>
     </div>
   );
 };
