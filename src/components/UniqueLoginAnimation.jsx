@@ -39,7 +39,7 @@ const UniqueLoginAnimation = () => {
       darkBlue: '#1a2b47',
       mediumBlue: '#2d4263',
       lightBlue: '#3e5f8a',
-      orange: '#ff7d00',
+      orange: 'rgb(255, 98, 0)',
       lightOrange: '#ff9a40',
       textLight: '#f5f5f5'
     };

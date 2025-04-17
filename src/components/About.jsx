@@ -141,20 +141,20 @@ const ParkingBanner = () => {
         {/* Left parking area */}
         <path d="M50,150 L200,150 L210,180 L40,180 Z" fill="#333333" stroke="#f5f5f5" strokeWidth="1" />
         <path d="M60,155 L100,155 L105,175 L65,175 Z" fill="#3e5f8a" stroke="#f5f5f5" strokeWidth="1" />
-        <path d="M110,155 L150,155 L155,175 L115,175 Z" fill="#ff7d00" stroke="#f5f5f5" strokeWidth="1" />
+        <path d="M110,155 L150,155 L155,175 L115,175 Z" fill="rgb(255, 98, 0)" stroke="#f5f5f5" strokeWidth="1" />
         <path d="M160,155 L190,155 L195,175 L165,175 Z" fill="#3e5f8a" stroke="#f5f5f5" strokeWidth="1" />
         
         {/* Center parking area */}
         <path d="M300,150 L500,150 L510,180 L290,180 Z" fill="#333333" stroke="#f5f5f5" strokeWidth="1" />
         <path d="M310,155 L350,155 L355,175 L315,175 Z" fill="#3e5f8a" stroke="#f5f5f5" strokeWidth="1" />
         <path d="M360,155 L400,155 L405,175 L365,175 Z" fill="#3e5f8a" stroke="#f5f5f5" strokeWidth="1" />
-        <path d="M410,155 L450,155 L455,175 L415,175 Z" fill="#ff9a40" stroke="#f5f5f5" strokeWidth="1" />
+        <path d="M410,155 L450,155 L455,175 L415,175 Z" fill="rgb(255, 98, 0)" stroke="#f5f5f5" strokeWidth="1" />
         <path d="M460,155 L490,155 L495,175 L465,175 Z" fill="#3e5f8a" stroke="#f5f5f5" strokeWidth="1" />
         
         {/* Right parking area */}
         <path d="M600,150 L750,150 L760,180 L590,180 Z" fill="#333333" stroke="#f5f5f5" strokeWidth="1" />
         <path d="M610,155 L650,155 L655,175 L615,175 Z" fill="#3e5f8a" stroke="#f5f5f5" strokeWidth="1" />
-        <path d="M660,155 L700,155 L705,175 L665,175 Z" fill="#ff7d00" stroke="#f5f5f5" strokeWidth="1" />
+        <path d="M660,155 L700,155 L705,175 L665,175 Z" fill="rgb(255, 98, 0)" stroke="#f5f5f5" strokeWidth="1" />
         <path d="M710,155 L740,155 L745,175 L715,175 Z" fill="#3e5f8a" stroke="#f5f5f5" strokeWidth="1" />
       </g>
       
@@ -171,7 +171,7 @@ const ParkingBanner = () => {
       <g className="pin-animation" transform="translate(430, 130)">
         <path 
           d="M0,0 C0,-15 20,-15 20,0 C20,10 10,20 10,20 C10,20 0,10 0,0" 
-          fill="#ff9a40" 
+          fill="rgb(255, 98, 0)" 
           stroke="#ff7d00" 
           strokeWidth="2"
           filter="url(#glow)"
@@ -184,11 +184,11 @@ const ParkingBanner = () => {
       {/* Decorative elements */}
       <g className="decorative-elements">
         {/* Radar-like circles around highlighted spot */}
-        <circle cx="430" cy="165" r="25" fill="none" stroke="#ff9a40" strokeWidth="1" opacity="0.5">
+        <circle cx="430" cy="165" r="25" fill="none" stroke="rgb(255, 98, 0)" strokeWidth="1" opacity="0.5">
           <animate attributeName="r" values="25;40;25" dur="3s" repeatCount="indefinite" />
           <animate attributeName="opacity" values="0.5;0;0.5" dur="3s" repeatCount="indefinite" />
         </circle>
-        <circle cx="430" cy="165" r="15" fill="none" stroke="#ff9a40" strokeWidth="1" opacity="0.7">
+        <circle cx="430" cy="165" r="15" fill="none" stroke="rgb(255, 98, 0)" strokeWidth="1" opacity="0.7">
           <animate attributeName="r" values="15;30;15" dur="3s" repeatCount="indefinite" />
           <animate attributeName="opacity" values="0.7;0.2;0.7" dur="3s" repeatCount="indefinite" />
         </circle>
@@ -239,7 +239,7 @@ const About = () => {
         </div>
         <img
           className="logo"
-          src="/logo.jpg"
+          src="/logog.png"
           alt="FindMySpot Logo"
         />
       </div>

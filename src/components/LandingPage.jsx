@@ -39,47 +39,53 @@ const LandingPage = () => {
   };
   
   // Handle heading animation
-  useEffect(() => {
-    setIsAnimated(true);
+ // Update the useEffect for the heading animation
+useEffect(() => {
+  setIsAnimated(true);
+  
+  // Ensure we account for every character including the final 'n'
+  const animateHeading = () => {
+    if (isPaused) return;
     
-    // Letter-by-letter animation for the heading
-    const animateHeading = () => {
-      if (isPaused) return;
-      
-      if (currentIndex <= fullHeading.length) {
-        if (currentIndex < mainText.length) {
-          // Animating the main text portion
-          setHeadingText(mainText.substring(0, currentIndex));
-        } else {
-          // Animating the highlighted text portion
-          const highlightedIndex = currentIndex - mainText.length;
-          // Use display: inline-block to ensure text stays on same line
-          setHeadingText(
-            mainText + 
-            `<span style="color: #FF7A00; display: inline;">${highlightedText.substring(0, highlightedIndex)}</span>`
-          );
-        }
-        
-        setCurrentIndex(prevIndex => prevIndex + 1);
+    if (currentIndex < fullHeading.length) {
+      if (currentIndex < mainText.length) {
+        // Animating the main text portion
+        setHeadingText(mainText.substring(0, currentIndex));
       } else {
-        // Text is complete, start pause
-        setIsPaused(true);
-        
-        // After 3 seconds, reset and start over
-        setTimeout(() => {
-          setCurrentIndex(0);
-          setHeadingText('');
-          setIsPaused(false);
-        }, 3000);
+        // Animating the highlighted text portion
+        const highlightedIndex = currentIndex - mainText.length;
+        setHeadingText(
+          mainText + 
+          `<span style="color:rgb(255, 98, 0); display: inline;">${highlightedText.substring(0, highlightedIndex)}</span>`
+        );
       }
-    };
-    
-    // Set interval for the letter animation
-    const letterAnimationInterval = setInterval(animateHeading, 150);
-    
-    // Clean up interval
-    return () => clearInterval(letterAnimationInterval);
-  }, [currentIndex, isPaused, mainText, highlightedText, fullHeading]);
+      
+      setCurrentIndex(prevIndex => prevIndex + 1);
+    } else {
+      // Text is complete, ensure we show the full text before pausing
+      setHeadingText(
+        mainText + 
+        `<span style="color:rgb(255, 98, 0); display: inline;">${highlightedText}</span>`
+      );
+      
+      // Start pause
+      setIsPaused(true);
+      
+      // After 3 seconds, reset and start over
+      setTimeout(() => {
+        setCurrentIndex(0);
+        setHeadingText('');
+        setIsPaused(false);
+      }, 3000);
+    }
+  };
+  
+  // Set interval for the letter animation
+  const letterAnimationInterval = setInterval(animateHeading, 150);
+  
+  // Clean up interval
+  return () => clearInterval(letterAnimationInterval);
+}, [currentIndex, isPaused, mainText, highlightedText, fullHeading]);
 
   // Handle scroll animations without using observer
   useEffect(() => {
@@ -144,7 +150,7 @@ const LandingPage = () => {
           // Use display: inline-block to ensure text stays on same line
           setHeadingText(
             mainText + 
-            `<span style="color: #FF7A00; display: inline;">${highlightedText.substring(0, highlightedIndex)}</span>`
+            `<span style="color: rgb(255, 98, 0); display: inline;">${highlightedText.substring(0, highlightedIndex)}</span>`
           );
         }
         
@@ -222,7 +228,7 @@ const LandingPage = () => {
       <nav className="flex justify-between items-center p-6 relative z-10">
         <div className="flex items-center">
           <img 
-            src="/logo.png" 
+            src="/logonew.png" 
             alt="FindMySpot Logo" 
             className="h-20 mr-2 -ml-10" 
           />
@@ -234,14 +240,14 @@ const LandingPage = () => {
           <a href="#how-it-works" className="hover:text-yellow-500" style={{ transition: "color 0.3s" }} onClick={handleHowItWorksClick}>How It Works</a>
           
           <button style={{ 
-              backgroundColor: "#FF7A00", 
+              backgroundColor: "rgb(255, 98, 0)", 
               padding: "0.5rem 1.5rem", 
               borderRadius: "9999px", 
               fontWeight: "500",
               transition: "background-color 0.3s"
             }}
             onMouseOver={(e) => e.target.style.backgroundColor = "#E56E00"}
-            onMouseOut={(e) => e.target.style.backgroundColor = "#FF7A00"}
+            onMouseOut={(e) => e.target.style.backgroundColor = "rgb(255, 98, 0)"}
             onClick={handleLoginClick}
           >
             Login
@@ -267,7 +273,7 @@ const LandingPage = () => {
           </p>
           <div className="flex flex-wrap gap-4">
             <button style={{ 
-                backgroundColor: "#FF7A00", 
+                backgroundColor: "rgb(255, 98, 0)", 
                 padding: "0.75rem 2rem", 
                 borderRadius: "9999px", 
                 fontWeight: "500",
@@ -279,7 +285,7 @@ const LandingPage = () => {
                 e.target.style.boxShadow = "0 10px 15px -3px rgba(255, 122, 0, 0.3)";
               }}
               onMouseOut={(e) => {
-                e.target.style.backgroundColor = "#FF7A00";
+                e.target.style.backgroundColor = "rgb(255, 98, 0)";
                 e.target.style.boxShadow = "none";
               }}
               onClick={handleLoginClickk}
@@ -287,8 +293,8 @@ const LandingPage = () => {
               Get Started
             </button>
             <button style={{ 
-                border: "2px solid #FF7A00", 
-                color: "#FF7A00",
+                border: "2px solid rgb(255, 98, 0)", 
+                color: "rgb(255, 98, 0)",
                 padding: "0.75rem 2rem", 
                 borderRadius: "9999px", 
                 fontWeight: "500",
@@ -296,12 +302,12 @@ const LandingPage = () => {
                 transition: "all 0.3s"
               }}
               onMouseOver={(e) => {
-                e.target.style.backgroundColor = "#FF7A00";
+                e.target.style.backgroundColor = "rgb(255, 98, 0)";
                 e.target.style.color = "white";
               }}
               onMouseOut={(e) => {
                 e.target.style.backgroundColor = "transparent";
-                e.target.style.color = "#FF7A00";
+                e.target.style.color = "rgb(255, 98, 0)";
               }}
               onClick={handleabout}
             >
@@ -311,25 +317,31 @@ const LandingPage = () => {
         </div>
 
         {/* Animated Car and Parking Graphic */}
-        <div className="absolute right-0 bottom-0 w-1/2 h-4/5" style={{ pointerEvents: "none" }}>
-          <div style={{
-            position: "absolute",
-            transition: "all 1.5s ease-out",
-            transform: isAnimated ? 'translateX(0)' : 'translateX(8rem)',
-            opacity: isAnimated ? 1 : 0
-          }}>
-            <svg viewBox="0 0 200 200" className="w-full h-full" style={{ opacity: 0.9 }}>
-              <rect x="20" y="50" width="40" height="80" rx="4" fill="#1A365D" stroke="#FF7A00" strokeWidth="2" />
-              <rect x="70" y="50" width="40" height="80" rx="4" fill="#1A365D" stroke="#FF7A00" strokeWidth="2" />
-              <rect x="120" y="50" width="40" height="80" rx="4" fill="#FF7A00" opacity="0.3" stroke="#FF7A00" strokeWidth="2" />
-              <path d="M140 150 L150 120 L170 120 L180 150 Z" fill="#0d2748" />
-              <rect x="135" y="150" width="50" height="20" rx="4" fill="#0d2748" />
-              <circle cx="145" cy="170" r="8" fill="#555" />
-              <circle cx="175" cy="170" r="8" fill="#555" />
-              <rect x="150" y="130" width="20" height="10" fill="#7DD3FC" />
-            </svg>
-          </div>
-        </div>
+       {/* Replace the SVG with your image */}
+<div className="absolute right-0 bottom-0 w-1/2 h-5/6" style={{ pointerEvents: "none" }}>
+  <div style={{
+    position: "absolute",
+    transition: "all 1.5s ease-out",
+    transform: isAnimated ? 'translateX(0)' : 'translateX(8rem)',
+    opacity: isAnimated ? 1 : 0,
+    width: "100%",
+    height: "100%",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center"
+  }}>
+    {/* Replace "/your-image-path.jpg" with the actual path to your image */}
+    <img 
+      src="/land.png" 
+      alt="FindMySpot Illustration" 
+      style={{
+        maxWidth: "100%",
+        maxHeight: "100%",
+        objectFit: "contain"
+      }}
+    />
+  </div>
+</div>
       </div>
 
       {/* Features Section */}
@@ -337,7 +349,7 @@ const LandingPage = () => {
         
         <div className="container mx-auto px-6">
           <h2 className="text-3xl font-bold mb-12 text-center">
-            Features That Make Parking <span style={{ color: "#FF7A00" }}>Effortless</span>
+            Features That Make Parking <span style={{ color: "rgb(255, 98, 0)" }}>Effortless</span>
           </h2>
           
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "2rem" }}>
@@ -384,7 +396,7 @@ const LandingPage = () => {
                   display: "inline-block",
                   marginBottom: "1rem"
                 }}>
-                  <svg viewBox="0 0 24 24" className="h-8 w-8" style={{ color: "#FF7A00" }} fill="currentColor">
+                  <svg viewBox="0 0 24 24" className="h-8 w-8" style={{ color: "rgb(255, 98, 0)" }} fill="currentColor">
                     <path d={feature.icon} />
                   </svg>
                 </div>
@@ -400,7 +412,7 @@ const LandingPage = () => {
       <div id="how-it-works" ref={howItWorksRef} style={{ padding: "5rem 0" }}>
         <div className="container mx-auto px-6">
           <h2 className="text-3xl font-bold mb-12 text-center">
-            How <span style={{ color: "#FF7A00" }}>FindMySpot</span> Works
+            How <span style={{ color: "rgb(255, 98, 0)" }}>FindMySpot</span> Works
           </h2>
           
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "2rem" }}>
@@ -457,14 +469,14 @@ const LandingPage = () => {
                     justifyContent: "center",
                     position: "relative"
                   }}>
-                    <svg viewBox="0 0 24 24" className="h-8 w-8 floating-icon" style={{ color: "#FF7A00" }} fill="currentColor">
+                    <svg viewBox="0 0 24 24" className="h-8 w-8 floating-icon" style={{ color: "rgb(255, 98, 0)" }} fill="currentColor">
                       <path d={item.icon} />
                     </svg>
                     <div className="step-number" style={{ 
                       position: "absolute", 
                       top: "-0.5rem", 
                       right: "-0.5rem", 
-                      backgroundColor: "#FF7A00", 
+                      backgroundColor: "rgb(255, 98, 0)", 
                       color: "white", 
                       height: "1.5rem", 
                       width: "1.5rem", 
@@ -494,7 +506,7 @@ const LandingPage = () => {
             Join thousands of drivers who save time and avoid parking stress every day.
           </p>
           <button style={{ 
-              backgroundColor: "#FF7A00", 
+              backgroundColor: "rgb(255, 98, 0)", 
               padding: "0.75rem 2rem", 
               borderRadius: "9999px", 
               fontWeight: "500",
@@ -506,7 +518,7 @@ const LandingPage = () => {
               e.target.style.boxShadow = "0 10px 15px -3px rgba(255, 122, 0, 0.3)";
             }}
             onMouseOut={(e) => {
-              e.target.style.backgroundColor = "#FF7A00";
+              e.target.style.backgroundColor = "rgb(255, 98, 0)";
               e.target.style.boxShadow = "none";
             }}
             onClick={handleLoginClickk}
@@ -524,7 +536,7 @@ const LandingPage = () => {
             Turn your unused parking space into income. Register your spot for betterment of everyone.
           </p>
           <button style={{ 
-              backgroundColor: "#FF7A00", 
+              backgroundColor: "rgb(255, 98, 0)", 
               padding: "0.75rem 2rem", 
               borderRadius: "9999px", 
               fontWeight: "500",
@@ -536,7 +548,7 @@ const LandingPage = () => {
               e.target.style.boxShadow = "0 10px 15px -3px rgba(255, 122, 0, 0.3)";
             }}
             onMouseOut={(e) => {
-              e.target.style.backgroundColor = "#FF7A00";
+              e.target.style.backgroundColor = "rgb(255, 98, 0)";
               e.target.style.boxShadow = "none";
             }}
             onClick={handlelister}
@@ -556,7 +568,7 @@ const LandingPage = () => {
           }}>
             <div className="mb-6">
               <div className="flex items-center mb-4">
-                <svg viewBox="0 0 24 24" className="h-8 w-8 mr-2" style={{ color: "#FF7A00" }} fill="currentColor">
+                <svg viewBox="0 0 24 24" className="h-8 w-8 mr-2" style={{ color: "rgb(255, 98, 0)" }} fill="currentColor">
                   <path d="M12 2C7.58 2 4 5.58 4 10c0 5.25 7 12 8 12s8-6.75 8-12c0-4.42-3.58-8-8-8zm0 11c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z" />
                 </svg>
                 <span className="text-2xl font-bold">FindMySpot</span>
