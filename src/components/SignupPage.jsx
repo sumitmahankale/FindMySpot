@@ -202,7 +202,7 @@ const SignupPage = () => {
 
         <div className="signup-image-container animate-slide-right">
           <img
-            src="/Welcome.png"
+            src="/signupnew.png"
             alt="Signup illustration"
             className="signup-image"
           />

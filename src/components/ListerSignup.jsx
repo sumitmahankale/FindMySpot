@@ -271,7 +271,7 @@ const ListerSignupPage = () => {
 
         <div className="signup-image-container animate-slide-right">
           <img
-            src="/wel.png"
+            src="/welcomenew.png"
             alt="Signup illustration"
             className="signup-image"
           />
