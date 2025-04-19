@@ -10,19 +10,21 @@ const ListerLoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  const showSuccessAlert = (message) => {
-    Swal.fire({
-      title: 'Success!',
-      text: message,
-      icon: 'success',
-      confirmButtonText: 'Continue',
-      confirmButtonColor: 'var(--medium-blue)',
-      timer: 3000,
-      timerProgressBar: true
-    }).then(() => {
-      navigate('/Listerdashboard');
-    });
-  };
+  // Replace the showSuccessAlert function
+const showSuccessAlert = (message) => {
+  Swal.fire({
+    title: 'Success!',
+    text: message,
+    icon: 'success',
+    confirmButtonText: 'Continue',
+    confirmButtonColor: 'var(--medium-blue)',
+    timer: 3000,
+    timerProgressBar: true
+  }).then(() => {
+    // Use window.location.href instead of navigate()
+    window.location.href = '/Listerdashboard';
+  });
+};
 
   const showErrorAlert = (message) => {
     Swal.fire({

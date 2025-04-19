@@ -328,7 +328,8 @@ useEffect(() => {
     height: "100%",
     display: "flex",
     justifyContent: "center",
-    alignItems: "center"
+    alignItems: "center",
+     top: "-50px"
   }}>
     {/* Replace "/your-image-path.jpg" with the actual path to your image */}
     <img 

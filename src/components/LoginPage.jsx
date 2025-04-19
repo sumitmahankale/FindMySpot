@@ -9,23 +9,22 @@ const LoginPage = () => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-
-  // Modify the showSuccessAlert function
+// Modify the showSuccessAlert function
 const showSuccessAlert = (message) => {
   Swal.fire({
     title: 'Success!',
     text: message,
     icon: 'success',
     confirmButtonText: 'Continue',
-    confirmButtonColor: 'var(--medium-blue)', // Keep this green or change as needed
-    timer: 2000, // Keep the 2-second timer for auto-redirect
+    confirmButtonColor: 'var(--medium-blue)',
+    timer: 2000,
     timerProgressBar: true,
-    // You can customize colors here
-    background: '#f8f9fa', // Light background
-    iconColor: '#4CAF50', // Green icon
+    background: '#f8f9fa',
+    iconColor: '#4CAF50',
   }).then(() => {
-    // Keep the navigation logic
-    navigate('/parking');
+    // Instead of just navigating, reload the page with the new URL
+    window.location.href = '/userdashboard';
+    // This is different from navigate() as it causes a full page reload
   });
 };
 

@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import { MapPin, Phone, User, Calendar, Info, X, Clock } from 'lucide-react';
+import { useNavigate } from 'react-router-dom'; // Add this import
 import axios from 'axios';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -22,6 +23,7 @@ const ParkingFinderPage = () => {
   const [mapCenter, setMapCenter] = useState([18.5204, 73.8567]); // Pune default
   const [lastAdded, setLastAdded] = useState(null);
   const mapRef = useRef(null);
+  const navigate = useNavigate(); // Add this hook
   
   // Fetch parking spaces from the backend
   const fetchParkingSpaces = async () => {
@@ -78,6 +80,23 @@ const ParkingFinderPage = () => {
         duration: 1.5
       });
     }
+  };
+
+  // Handle booking button click
+  const handleBooking = (parkingSpace) => {
+    // Check if user is logged in
+    const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+    
+    if (!isAuthenticated) {
+      // Redirect to login page with return URL
+      navigate('/login', { state: { from: '/booking', parkingSpace: JSON.stringify(parkingSpace) } });
+    } else {
+      // User is logged in, redirect to booking page with parking space info
+      navigate('/booking', { state: { parkingSpace } });
+    }
+    
+    // Close the details modal
+    setShowDetails(false);
   };
   
   // Custom icons for regular and selected markers
@@ -303,7 +322,7 @@ const ParkingFinderPage = () => {
                 </div>
               )}
               
-              <div className="mt-6 pt-4 border-t grid grid-cols-2 gap-3">
+              <div className="mt-6 pt-4 border-t grid grid-cols-3 gap-3">
                 <a 
                   href={`https://www.google.com/maps/dir/?api=1&destination=${selectedListing.lat},${selectedListing.lng}`}
                   target="_blank"
@@ -311,8 +330,15 @@ const ParkingFinderPage = () => {
                   className="bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 text-center flex items-center justify-center"
                 >
                   <MapPin className="w-4 h-4 mr-1" />
-                  Get Directions
+                  Directions
                 </a>
+                <button 
+                  className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
+                  onClick={() => handleBooking(selectedListing)}
+                >
+                  <Calendar className="w-4 h-4 mr-1" />
+                  Book
+                </button>
                 <button 
                   className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
                   onClick={closeDetails}
