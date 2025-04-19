@@ -2,10 +2,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import { MapPin, Phone, User, Calendar, Info, X, Clock } from 'lucide-react';
-import { useNavigate } from 'react-router-dom'; // Add this import
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import AutocompleteSearch from './AutoCompleteSearch'; // Import the AutocompleteSearch component
 
 // Fix for Leaflet marker icons in React
 delete L.Icon.Default.prototype._getIconUrl;
@@ -22,8 +23,11 @@ const ParkingFinderPage = () => {
   const [newListingNotification, setNewListingNotification] = useState(false);
   const [mapCenter, setMapCenter] = useState([18.5204, 73.8567]); // Pune default
   const [lastAdded, setLastAdded] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [searchResults, setSearchResults] = useState(null);
+  const [selectedLocation, setSelectedLocation] = useState(null);
   const mapRef = useRef(null);
-  const navigate = useNavigate(); // Add this hook
+  const navigate = useNavigate();
   
   // Fetch parking spaces from the backend
   const fetchParkingSpaces = async () => {
@@ -82,6 +86,73 @@ const ParkingFinderPage = () => {
     }
   };
 
+  // Handle location selection from AutocompleteSearch
+  const handleLocationSelect = (location) => {
+    setSelectedLocation(location);
+    
+    if (location && location.lat && location.lng) {
+      // Update map center to the selected location
+      setMapCenter([location.lat, location.lng]);
+      
+      // If map reference is available, fly to the location
+      if (mapRef.current) {
+        mapRef.current.flyTo([location.lat, location.lng], 15, {
+          duration: 1.5
+        });
+      }
+    }
+  };
+
+  // Handle search
+  const handleSearch = async () => {
+    if (!selectedLocation) {
+      return;
+    }
+    
+    setIsLoading(true);
+    
+    try {
+      // Use coordinates from selected location for search with a fixed radius
+      const response = await axios.get(`http://localhost:5000/api/search-parking`, {
+        params: {
+          lat: selectedLocation.lat,
+          lng: selectedLocation.lng,
+          radius: 5 // Fixed radius of 5km
+        }
+      });
+      
+      setSearchResults(response.data);
+      
+      // If results found, update the displayed spaces
+      if (response.data.length > 0) {
+        // Center map on first result
+        if (mapRef.current) {
+          mapRef.current.flyTo([response.data[0].lat, response.data[0].lng], 14, {
+            duration: 1.5
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error searching parking spaces:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Automatically search when location changes
+  useEffect(() => {
+    if (selectedLocation) {
+      handleSearch();
+    }
+  }, [selectedLocation]);
+  
+  // Reset search
+  const resetSearch = () => {
+    setSelectedLocation(null);
+    setSearchResults(null);
+    fetchParkingSpaces();
+  };
+
   // Handle booking button click
   const handleBooking = (parkingSpace) => {
     // Check if user is logged in
@@ -125,11 +196,31 @@ const ParkingFinderPage = () => {
     setShowDetails(false);
   };
 
+  // Determine which spaces to display
+  const displayedSpaces = searchResults || spaces;
+
   return (
     <div className="w-full max-w-6xl mx-auto p-4 bg-white shadow-xl rounded-xl">
       <div className="border-b pb-4 mb-6">
         <h1 className="text-2xl font-bold text-blue-800">Find Available Parking</h1>
         <p className="text-gray-600">Discover parking spaces in Pune</p>
+      </div>
+
+      {/* Search Form with Autocomplete - Z-index fixed */}
+      <div className="mb-6 relative" style={{ zIndex: 1000 }}>
+        <AutocompleteSearch onLocationSelect={handleLocationSelect} />
+        
+        {searchResults && (
+          <div className="mt-2 flex justify-end">
+            <button
+              type="button"
+              onClick={resetSearch}
+              className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-md text-sm"
+            >
+              Clear Results
+            </button>
+          </div>
+        )}
       </div>
 
       {newListingNotification && (
@@ -138,9 +229,22 @@ const ParkingFinderPage = () => {
         </div>
       )}
 
+      {isLoading && (
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 text-blue-700 rounded-lg flex items-center">
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500 mr-3"></div>
+          <span>Searching for parking spaces...</span>
+        </div>
+      )}
+
+      {searchResults && !isLoading && (
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 text-blue-700 rounded-lg">
+          Found {searchResults.length} parking spaces near "{selectedLocation?.location}"
+        </div>
+      )}
+
       <div className="relative">
-        {/* Map Display */}
-        <div className="mb-6 relative">
+        {/* Map Display - Z-index fixed */}
+        <div className="mb-6 relative" style={{ zIndex: 1 }}>
           <div className="h-96 rounded-lg overflow-hidden shadow-md border-2 border-blue-200">
             <MapContainer 
               center={mapCenter} 
@@ -153,8 +257,32 @@ const ParkingFinderPage = () => {
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
               
+              {/* Current search location marker */}
+              {selectedLocation && (
+                <Marker 
+                  position={[selectedLocation.lat, selectedLocation.lng]}
+                  icon={new L.Icon({
+                    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+                    iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [1, -34],
+                    shadowSize: [41, 41],
+                    className: 'search-location-marker' // For custom styling
+                  })}
+                >
+                  <Popup>
+                    <div className="text-sm">
+                      <div className="font-bold">Search Location</div>
+                      <div>{selectedLocation.location}</div>
+                    </div>
+                  </Popup>
+                </Marker>
+              )}
+              
               {/* Parking spot markers */}
-              {spaces.map(spot => (
+              {displayedSpaces.map(spot => (
                 <Marker 
                   key={spot.id}
                   position={[spot.lat, spot.lng]}
@@ -190,69 +318,82 @@ const ParkingFinderPage = () => {
         {/* Available Spaces List */}
         <div className="bg-gray-50 p-4 rounded-lg shadow-md">
           <h2 className="text-xl font-semibold mb-4 text-blue-800">
-            Available Parking Spaces ({spaces.length})
+            Available Parking Spaces {isLoading ? 
+              <span className="text-sm font-normal text-blue-600">(Loading...)</span> : 
+              `(${displayedSpaces.length})`
+            }
           </h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {spaces.map(space => (
-              <div 
-                key={space.id} 
-                className={`bg-white p-4 rounded-lg shadow transition-all duration-200 hover:shadow-lg cursor-pointer ${
-                  selectedListing && selectedListing.id === space.id ? 'ring-2 ring-blue-500' : ''
-                } ${lastAdded && lastAdded.id === space.id ? 'ring-2 ring-green-500' : ''}`}
-                onClick={() => handleMarkerClick(space)}
-              >
-                <h3 className="font-semibold text-lg text-blue-700">{space.location}</h3>
-                {lastAdded && lastAdded.id === space.id && (
-                  <div className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded inline-block mb-2">
-                    New
-                  </div>
-                )}
-                
-                <div className="mt-2 space-y-1 text-sm">
-                  <div className="flex items-center text-gray-600">
-                    <div className="w-4 h-4 mr-1 flex items-center justify-center text-green-600">
-                      <span className="text-green-600 font-semibold">₹</span>
+          {isLoading ? (
+            <div className="flex justify-center items-center py-8">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {displayedSpaces.map(space => (
+                  <div 
+                    key={space.id} 
+                    className={`bg-white p-4 rounded-lg shadow transition-all duration-200 hover:shadow-lg cursor-pointer ${
+                      selectedListing && selectedListing.id === space.id ? 'ring-2 ring-blue-500' : ''
+                    } ${lastAdded && lastAdded.id === space.id ? 'ring-2 ring-green-500' : ''}`}
+                    onClick={() => handleMarkerClick(space)}
+                  >
+                    <h3 className="font-semibold text-lg text-blue-700">{space.location}</h3>
+                    {lastAdded && lastAdded.id === space.id && (
+                      <div className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded inline-block mb-2">
+                        New
+                      </div>
+                    )}
+                    
+                    <div className="mt-2 space-y-1 text-sm">
+                      <div className="flex items-center text-gray-600">
+                        <div className="w-4 h-4 mr-1 flex items-center justify-center text-green-600">
+                          <span className="text-green-600 font-semibold">₹</span>
+                        </div>
+                        <span>{space.price}</span>
+                      </div>
+                      
+                      <div className="flex items-center text-gray-600">
+                        <Clock className="w-4 h-4 mr-1 text-orange-500" />
+                        <span>{space.availability}</span>
+                      </div>
+                      
+                      <div className="flex items-center text-gray-600 text-xs mt-1">
+                        <MapPin className="w-3 h-3 mr-1 text-blue-600" />
+                        <span>
+                          {space.lat.toFixed(4)}, {space.lng.toFixed(4)}
+                        </span>
+                      </div>
                     </div>
-                    <span>{space.price}</span>
+                    
+                    <button 
+                      className="mt-3 text-blue-600 text-sm flex items-center hover:text-blue-800"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleMarkerClick(space);
+                      }}
+                    >
+                      <Info className="w-4 h-4 mr-1" />
+                      View Details
+                    </button>
                   </div>
-                  
-                  <div className="flex items-center text-gray-600">
-                    <Clock className="w-4 h-4 mr-1 text-orange-500" />
-                    <span>{space.availability}</span>
-                  </div>
-                  
-                  <div className="flex items-center text-gray-600 text-xs mt-1">
-                    <MapPin className="w-3 h-3 mr-1 text-blue-600" />
-                    <span>
-                      {space.lat.toFixed(4)}, {space.lng.toFixed(4)}
-                    </span>
-                  </div>
-                </div>
-                
-                <button 
-                  className="mt-3 text-blue-600 text-sm flex items-center hover:text-blue-800"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleMarkerClick(space);
-                  }}
-                >
-                  <Info className="w-4 h-4 mr-1" />
-                  View Details
-                </button>
+                ))}
               </div>
-            ))}
-          </div>
-          
-          {spaces.length === 0 && (
-            <p className="text-gray-500 text-center py-4">No parking spaces available yet.</p>
+              
+              {displayedSpaces.length === 0 && (
+                <p className="text-gray-500 text-center py-4">
+                  {searchResults ? 'No results found. Try a different location.' : 'No parking spaces available yet.'}
+                </p>
+              )}
+            </>
           )}
         </div>
       </div>
       
       {/* Detail Modal - Fixed z-index issue */}
       {showDetails && selectedListing && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50" style={{ zIndex: 9999 }}>
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center" style={{ zIndex: 9999 }}>
           <div className="bg-white rounded-lg max-w-md w-full p-6 m-4 shadow-2xl transform transition-all duration-300 ease-in-out scale-100" style={{ position: 'relative' }}>
             <div className="flex justify-between items-start">
               <h2 className="text-xl font-bold text-blue-800">{selectedListing.location}</h2>
