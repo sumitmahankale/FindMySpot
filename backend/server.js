@@ -922,3 +922,386 @@ app.put('/api/admin/queries/:queryId', authenticateToken, async (req, res) => {
     res.status(500).json({ error: 'Failed to update query', details: error.message });
   }
 });
+// Location suggestions endpoint
+app.get('/api/location-suggestions', async (req, res) => {
+  try {
+    const { query } = req.query;
+    
+    if (!query || query.length < 2) {
+      return res.json([]);
+    }
+    
+    // Search for locations that match the query
+    const spaces = await ParkingSpace.findAll({
+      where: {
+        location: {
+          [Sequelize.Op.like]: `%${query}%`
+        },
+        isActive: true
+      },
+      attributes: ['id', 'location', 'lat', 'lng'],
+      limit: 8, // Limit the number of suggestions
+      order: [
+        [Sequelize.literal(`CASE WHEN location LIKE '${query}%' THEN 1 ELSE 2 END`), 'ASC'], // Prioritize matches at the start
+        ['location', 'ASC']
+      ]
+    });
+    
+    // Create unique locations (to avoid duplicates)
+    const uniqueLocations = [];
+    const seen = new Set();
+    
+    spaces.forEach(space => {
+      // Create a key based on location name to ensure uniqueness
+      const key = space.location.toLowerCase();
+      if (!seen.has(key)) {
+        seen.add(key);
+        uniqueLocations.push({
+          id: space.id,
+          location: space.location,
+          lat: space.lat,
+          lng: space.lng
+        });
+      }
+    });
+    
+    res.json(uniqueLocations);
+  } catch (error) {
+    console.error('Error fetching location suggestions:', error);
+    res.status(500).json({ error: 'Failed to fetch location suggestions' });
+  }
+});
+// Define Booking model
+const Booking = sequelize.define('Booking', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  bookingDate: {
+    type: DataTypes.DATE,
+    allowNull: false
+  },
+  startTime: {
+    type: DataTypes.TIME,
+    allowNull: false
+  },
+  endTime: {
+    type: DataTypes.TIME,
+    allowNull: false
+  },
+  status: {
+    type: DataTypes.ENUM('pending', 'confirmed', 'completed', 'cancelled'),
+    defaultValue: 'pending'
+  },
+  totalAmount: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false
+  },
+  paymentStatus: {
+    type: DataTypes.ENUM('pending', 'paid', 'refunded'),
+    defaultValue: 'pending'
+  },
+  vehicleInfo: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  notes: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  userId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'Users',
+      key: 'id'
+    }
+  },
+  parkingSpaceId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'ParkingSpaces',
+      key: 'id'
+    }
+  },
+  listerId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'Listers',
+      key: 'id'
+    }
+  }
+});
+
+// Define relationships
+User.hasMany(Booking, { foreignKey: 'userId' });
+Booking.belongsTo(User, { foreignKey: 'userId' });
+
+ParkingSpace.hasMany(Booking, { foreignKey: 'parkingSpaceId' });
+Booking.belongsTo(ParkingSpace, { foreignKey: 'parkingSpaceId' });
+
+Lister.hasMany(Booking, { foreignKey: 'listerId' });
+Booking.belongsTo(Lister, { foreignKey: 'listerId' });
+
+// Create a new booking
+app.post('/api/bookings', authenticateToken, async (req, res) => {
+  try {
+    const { 
+      parkingSpaceId, 
+      bookingDate, 
+      startTime, 
+      endTime, 
+      totalAmount, 
+      vehicleInfo, 
+      notes 
+    } = req.body;
+    
+    // Get the authenticated user ID
+    const userId = req.user.id;
+    
+    // Find the parking space to get the lister ID
+    const parkingSpace = await ParkingSpace.findByPk(parkingSpaceId);
+    if (!parkingSpace) {
+      return res.status(404).json({ error: 'Parking space not found' });
+    }
+    
+    // Create booking with all three IDs: user, parking space, and lister
+    const booking = await Booking.create({
+      bookingDate,
+      startTime,
+      endTime,
+      totalAmount,
+      vehicleInfo,
+      notes,
+      userId,
+      parkingSpaceId,
+      listerId: parkingSpace.listerId
+    });
+    
+    res.status(201).json(booking);
+  } catch (error) {
+    console.error('Error creating booking:', error);
+    res.status(500).json({ error: 'Failed to create booking', details: error.message });
+  }
+});
+
+// Get bookings for a user
+app.get('/api/user/bookings', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    const bookings = await Booking.findAll({
+      where: { userId },
+      include: [
+        {
+          model: ParkingSpace,
+          attributes: ['id', 'location', 'price', 'lat', 'lng']
+        },
+        {
+          model: Lister,
+          attributes: ['id', 'fullName', 'businessName', 'phone', 'email']
+        }
+      ],
+      order: [['bookingDate', 'DESC']]
+    });
+    
+    res.json(bookings);
+  } catch (error) {
+    console.error('Error fetching user bookings:', error);
+    res.status(500).json({ error: 'Failed to fetch bookings' });
+  }
+});
+
+// Get bookings for a lister
+app.get('/api/lister/bookings', authenticateToken, async (req, res) => {
+  try {
+    const listerId = req.user.id;
+    
+    // Verify the user is a lister
+    if (req.user.role !== 'lister') {
+      return res.status(403).json({ error: 'Unauthorized access to lister bookings' });
+    }
+    
+    const bookings = await Booking.findAll({
+      where: { listerId },
+      include: [
+        {
+          model: User,
+          attributes: ['id', 'fullName', 'email']
+        },
+        {
+          model: ParkingSpace,
+          attributes: ['id', 'location', 'price']
+        }
+      ],
+      order: [['bookingDate', 'DESC']]
+    });
+    
+    res.json(bookings);
+  } catch (error) {
+    console.error('Error fetching lister bookings:', error);
+    res.status(500).json({ error: 'Failed to fetch bookings' });
+  }
+});
+
+// Update booking status (for lister or admin)
+app.put('/api/bookings/:id/status', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    
+    // Find the booking
+    const booking = await Booking.findByPk(id);
+    if (!booking) {
+      return res.status(404).json({ error: 'Booking not found' });
+    }
+    
+    // Verify the user is authorized (lister of this booking or admin)
+    if (req.user.id !== booking.listerId && req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized to update this booking' });
+    }
+    
+    // Update booking status
+    await booking.update({ status });
+    
+    res.json({ message: 'Booking status updated successfully', booking });
+  } catch (error) {
+    console.error('Error updating booking status:', error);
+    res.status(500).json({ error: 'Failed to update booking status' });
+  }
+});
+
+// Cancel a booking (for user)
+app.put('/api/bookings/:id/cancel', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Find the booking
+    const booking = await Booking.findByPk(id);
+    if (!booking) {
+      return res.status(404).json({ error: 'Booking not found' });
+    }
+    
+    // Verify the user is authorized (user who made this booking)
+    if (req.user.id !== booking.userId) {
+      return res.status(403).json({ error: 'Unauthorized to cancel this booking' });
+    }
+    
+    // Check if booking is already completed
+    if (booking.status === 'completed') {
+      return res.status(400).json({ error: 'Cannot cancel a completed booking' });
+    }
+    
+    // Update booking status to cancelled
+    await booking.update({ 
+      status: 'cancelled',
+      paymentStatus: booking.paymentStatus === 'paid' ? 'refunded' : 'pending'
+    });
+    
+    res.json({ message: 'Booking cancelled successfully', booking });
+  } catch (error) {
+    console.error('Error cancelling booking:', error);
+    res.status(500).json({ error: 'Failed to cancel booking' });
+  }
+});
+
+// Check parking space availability for a given date and time range
+app.get('/api/parking-spaces/:id/availability', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { date, startTime, endTime } = req.query;
+    
+    if (!date || !startTime || !endTime) {
+      return res.status(400).json({ error: 'Date, start time, and end time are required' });
+    }
+    
+    // Find conflicting bookings
+    const conflictingBookings = await Booking.findAll({
+      where: {
+        parkingSpaceId: id,
+        bookingDate: date,
+        status: {
+          [Sequelize.Op.notIn]: ['cancelled']
+        },
+        [Sequelize.Op.or]: [
+          {
+            // New booking starts during an existing booking
+            [Sequelize.Op.and]: [
+              { startTime: { [Sequelize.Op.lte]: endTime } },
+              { endTime: { [Sequelize.Op.gt]: startTime } }
+            ]
+          },
+          {
+            // New booking ends during an existing booking
+            [Sequelize.Op.and]: [
+              { startTime: { [Sequelize.Op.lt]: endTime } },
+              { endTime: { [Sequelize.Op.gte]: startTime } }
+            ]
+          }
+        ]
+      }
+    });
+    
+    
+  } catch (error) {
+    console.error('Error checking availability:', error);
+    res.status(500).json({ error: 'Failed to check availability' });
+  }
+});
+// Check parking space availability for a given date and time range
+app.get('/api/parking-spaces/:id/availability', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { date, startTime, endTime } = req.query;
+    
+    if (!date || !startTime || !endTime) {
+      return res.status(400).json({ error: 'Date, start time, and end time are required' });
+    }
+    
+    // Find conflicting bookings
+    const conflictingBookings = await Booking.findAll({
+      where: {
+        parkingSpaceId: id,
+        bookingDate: date,
+        status: {
+          [Sequelize.Op.notIn]: ['cancelled']
+        },
+        [Sequelize.Op.or]: [
+          // Case 1: New booking completely contains an existing booking
+          {
+            startTime: { [Sequelize.Op.gte]: startTime },
+            endTime: { [Sequelize.Op.lte]: endTime }
+          },
+          // Case 2: New booking starts during an existing booking
+          {
+            startTime: { [Sequelize.Op.lt]: startTime },
+            endTime: { [Sequelize.Op.gt]: startTime }
+          },
+          // Case 3: New booking ends during an existing booking
+          {
+            startTime: { [Sequelize.Op.lt]: endTime },
+            endTime: { [Sequelize.Op.gt]: endTime }
+          },
+          // Case 4: New booking is completely contained within an existing booking
+          {
+            startTime: { [Sequelize.Op.lte]: startTime },
+            endTime: { [Sequelize.Op.gte]: endTime }
+          }
+        ]
+      }
+    });
+    
+    const available = conflictingBookings.length === 0;
+    
+    res.json({ 
+      available, 
+      conflictCount: conflictingBookings.length 
+    });
+  } catch (error) {
+    console.error('Error checking availability:', error);
+    res.status(500).json({ error: 'Failed to check availability' });
+  }
+});
