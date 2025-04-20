@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Calendar, Clock, MapPin, AlertCircle, CheckCircle, XCircle, User, Phone, Download } from 'lucide-react';
+import { Calendar, Clock, MapPin, AlertCircle, CheckCircle, XCircle, User, Phone, Download, RefreshCw } from 'lucide-react';
 import Swal from 'sweetalert2';
 
 const UserBookingsPage = () => {
@@ -11,35 +11,66 @@ const UserBookingsPage = () => {
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [generatingTicket, setGeneratingTicket] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const modalRef = useRef(null);
 
   // Fetch user bookings
-  useEffect(() => {
-    const fetchBookings = async () => {
-      const token = localStorage.getItem('token');
-     
-      if (!token) {
-        setError('Authentication required');
-        setLoading(false);
-        return;
-      }
-      
-      try {
-        const response = await axios.get('http://localhost:5000/api/user/bookings', {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        
-        setBookings(response.data);
-        setLoading(false);
-      } catch (err) {
-        console.error('Error fetching bookings:', err);
-        setError(err.response?.data?.error || 'Failed to fetch bookings');
-        setLoading(false);
-      }
-    };
+  const fetchBookings = async () => {
+    const token = localStorage.getItem('token');
+   
+    if (!token) {
+      setError('Authentication required');
+      setLoading(false);
+      return;
+    }
     
+    try {
+      setRefreshing(true);
+      const response = await axios.get('http://localhost:5000/api/user/bookings', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      
+      setBookings(response.data);
+      setLoading(false);
+      
+      // Show success message when refreshing (not on initial load)
+      if (refreshing) {
+        Swal.fire({
+          title: 'Updated!',
+          text: 'Booking information refreshed',
+          icon: 'success',
+          timer: 1500,
+          showConfirmButton: false
+        });
+      }
+    } catch (err) {
+      console.error('Error fetching bookings:', err);
+      setError(err.response?.data?.error || 'Failed to fetch bookings');
+      setLoading(false);
+      
+      if (refreshing) {
+        Swal.fire({
+          title: 'Error',
+          text: 'Failed to refresh booking information',
+          icon: 'error',
+          timer: 2000,
+          showConfirmButton: false
+        });
+      }
+    } finally {
+      setRefreshing(false);
+    }
+  };
+  
+  // Handle refresh button click
+  const handleRefresh = () => {
+    fetchBookings();
+  };
+
+  // Initial fetch on component mount
+  useEffect(() => {
     fetchBookings();
   }, []);
 
@@ -88,14 +119,8 @@ const UserBookingsPage = () => {
             }
           });
           
-          // Update bookings in state
-          setBookings(prevBookings => 
-            prevBookings.map(booking => 
-              booking.id === bookingId 
-                ? { ...booking, status: 'cancelled', paymentStatus: booking.paymentStatus === 'paid' ? 'refunded' : 'pending' }
-                : booking
-            )
-          );
+          // Refresh bookings instead of just updating state
+          fetchBookings();
           
           Swal.fire(
             'Cancelled!',
@@ -109,7 +134,6 @@ const UserBookingsPage = () => {
             err.response?.data?.error || 'Failed to cancel booking',
             'error'
           );
-        } finally {
           setLoading(false);
         }
       }
@@ -261,12 +285,26 @@ ${booking.notes ? `NOTES: ${booking.notes}` : ''}
 
   return (
     <div className="w-full max-w-6xl mx-auto p-4 bg-white shadow-xl rounded-xl animate-fadeIn">
-      <div className="border-b pb-4 mb-6">
-        <h1 className="text-2xl font-bold text-blue-800">My Bookings</h1>
-        <p className="text-gray-600">Manage your parking reservations</p>
+      <div className="border-b pb-4 mb-6 flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold text-blue-800">My Bookings</h1>
+          <p className="text-gray-600">Manage your parking reservations</p>
+        </div>
+        
+        {/* Refresh Button */}
+        <button
+          onClick={handleRefresh}
+          disabled={loading || refreshing}
+          className={`flex items-center px-4 py-2 rounded-lg ${
+            refreshing ? 'bg-blue-200' : 'bg-blue-600 hover:bg-blue-700'
+          } text-white transition-colors`}
+        >
+          <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+          {refreshing ? 'Refreshing...' : 'Refresh'}
+        </button>
       </div>
 
-      {loading ? (
+      {loading && !refreshing ? (
         <div className="flex justify-center items-center py-20">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
         </div>
@@ -321,100 +359,108 @@ ${booking.notes ? `NOTES: ${booking.notes}` : ''}
             </button>
           </div>
 
-          {/* Bookings List */}
-          {filteredBookings.length === 0 ? (
-            <div className="text-center py-10 bg-gray-50 rounded-lg">
-              <Calendar className="mx-auto w-10 h-10 text-gray-400 mb-3" />
-              <h3 className="text-xl font-medium text-gray-600">No bookings found</h3>
-              <p className="text-gray-500 mt-1">
-                {filter === 'all' 
-                  ? "You haven't made any bookings yet" 
-                  : `You don't have any ${filter} bookings`}
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {filteredBookings.map(booking => {
-                const statusBadge = getStatusBadge(booking.status);
-                const paymentBadge = getPaymentBadge(booking.paymentStatus);
-                
-                return (
-                  <div 
-                    key={booking.id} 
-                    className="bg-white border rounded-lg shadow-sm hover:shadow-md transition-shadow p-4"
-                  >
-                    <div className="flex flex-col md:flex-row justify-between">
-                      <div className="mb-3 md:mb-0">
-                        <div className="flex items-center mb-2">
-                          <h3 className="text-lg font-medium text-blue-800">
-                            {booking.ParkingSpace?.location || 'Unknown Location'}
-                          </h3>
-                          <span className={`ml-3 px-3 py-1 rounded-full text-xs flex items-center ${statusBadge.bg} ${statusBadge.text}`}>
-                            {statusBadge.icon}
-                            {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
-                          </span>
-                        </div>
-                        
-                        <div className="text-sm space-y-1 text-gray-600">
-                          <div className="flex items-center">
-                            <Calendar className="w-4 h-4 mr-2" />
-                            <span>{formatDate(booking.bookingDate)}</span>
+          {/* Bookings List with Loading Overlay for Refresh */}
+          <div className="relative">
+            {refreshing && (
+              <div className="absolute inset-0 bg-white bg-opacity-60 flex items-center justify-center z-10 rounded-lg">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div>
+              </div>
+            )}
+            
+            {filteredBookings.length === 0 ? (
+              <div className="text-center py-10 bg-gray-50 rounded-lg">
+                <Calendar className="mx-auto w-10 h-10 text-gray-400 mb-3" />
+                <h3 className="text-xl font-medium text-gray-600">No bookings found</h3>
+                <p className="text-gray-500 mt-1">
+                  {filter === 'all' 
+                    ? "You haven't made any bookings yet" 
+                    : `You don't have any ${filter} bookings`}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {filteredBookings.map(booking => {
+                  const statusBadge = getStatusBadge(booking.status);
+                  const paymentBadge = getPaymentBadge(booking.paymentStatus);
+                  
+                  return (
+                    <div 
+                      key={booking.id} 
+                      className="bg-white border rounded-lg shadow-sm hover:shadow-md transition-shadow p-4"
+                    >
+                      <div className="flex flex-col md:flex-row justify-between">
+                        <div className="mb-3 md:mb-0">
+                          <div className="flex items-center mb-2">
+                            <h3 className="text-lg font-medium text-blue-800">
+                              {booking.ParkingSpace?.location || 'Unknown Location'}
+                            </h3>
+                            <span className={`ml-3 px-3 py-1 rounded-full text-xs flex items-center ${statusBadge.bg} ${statusBadge.text}`}>
+                              {statusBadge.icon}
+                              {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                            </span>
                           </div>
-                          <div className="flex items-center">
-                            <Clock className="w-4 h-4 mr-2" />
-                            <span>{formatTime(booking.startTime)} - {formatTime(booking.endTime)}</span>
-                          </div>
-                          {booking.ParkingSpace && (
+                          
+                          <div className="text-sm space-y-1 text-gray-600">
                             <div className="flex items-center">
-                              <MapPin className="w-4 h-4 mr-2" />
-                              <span>
-                                {booking.ParkingSpace.location}
-                              </span>
+                              <Calendar className="w-4 h-4 mr-2" />
+                              <span>{formatDate(booking.bookingDate)}</span>
                             </div>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <div className="flex flex-col items-end">
-                        <div className="text-lg font-semibold text-green-700">₹{booking.totalAmount}</div>
-                        <div className={`mt-1 px-2 py-1 rounded text-xs ${paymentBadge.bg} ${paymentBadge.text}`}>
-                          {booking.paymentStatus.charAt(0).toUpperCase() + booking.paymentStatus.slice(1)}
+                            <div className="flex items-center">
+                              <Clock className="w-4 h-4 mr-2" />
+                              <span>{formatTime(booking.startTime)} - {formatTime(booking.endTime)}</span>
+                            </div>
+                            {booking.ParkingSpace && (
+                              <div className="flex items-center">
+                                <MapPin className="w-4 h-4 mr-2" />
+                                <span>
+                                  {booking.ParkingSpace.location}
+                                </span>
+                              </div>
+                            )}
+                          </div>
                         </div>
                         
-                        <div className="mt-3 flex space-x-2">
-                          <button 
-                            onClick={() => handleViewDetails(booking)}
-                            className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
-                          >
-                            Details
-                          </button>
+                        <div className="flex flex-col items-end">
+                          <div className="text-lg font-semibold text-green-700">₹{booking.totalAmount}</div>
+                          <div className={`mt-1 px-2 py-1 rounded text-xs ${paymentBadge.bg} ${paymentBadge.text}`}>
+                            {booking.paymentStatus.charAt(0).toUpperCase() + booking.paymentStatus.slice(1)}
+                          </div>
                           
-                          <button 
-                            onClick={() => downloadTicket(booking)}
-                            className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors flex items-center"
-                            disabled={generatingTicket}
-                          >
-                            <Download className="w-3 h-3 mr-1" />
-                            Ticket
-                          </button>
-                          
-                          {booking.status === 'pending' || booking.status === 'confirmed' ? (
+                          <div className="mt-3 flex space-x-2">
                             <button 
-                              onClick={() => handleCancelBooking(booking.id)}
-                              className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors"
-                              disabled={loading}
+                              onClick={() => handleViewDetails(booking)}
+                              className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
                             >
-                              Cancel
+                              Details
                             </button>
-                          ) : null}
+                            
+                            <button 
+                              onClick={() => downloadTicket(booking)}
+                              className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors flex items-center"
+                              disabled={generatingTicket}
+                            >
+                              <Download className="w-3 h-3 mr-1" />
+                              Ticket
+                            </button>
+                            
+                            {booking.status === 'pending' || booking.status === 'confirmed' ? (
+                              <button 
+                                onClick={() => handleCancelBooking(booking.id)}
+                                className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors"
+                                disabled={loading || refreshing}
+                              >
+                                Cancel
+                              </button>
+                            ) : null}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </>
       )}
 
