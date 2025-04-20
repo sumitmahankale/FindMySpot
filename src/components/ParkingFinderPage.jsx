@@ -474,12 +474,16 @@ const ParkingFinderPage = () => {
                   Directions
                 </a>
                 <button 
-                  className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
-                  onClick={() => handleBooking(selectedListing)}
-                >
-                  <Calendar className="w-4 h-4 mr-1" />
-                  Book
-                </button>
+  className="text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
+  style={{ 
+    backgroundColor: 'rgb(255, 98, 0)', 
+    ":hover": { backgroundColor: 'rgb(204, 78, 0)' } 
+  }}
+  onClick={() => handleBooking(selectedListing)}
+>
+  <Calendar className="w-4 h-4 mr-1" />
+  Book
+</button>
                 <button 
                   className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
                   onClick={closeDetails}

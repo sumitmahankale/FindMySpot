@@ -8,39 +8,46 @@ const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
-// Modify the showSuccessAlert function
-const showSuccessAlert = (message) => {
-  Swal.fire({
-    title: 'Success!',
-    text: message,
-    icon: 'success',
-    confirmButtonText: 'Continue',
-    confirmButtonColor: 'var(--medium-blue)',
-    timer: 2000,
-    timerProgressBar: true,
-    background: '#f8f9fa',
-    iconColor: '#4CAF50',
-  }).then(() => {
-    // Instead of just navigating, reload the page with the new URL
-    window.location.href = '/userdashboard';
-    // This is different from navigate() as it causes a full page reload
-  });
-};
 
-// Modify the showErrorAlert function
-const showErrorAlert = (message) => {
-  Swal.fire({
-    title: 'Error!',
-    text: message,
-    icon: 'error',
-    confirmButtonText: 'Try Again',
-    confirmButtonColor: '#f44336', // You can change this red color if needed
-    // Add more custom styling
-    background: '#f8f9fa', // Light background
-    iconColor: '#f44336', // Red icon
-  });
-};
+  // Toggle password visibility
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
+  // Modify the showSuccessAlert function
+  const showSuccessAlert = (message) => {
+    Swal.fire({
+      title: 'Success!',
+      text: message,
+      icon: 'success',
+      confirmButtonText: 'Continue',
+      confirmButtonColor: 'var(--medium-blue)',
+      timer: 2000,
+      timerProgressBar: true,
+      background: '#f8f9fa',
+      iconColor: '#4CAF50',
+    }).then(() => {
+      // Instead of just navigating, reload the page with the new URL
+      window.location.href = '/userdashboard';
+      // This is different from navigate() as it causes a full page reload
+    });
+  };
+
+  // Modify the showErrorAlert function
+  const showErrorAlert = (message) => {
+    Swal.fire({
+      title: 'Error!',
+      text: message,
+      icon: 'error',
+      confirmButtonText: 'Try Again',
+      confirmButtonColor: '#f44336', // You can change this red color if needed
+      // Add more custom styling
+      background: '#f8f9fa', // Light background
+      iconColor: '#f44336', // Red icon
+    });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -113,15 +120,35 @@ const showErrorAlert = (message) => {
 
             <div className="form-group">
               <label htmlFor="password">Password</label>
-              <input
-                className="input-focus-effect"
-                type="password"
-                id="password"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
+              <div className="password-input-container">
+                <input
+                  className="input-focus-effect"
+                  type={showPassword ? "text" : "password"}
+                  id="password"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+                <button 
+                  type="button" 
+                  className="password-toggle-button"
+                  onClick={togglePasswordVisibility}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? (
+                    <svg className="eye-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" />
+                      <line x1="1" y1="1" x2="23" y2="23" />
+                    </svg>
+                  ) : (
+                    <svg className="eye-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  )}
+                </button>
+              </div>
             </div>
 
             <div className="form-options">
