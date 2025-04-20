@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Calendar, Clock, MapPin, AlertCircle, CheckCircle, XCircle, User, Phone } from 'lucide-react';
+import { Calendar, Clock, MapPin, AlertCircle, CheckCircle, XCircle, User, Phone, Download } from 'lucide-react';
 import Swal from 'sweetalert2';
 
 const UserBookingsPage = () => {
@@ -10,6 +10,8 @@ const UserBookingsPage = () => {
   const [filter, setFilter] = useState('all'); // 'all', 'pending', 'confirmed', 'completed', 'cancelled'
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [generatingTicket, setGeneratingTicket] = useState(false);
+  const modalRef = useRef(null);
 
   // Fetch user bookings
   useEffect(() => {
@@ -40,6 +42,23 @@ const UserBookingsPage = () => {
     
     fetchBookings();
   }, []);
+
+  // Add click outside handler for modal
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (modalRef.current && !modalRef.current.contains(event.target)) {
+        closeModal();
+      }
+    };
+
+    if (showModal) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showModal]);
 
   // Filter bookings based on status
   const filteredBookings = filter === 'all' 
@@ -106,32 +125,108 @@ const UserBookingsPage = () => {
   // Close modal
   const closeModal = () => {
     setShowModal(false);
-    setSelectedBooking(null);
+    setTimeout(() => {
+      setSelectedBooking(null);
+    }, 300); // Wait for animation to finish
+  };
+
+  // Download ticket function
+  const downloadTicket = (booking) => {
+    setGeneratingTicket(true);
+    
+    setTimeout(() => {
+      try {
+        // Create the ticket content
+        const ticketContent = `
+PARKING TICKET
+------------------------------------------
+BOOKING ID: ${booking.id}
+STATUS: ${booking.status.toUpperCase()}
+------------------------------------------
+DATE: ${formatDate(booking.bookingDate)}
+TIME: ${formatTime(booking.startTime)} - ${formatTime(booking.endTime)}
+------------------------------------------
+LOCATION: ${booking.ParkingSpace?.location || 'N/A'}
+AMOUNT PAID: ₹${booking.totalAmount}
+PAYMENT STATUS: ${booking.paymentStatus.toUpperCase()}
+------------------------------------------
+VEHICLE: ${booking.vehicleInfo || 'N/A'}
+------------------------------------------
+${booking.Lister ? `OWNER: ${booking.Lister.fullName}
+CONTACT: ${booking.Lister.phone || 'N/A'}` : 'OWNER INFORMATION NOT AVAILABLE'}
+------------------------------------------
+${booking.notes ? `NOTES: ${booking.notes}` : ''}
+        `;
+        
+        // Create a blob
+        const blob = new Blob([ticketContent], { type: 'text/plain' });
+        
+        // Create a download link
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `parking-ticket-${booking.id}.txt`;
+        
+        // Trigger the download
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Show success message
+        Swal.fire({
+          title: 'Success!',
+          text: 'Ticket downloaded successfully',
+          icon: 'success',
+          timer: 2000,
+          showConfirmButton: false
+        });
+      } catch (err) {
+        console.error('Error downloading ticket:', err);
+        Swal.fire(
+          'Error',
+          'Failed to download ticket',
+          'error'
+        );
+      } finally {
+        setGeneratingTicket(false);
+      }
+    }, 500); // Simulate processing time
   };
 
   // Format date for display
   const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      weekday: 'short', 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
-    });
+    if (!dateString) return 'N/A';
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', { 
+        weekday: 'short', 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric' 
+      });
+    } catch (err) {
+      console.error('Error formatting date:', err);
+      return 'Invalid date';
+    }
   };
 
   // Format time for display
   const formatTime = (timeString) => {
-    // Handle if timeString is just a time (like "14:30:00") or a full datetime string
-    if (timeString.includes('T')) {
-      const date = new Date(timeString);
-      return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-    } else {
-      const [hours, minutes] = timeString.split(':');
-      const date = new Date();
-      date.setHours(parseInt(hours, 10));
-      date.setMinutes(parseInt(minutes, 10));
-      return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    if (!timeString) return 'N/A';
+    try {
+      // Handle if timeString is just a time (like "14:30:00") or a full datetime string
+      if (timeString.includes('T')) {
+        const date = new Date(timeString);
+        return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+      } else {
+        const [hours, minutes] = timeString.split(':');
+        const date = new Date();
+        date.setHours(parseInt(hours, 10));
+        date.setMinutes(parseInt(minutes, 10));
+        return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+      }
+    } catch (err) {
+      console.error('Error formatting time:', err);
+      return 'Invalid time';
     }
   };
 
@@ -294,6 +389,15 @@ const UserBookingsPage = () => {
                             Details
                           </button>
                           
+                          <button 
+                            onClick={() => downloadTicket(booking)}
+                            className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors flex items-center"
+                            disabled={generatingTicket}
+                          >
+                            <Download className="w-3 h-3 mr-1" />
+                            Ticket
+                          </button>
+                          
                           {booking.status === 'pending' || booking.status === 'confirmed' ? (
                             <button 
                               onClick={() => handleCancelBooking(booking.id)}
@@ -314,207 +418,211 @@ const UserBookingsPage = () => {
         </>
       )}
 
-      {/* Booking Details Modal */}
-      {showModal && selectedBooking && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white p-4 border-b flex justify-between items-center">
-              <h2 className="text-xl font-bold text-blue-800">Booking Details</h2>
+      {/* Booking Details Modal - Reduced size */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 animate-fadeIn">
+          <div 
+            ref={modalRef}
+            className="bg-white rounded-lg w-full max-w-md max-h-[70vh] overflow-y-auto animate-scaleIn"
+          >
+            <div className="sticky top-0 bg-white p-3 border-b flex justify-between items-center">
+              <h2 className="text-lg font-bold text-blue-800">Booking Details</h2>
               <button 
                 onClick={closeModal}
                 className="text-gray-500 hover:text-gray-700"
               >
-                <XCircle className="h-6 w-6" />
+                <XCircle className="h-5 w-5" />
               </button>
             </div>
             
-            <div className="p-6">
-              {/* Status */}
-              <div className="mb-6">
-                {selectedBooking.status === 'pending' && (
-                  <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
-                    <div className="flex">
-                      <AlertCircle className="h-5 w-5 text-yellow-400 mr-2" />
-                      <div>
-                        <p className="font-medium text-yellow-800">Pending Confirmation</p>
-                        <p className="text-sm text-yellow-700">Your booking is waiting for the owner's confirmation.</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                {selectedBooking.status === 'confirmed' && (
-                  <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-4">
-                    <div className="flex">
-                      <CheckCircle className="h-5 w-5 text-blue-400 mr-2" />
-                      <div>
-                        <p className="font-medium text-blue-800">Booking Confirmed</p>
-                        <p className="text-sm text-blue-700">Your parking space is reserved for the selected date and time.</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                {selectedBooking.status === 'completed' && (
-                  <div className="bg-green-50 border-l-4 border-green-400 p-4 mb-4">
-                    <div className="flex">
-                      <CheckCircle className="h-5 w-5 text-green-400 mr-2" />
-                      <div>
-                        <p className="font-medium text-green-800">Booking Completed</p>
-                        <p className="text-sm text-green-700">This booking has been successfully completed.</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                {selectedBooking.status === 'cancelled' && (
-                  <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
-                    <div className="flex">
-                      <XCircle className="h-5 w-5 text-red-400 mr-2" />
-                      <div>
-                        <p className="font-medium text-red-800">Booking Cancelled</p>
-                        <p className="text-sm text-red-700">This booking has been cancelled.</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Booking Information */}
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h3 className="text-lg font-medium mb-3 text-blue-800">Booking Information</h3>
-                  
-                  <div className="space-y-3">
-                    <div>
-                      <p className="text-sm text-gray-500">Booking ID</p>
-                      <p className="font-medium">{selectedBooking.id}</p>
-                    </div>
-                    
-                    <div>
-                      <p className="text-sm text-gray-500">Date</p>
-                      <p className="font-medium">{formatDate(selectedBooking.bookingDate)}</p>
-                    </div>
-                    
-                    <div>
-                      <p className="text-sm text-gray-500">Time</p>
-                      <p className="font-medium">{formatTime(selectedBooking.startTime)} - {formatTime(selectedBooking.endTime)}</p>
-                    </div>
-                    
-                    <div>
-                      <p className="text-sm text-gray-500">Payment</p>
+            {selectedBooking && (
+              <div className="p-3">
+                {/* Status - Made more compact */}
+                <div className="mb-4">
+                  {selectedBooking.status === 'pending' && (
+                    <div className="bg-yellow-50 border-l-4 border-yellow-400 p-2 mb-3">
                       <div className="flex items-center">
-                        <p className="font-medium mr-2">₹{selectedBooking.totalAmount}</p>
-                        <span className={`px-2 py-1 rounded text-xs ${getPaymentBadge(selectedBooking.paymentStatus).bg} ${getPaymentBadge(selectedBooking.paymentStatus).text}`}>
-                          {selectedBooking.paymentStatus.charAt(0).toUpperCase() + selectedBooking.paymentStatus.slice(1)}
-                        </span>
+                        <AlertCircle className="h-4 w-4 text-yellow-400 mr-2" />
+                        <p className="font-medium text-yellow-800 text-sm">Waiting for confirmation</p>
                       </div>
                     </div>
-                    
-                    {selectedBooking.vehicleInfo && (
-                      <div>
-                        <p className="text-sm text-gray-500">Vehicle Information</p>
-                        <p className="font-medium">{selectedBooking.vehicleInfo}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                
-                {/* Parking Space Information */}
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h3 className="text-lg font-medium mb-3 text-blue-800">Parking Space Details</h3>
+                  )}
                   
-                  {selectedBooking.ParkingSpace ? (
-                    <div className="space-y-3">
-                      <div>
-                        <p className="text-sm text-gray-500">Location</p>
-                        <p className="font-medium">{selectedBooking.ParkingSpace.location}</p>
-                      </div>
-                      
-                      {selectedBooking.ParkingSpace.lat && selectedBooking.ParkingSpace.lng && (
-                        <div>
-                          <p className="text-sm text-gray-500">Coordinates</p>
-                          <p className="font-medium">
-                            {selectedBooking.ParkingSpace.lat.toFixed(4)}, {selectedBooking.ParkingSpace.lng.toFixed(4)}
-                          </p>
-                        </div>
-                      )}
-                      
-                      <div>
-                        <p className="text-sm text-gray-500">Price per hour</p>
-                        <p className="font-medium">₹{selectedBooking.ParkingSpace.price}</p>
+                  {selectedBooking.status === 'confirmed' && (
+                    <div className="bg-blue-50 border-l-4 border-blue-400 p-2 mb-3">
+                      <div className="flex items-center">
+                        <CheckCircle className="h-4 w-4 text-blue-400 mr-2" />
+                        <p className="font-medium text-blue-800 text-sm">Space confirmed</p>
                       </div>
                     </div>
-                  ) : (
-                    <p className="text-gray-500">Parking space details not available</p>
+                  )}
+                  
+                  {selectedBooking.status === 'completed' && (
+                    <div className="bg-green-50 border-l-4 border-green-400 p-2 mb-3">
+                      <div className="flex items-center">
+                        <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
+                        <p className="font-medium text-green-800 text-sm">Booking completed</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {selectedBooking.status === 'cancelled' && (
+                    <div className="bg-red-50 border-l-4 border-red-400 p-2 mb-3">
+                      <div className="flex items-center">
+                        <XCircle className="h-4 w-4 text-red-400 mr-2" />
+                        <p className="font-medium text-red-800 text-sm">Booking cancelled</p>
+                      </div>
+                    </div>
                   )}
                 </div>
-              </div>
-              
-              {/* Owner Information */}
-              {selectedBooking.Lister && (
-                <div className="mt-6 bg-gray-50 p-4 rounded-lg">
-                  <h3 className="text-lg font-medium mb-3 text-blue-800">Owner Information</h3>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-500">Name</p>
-                      <div className="flex items-center">
-                        <User className="w-4 h-4 mr-2 text-gray-400" />
-                        <p className="font-medium">{selectedBooking.Lister.fullName}</p>
-                      </div>
-                    </div>
+                
+                <div className="space-y-4">
+                  {/* Booking Information - More compact layout */}
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <h3 className="text-sm font-bold text-blue-800 mb-2">Booking Info</h3>
                     
-                    {selectedBooking.Lister.businessName && (
+                    <div className="grid grid-cols-2 gap-2 text-sm">
                       <div>
-                        <p className="text-sm text-gray-500">Business</p>
-                        <p className="font-medium">{selectedBooking.Lister.businessName}</p>
+                        <p className="text-xs text-gray-500">Booking ID</p>
+                        <p className="font-medium">{selectedBooking.id}</p>
                       </div>
-                    )}
-                    
-                    {selectedBooking.Lister.phone && (
+                      
                       <div>
-                        <p className="text-sm text-gray-500">Contact</p>
+                        <p className="text-xs text-gray-500">Date</p>
+                        <p className="font-medium">{formatDate(selectedBooking.bookingDate)}</p>
+                      </div>
+                      
+                      <div>
+                        <p className="text-xs text-gray-500">Time</p>
+                        <p className="font-medium">{formatTime(selectedBooking.startTime)} - {formatTime(selectedBooking.endTime)}</p>
+                      </div>
+                      
+                      <div>
+                        <p className="text-xs text-gray-500">Payment</p>
                         <div className="flex items-center">
-                          <Phone className="w-4 h-4 mr-2 text-gray-400" />
-                          <p className="font-medium">{selectedBooking.Lister.phone}</p>
+                          <p className="font-medium mr-1">₹{selectedBooking.totalAmount}</p>
+                          <span className={`px-1 py-0.5 rounded text-xs ${getPaymentBadge(selectedBooking.paymentStatus).bg} ${getPaymentBadge(selectedBooking.paymentStatus).text}`}>
+                            {selectedBooking.paymentStatus.charAt(0).toUpperCase() + selectedBooking.paymentStatus.slice(1)}
+                          </span>
                         </div>
                       </div>
+                      
+                      {selectedBooking.vehicleInfo && (
+                        <div className="col-span-2">
+                          <p className="text-xs text-gray-500">Vehicle</p>
+                          <p className="font-medium">{selectedBooking.vehicleInfo}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Parking Space Information */}
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <h3 className="text-sm font-bold text-blue-800 mb-2">Parking Details</h3>
+                    
+                    {selectedBooking.ParkingSpace ? (
+                      <div className="text-sm">
+                        <div className="mb-1">
+                          <p className="text-xs text-gray-500">Location</p>
+                          <p className="font-medium">{selectedBooking.ParkingSpace.location}</p>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-2">
+                          {selectedBooking.ParkingSpace.lat && selectedBooking.ParkingSpace.lng && (
+                            <div>
+                              <p className="text-xs text-gray-500">Coordinates</p>
+                              <p className="font-medium">
+                                {selectedBooking.ParkingSpace.lat.toFixed(4)}, {selectedBooking.ParkingSpace.lng.toFixed(4)}
+                              </p>
+                            </div>
+                          )}
+                          
+                          <div>
+                            <p className="text-xs text-gray-500">Price/hour</p>
+                            <p className="font-medium">₹{selectedBooking.ParkingSpace.price}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-gray-500 text-sm">Details not available</p>
                     )}
                   </div>
+                  
+                  {/* Owner Information - More compact */}
+                  {selectedBooking.Lister && (
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <h3 className="text-sm font-bold text-blue-800 mb-2">Owner Info</h3>
+                      
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div>
+                          <p className="text-xs text-gray-500">Name</p>
+                          <div className="flex items-center">
+                            <User className="w-3 h-3 mr-1 text-gray-400" />
+                            <p className="font-medium">{selectedBooking.Lister.fullName}</p>
+                          </div>
+                        </div>
+                        
+                        {selectedBooking.Lister.phone && (
+                          <div>
+                            <p className="text-xs text-gray-500">Contact</p>
+                            <div className="flex items-center">
+                              <Phone className="w-3 h-3 mr-1 text-gray-400" />
+                              <p className="font-medium">{selectedBooking.Lister.phone}</p>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {selectedBooking.Lister.businessName && (
+                          <div className="col-span-2">
+                            <p className="text-xs text-gray-500">Business</p>
+                            <p className="font-medium">{selectedBooking.Lister.businessName}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Notes (if any) - More compact */}
+                  {selectedBooking.notes && (
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <h3 className="text-sm font-bold text-blue-800 mb-1">Notes</h3>
+                      <p className="text-gray-700 text-sm">{selectedBooking.notes}</p>
+                    </div>
+                  )}
                 </div>
-              )}
-              
-              {/* Notes (if any) */}
-              {selectedBooking.notes && (
-                <div className="mt-6 bg-gray-50 p-4 rounded-lg">
-                  <h3 className="text-lg font-medium mb-2 text-blue-800">Notes</h3>
-                  <p className="text-gray-700">{selectedBooking.notes}</p>
-                </div>
-              )}
-              
-              {/* Actions */}
-              <div className="mt-8 flex justify-end space-x-3">
-                <button
-                  onClick={closeModal}
-                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
-                >
-                  Close
-                </button>
                 
-                {(selectedBooking.status === 'pending' || selectedBooking.status === 'confirmed') && (
-                  <button 
-                    onClick={() => {
-                      closeModal();
-                      handleCancelBooking(selectedBooking.id);
-                    }}
-                    className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                {/* Actions - Made more compact */}
+                <div className="mt-4 flex justify-end space-x-2">
+                  <button
+                    onClick={() => downloadTicket(selectedBooking)}
+                    className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors flex items-center"
+                    disabled={generatingTicket}
                   >
-                    Cancel Booking
+                    <Download className="w-3 h-3 mr-1" />
+                    Ticket
                   </button>
-                )}
+                  
+                  {(selectedBooking.status === 'pending' || selectedBooking.status === 'confirmed') && (
+                    <button 
+                      onClick={() => {
+                        closeModal();
+                        handleCancelBooking(selectedBooking.id);
+                      }}
+                      className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                  
+                  <button
+                    onClick={closeModal}
+                    className="px-3 py-1 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300 transition-colors"
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       )}
@@ -526,8 +634,17 @@ const UserBookingsPage = () => {
           to { opacity: 1; }
         }
         
+        @keyframes scaleIn {
+          from { transform: scale(0.95); opacity: 0; }
+          to { transform: scale(1); opacity: 1; }
+        }
+        
         .animate-fadeIn {
-          animation: fadeIn 0.5s ease-in-out;
+          animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        .animate-scaleIn {
+          animation: scaleIn 0.3s ease-out;
         }
       `}</style>
     </div>

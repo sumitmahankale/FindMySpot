@@ -33,7 +33,7 @@ const BookingPage = () => {
 
     // Check if parking space info is available
     if (!parkingSpace) {
-      navigate('/parking-finder');
+      navigate('/userdashbaord');
       return;
     }
 
@@ -204,7 +204,7 @@ const BookingPage = () => {
         cancelButtonText: 'Close'
       }).then((result) => {
         if (result.isConfirmed) {
-          navigate('/userdashboard/bookings');
+          navigate('/userdashboard');
         } else {
           navigate('/userdashboard');
         }
