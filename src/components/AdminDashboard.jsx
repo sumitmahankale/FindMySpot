@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Users, Map, Layout, ChevronRight, LogOut, Settings, MessageSquare } from 'lucide-react';
+import { Users, Map, Layout, ChevronRight, LogOut, Settings, MessageSquare, Database } from 'lucide-react';
 import AdminRequestsPage from './AdminRequestPage';
 import ListerDashboard from './AdminListerDashboard';
 import AdminQueryManagement from './AdminQueryManagement';
+import AdminData from './AdminData'; // Import the AdminData component
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
@@ -117,6 +118,7 @@ const AdminDashboard = () => {
             { id: 'requests', label: 'Lister Requests', Icon: Users },
             { id: 'spaces', label: 'Space Management', Icon: Map },
             { id: 'queries', label: 'Lister Queries', Icon: MessageSquare },
+            { id: 'data', label: 'Data', Icon: Database }, // New Data option
             { id: 'settings', label: 'Settings', Icon: Settings }
           ].map((item, index) => (
             <button
@@ -204,6 +206,8 @@ const AdminDashboard = () => {
               <ListerDashboard />
             ) : activeTab === 'queries' ? (
               <AdminQueryManagement />
+            ) : activeTab === 'data' ? (
+              <AdminData /> // Added AdminData component
             ) : (
               <div 
                 className="bg-white rounded-lg shadow-md p-6"
