@@ -1305,3 +1305,241 @@ app.get('/api/parking-spaces/:id/availability', async (req, res) => {
     res.status(500).json({ error: 'Failed to check availability' });
   }
 });
+// Add this to your server.js file (near the other admin endpoints)
+// Add these endpoints to your existing server.js file
+
+// Admin Dashboard stats endpoint
+app.get('/api/admin/dashboard', async (req, res) => {
+  try {
+    // Get current date for calculating monthly stats
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
+    
+    // Previous month
+    const firstDayOfPrevMonth = new Date(currentYear, currentMonth - 1, 1);
+    const lastDayOfPrevMonth = new Date(currentYear, currentMonth, 0);
+    
+    // Get user counts
+    const totalUsers = await User.count();
+    const totalListers = await Lister.count();
+    
+    // Get new users/listers this month
+    const newUsersThisMonth = await User.count({
+      where: {
+        createdAt: {
+          [Sequelize.Op.gte]: firstDayOfMonth
+        }
+      }
+    });
+    
+    const newListersThisMonth = await Lister.count({
+      where: {
+        createdAt: {
+          [Sequelize.Op.gte]: firstDayOfMonth
+        }
+      }
+    });
+    
+    // Get parking space stats
+    const totalParkingSpaces = await ParkingSpace.count();
+    const activeListings = await ParkingSpace.count({
+      where: { isActive: true }
+    });
+    
+    // Get booking stats
+    const totalBookings = await Booking.count();
+    const pendingBookings = await Booking.count({
+      where: { status: 'pending' }
+    });
+    
+    const bookingsThisMonth = await Booking.count({
+      where: {
+        createdAt: {
+          [Sequelize.Op.gte]: firstDayOfMonth
+        }
+      }
+    });
+    
+    // Get revenue this month (sum of totalAmount for confirmed/completed bookings)
+    const revenueResult = await Booking.findOne({
+      attributes: [
+        [Sequelize.fn('SUM', Sequelize.col('totalAmount')), 'total']
+      ],
+      where: {
+        createdAt: {
+          [Sequelize.Op.gte]: firstDayOfMonth
+        },
+        status: {
+          [Sequelize.Op.in]: ['confirmed', 'completed']
+        }
+      },
+      raw: true
+    });
+    
+    const revenueThisMonth = revenueResult.total ? parseFloat(revenueResult.total) : 0;
+    
+    // Get user growth over last 5 months
+    const userGrowth = [];
+    for (let i = 4; i >= 0; i--) {
+      const month = new Date(currentYear, currentMonth - i, 1);
+      const monthEnd = new Date(currentYear, currentMonth - i + 1, 0);
+      
+      const monthName = month.toLocaleString('default', { month: 'short' });
+      
+      const userCount = await User.count({
+        where: {
+          createdAt: {
+            [Sequelize.Op.lt]: monthEnd
+          }
+        }
+      });
+      
+      const listerCount = await Lister.count({
+        where: {
+          createdAt: {
+            [Sequelize.Op.lt]: monthEnd
+          }
+        }
+      });
+      
+      userGrowth.push({
+        month: monthName,
+        users: userCount,
+        listers: listerCount
+      });
+    }
+    
+    // Calculate booking trends for last 7 days
+    const bookingTrends = [];
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      date.setHours(0, 0, 0, 0);
+      
+      const nextDay = new Date(date);
+      nextDay.setDate(date.getDate() + 1);
+      
+      const dayBookings = await Booking.count({
+        where: {
+          createdAt: {
+            [Sequelize.Op.gte]: date,
+            [Sequelize.Op.lt]: nextDay
+          }
+        }
+      });
+      
+      const dayIndex = date.getDay();
+      
+      bookingTrends.push({
+        day: dayNames[dayIndex],
+        bookings: dayBookings
+      });
+    }
+    
+    // Create response object
+    const dashboardStats = {
+      users: totalUsers,
+      listers: totalListers,
+      parkingSpaces: totalParkingSpaces,
+      activeListings: activeListings,
+      totalBookings: totalBookings,
+      pendingBookings: pendingBookings,
+      newUsersThisMonth: newUsersThisMonth,
+      newListersThisMonth: newListersThisMonth,
+      bookingsThisMonth: bookingsThisMonth,
+      revenueThisMonth: revenueThisMonth,
+      userGrowth: userGrowth,
+      bookingTrends: bookingTrends
+    };
+    
+    res.json(dashboardStats);
+    
+  } catch (error) {
+    console.error('Error fetching dashboard stats:', error);
+    res.status(500).json({ error: 'Failed to retrieve dashboard statistics', details: error.message });
+  }
+});
+
+// Get recent bookings for admin dashboard
+app.get('/api/admin/recent-bookings', async (req, res) => {
+  try {
+    const recentBookings = await Booking.findAll({
+      include: [
+        {
+          model: User,
+          attributes: ['id', 'fullName', 'email']
+        },
+        {
+          model: ParkingSpace,
+          attributes: ['id', 'location', 'price']
+        },
+        {
+          model: Lister,
+          attributes: ['id', 'fullName', 'businessName']
+        }
+      ],
+      order: [['createdAt', 'DESC']],
+      limit: 10
+    });
+    
+    res.json(recentBookings);
+  } catch (error) {
+    console.error('Error fetching recent bookings:', error);
+    res.status(500).json({ error: 'Failed to fetch recent bookings' });
+  }
+});
+
+// Get recent users for admin dashboard
+app.get('/api/admin/recent-users', async (req, res) => {
+  try {
+    const recentUsers = await User.findAll({
+      attributes: ['id', 'fullName', 'email', 'createdAt'],
+      order: [['createdAt', 'DESC']],
+      limit: 10
+    });
+    
+    res.json(recentUsers);
+  } catch (error) {
+    console.error('Error fetching recent users:', error);
+    res.status(500).json({ error: 'Failed to fetch recent users' });
+  }
+});
+
+// Get recent listers for admin dashboard
+app.get('/api/admin/recent-listers', async (req, res) => {
+  try {
+    const recentListers = await Lister.findAll({
+      attributes: ['id', 'fullName', 'email', 'businessName', 'createdAt'],
+      order: [['createdAt', 'DESC']],
+      limit: 10
+    });
+    
+    res.json(recentListers);
+  } catch (error) {
+    console.error('Error fetching recent listers:', error);
+    res.status(500).json({ error: 'Failed to fetch recent listers' });
+  }
+});
+
+// Get recent parking spaces for admin dashboard
+app.get('/api/admin/recent-spaces', async (req, res) => {
+  try {
+    const recentSpaces = await ParkingSpace.findAll({
+      include: [{
+        model: Lister,
+        attributes: ['id', 'fullName', 'businessName']
+      }],
+      order: [['createdAt', 'DESC']],
+      limit: 10
+    });
+    
+    res.json(recentSpaces);
+  } catch (error) {
+    console.error('Error fetching recent spaces:', error);
+    res.status(500).json({ error: 'Failed to fetch recent parking spaces' });
+  }
+});
