@@ -21,7 +21,8 @@ import AdminDashboard from './components/AdminDashboard.jsx';
 import ListerQueryComponent from './components/ListerQuery.jsx';
 import AdminQueryManagement from './components/AdminQueryManagement.jsx';
 import UserMainDashboard from './components/UserDashboard.jsx';
-
+import UserBookingPage from './components/UserBookingPage.jsx'
+import ListerBookingManagement from './components/ListerBookingManagement.jsx';
 const router=createBrowserRouter([
   {
     path : "/Login",
@@ -106,6 +107,14 @@ const router=createBrowserRouter([
   {
     path : "userdashboard",
     element : <UserMainDashboard/>,
+  },
+  {
+    path : "userbookings",
+    element : <UserBookingPage/>,
+  },
+  {
+    path : "listerbookingmanagement",
+    element : <ListerBookingManagement/>,
   },
 ]);
 function App() {

@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Car, MessageSquare, Map, Layout, ChevronRight, Bell, LogOut, HelpCircle, AlertTriangle, Navigation } from 'lucide-react';
+import { Car, MessageSquare, Map, Layout, ChevronRight, Bell, LogOut, HelpCircle, AlertTriangle, Navigation, Calendar } from 'lucide-react';
 import ListerDashboard from './ListerDashboard';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
 import ListerQueryComponent from './ListerQuery';
+import ListerBookingManagement from './ListerBookingManagement';
 
 // Custom CSS variables
 const styles = {
@@ -249,6 +250,7 @@ const ListerMainDashboard = () => {
         <nav className="mt-6 flex-1">
           {[
             { id: 'parking', label: 'Parking Management', Icon: Car },
+            { id: 'booking', label: 'Booking Management', Icon: Calendar },
             { id: 'query', label: 'Raise Query', Icon: MessageSquare },
             { id: 'spaces', label: 'My Space Details', Icon: Map },
             { id: 'help', label: 'Help', Icon: HelpCircle }
@@ -346,6 +348,7 @@ const ListerMainDashboard = () => {
           <div className="flex items-center space-x-4 flex-1">
             <h2 className="text-xl font-semibold" style={{ color: styles.textDark }}>
               {activeTab === 'parking' ? 'Parking Management' : 
+               activeTab === 'booking' ? 'Booking Management' :
                activeTab === 'query' ? 'Raise Query' : 
                activeTab === 'spaces' ? 'My Space Details' : 'Help & Support'}
             </h2>
@@ -372,6 +375,8 @@ const ListerMainDashboard = () => {
           >
             {activeTab === 'parking' ? (
               <ListerDashboard />
+            ) : activeTab === 'booking' ? (
+              <ListerBookingManagement />
             ) : activeTab === 'query' ? (
               <ListerQueryComponent activeTab={activeTab} />
             ) : activeTab === 'spaces' ? (

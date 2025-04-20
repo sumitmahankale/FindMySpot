@@ -160,10 +160,10 @@ const ParkingFinderPage = () => {
     
     if (!isAuthenticated) {
       // Redirect to login page with return URL
-      navigate('/login', { state: { from: '/booking', parkingSpace: JSON.stringify(parkingSpace) } });
+      navigate('/login', { state: { from: '/userbookings', parkingSpace: JSON.stringify(parkingSpace) } });
     } else {
       // User is logged in, redirect to booking page with parking space info
-      navigate('/booking', { state: { parkingSpace } });
+      navigate('/userbookings', { state: { parkingSpace } });
     }
     
     // Close the details modal

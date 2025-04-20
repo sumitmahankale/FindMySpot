@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Car, Bell, LogOut, ChevronRight, Layout } from 'lucide-react';
+import { Car, Bell, LogOut, ChevronRight, Layout, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
 import ParkingFinderPage from './ParkingFinderPage'; // Import the ParkingFinderPage component
+import UserBookingsPage from './UserMyBookingPage'; // Import the UserBookingsPage component
 
 // Custom CSS variables
 const styles = {
@@ -28,7 +29,7 @@ const UserMainDashboard = () => {
   const [lastLogin, setLastLogin] = useState('Today, 10:30 AM');
   const [pageLoaded, setPageLoaded] = useState(false);
   const [hoverTimeout, setHoverTimeout] = useState(null);
-  // Removed the unused contentAnimating state
+  const [activeTab, setActiveTab] = useState('find-parking'); // Add activeTab state
   
   const sidebarRef = useRef(null);
   
@@ -159,7 +160,7 @@ const UserMainDashboard = () => {
             style={{ transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)', whiteSpace: 'nowrap' }}
           >
             <h1 className="text-xl font-bold" style={{ color: styles.textLight }}>User Dashboard</h1>
-            <p className="text-sm" style={{ color: styles.lightOrange }}>Find Parking</p>
+            <p className="text-sm" style={{ color: styles.lightOrange }}>Find & Manage Parking</p>
           </div>
           
           {isCollapsed && <Layout className="h-6 w-6" style={{ opacity: isCollapsed ? 1 : 0, transition: 'opacity 0.3s ease', color: styles.textLight }} />}
@@ -178,12 +179,13 @@ const UserMainDashboard = () => {
         </div>
 
         <nav className="mt-6 flex-1">
-          {/* Only showing ParkingFinder in the navbar */}
+          {/* Find Parking Nav Button */}
           <button
-            className={`flex items-center w-full px-6 py-4 text-left transition-all duration-300 ease-in-out`}
+            onClick={() => setActiveTab('find-parking')}
+            className={`flex items-center w-full px-6 py-4 text-left transition-all duration-300 ease-in-out ${activeTab === 'find-parking' ? 'border-l-4' : 'border-l-0'}`}
             style={{ 
-              backgroundColor: styles.mediumBlue,
-              borderLeft: `4px solid ${styles.orange}`,
+              backgroundColor: activeTab === 'find-parking' ? styles.mediumBlue : 'transparent',
+              borderColor: styles.orange,
               animation: pageLoaded ? 'slideIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards' : 'none'
             }}
           >
@@ -192,7 +194,7 @@ const UserMainDashboard = () => {
               style={{ 
                 color: styles.textLight,
                 transition: 'margin 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                filter: 'drop-shadow(0 0 3px rgba(255, 255, 255, 0.5))'
+                filter: activeTab === 'find-parking' ? 'drop-shadow(0 0 3px rgba(255, 255, 255, 0.5))' : 'none'
               }}
             />
             <span 
@@ -203,6 +205,35 @@ const UserMainDashboard = () => {
               }}
             >
               Find Parking
+            </span>
+          </button>
+
+          {/* My Bookings Nav Button */}
+          <button
+            onClick={() => setActiveTab('my-bookings')}
+            className={`flex items-center w-full px-6 py-4 text-left transition-all duration-300 ease-in-out ${activeTab === 'my-bookings' ? 'border-l-4' : 'border-l-0'}`}
+            style={{ 
+              backgroundColor: activeTab === 'my-bookings' ? styles.mediumBlue : 'transparent',
+              borderColor: styles.orange,
+              animation: pageLoaded ? 'slideIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards' : 'none'
+            }}
+          >
+            <Calendar 
+              className={`${isCollapsed ? 'mx-auto' : 'mr-3'} h-5 w-5`}
+              style={{ 
+                color: styles.textLight,
+                transition: 'margin 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                filter: activeTab === 'my-bookings' ? 'drop-shadow(0 0 3px rgba(255, 255, 255, 0.5))' : 'none'
+              }}
+            />
+            <span 
+              className={`whitespace-nowrap overflow-hidden ${isCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'}`}
+              style={{ 
+                color: styles.textLight,
+                transition: 'opacity 0.4s ease, width 0.3s cubic-bezier(0.4, 0, 0.2, 1)' 
+              }}
+            >
+              My Bookings
             </span>
           </button>
         </nav>
@@ -265,7 +296,7 @@ const UserMainDashboard = () => {
                 style={{ backgroundColor: 'white' }}>
           <div className="flex items-center space-x-4 flex-1">
             <h2 className="text-xl font-semibold" style={{ color: styles.textDark }}>
-              Find Parking
+              {activeTab === 'find-parking' ? 'Find Parking' : 'My Bookings'}
             </h2>
           </div>
           
@@ -286,8 +317,7 @@ const UserMainDashboard = () => {
         {/* Dashboard Content */}
         <div className="flex-1 overflow-y-auto p-6" style={{ backgroundColor: styles.background }}>
           <div className="transition-all duration-500 ease-in-out">
-            {/* Only show ParkingFinderPage component */}
-            <ParkingFinderPage />
+            {activeTab === 'find-parking' ? <ParkingFinderPage /> : <UserBookingsPage />}
           </div>
         </div>
       </div>
