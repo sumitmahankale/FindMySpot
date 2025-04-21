@@ -23,6 +23,7 @@ import AdminQueryManagement from './components/AdminQueryManagement.jsx';
 import UserMainDashboard from './components/UserDashboard.jsx';
 import UserBookingPage from './components/UserBookingPage.jsx'
 import ListerBookingManagement from './components/ListerBookingManagement.jsx';
+import PaymentPage from './components/PaymentPage.jsx';
 const router=createBrowserRouter([
   {
     path : "/Login",
@@ -115,6 +116,10 @@ const router=createBrowserRouter([
   {
     path : "listerbookingmanagement",
     element : <ListerBookingManagement/>,
+  },
+  {
+    path : "payment",
+    element : <PaymentPage/>,
   },
 ]);
 function App() {

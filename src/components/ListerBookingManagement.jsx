@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Clock, Calendar, User, MapPin, Car, DollarSign, CheckCircle, XCircle, FileText, ChevronDown, ChevronUp, Search } from 'lucide-react';
 import axios from 'axios';
 import Swal from 'sweetalert2';
-
+import { IndianRupee } from "lucide-react"
 const ListerBookingManagement = () => {
   const [bookings, setBookings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -338,7 +338,7 @@ const ListerBookingManagement = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <DollarSign className="h-4 w-4 text-green-500 mr-1" />
+                      <IndianRupee className="h-4 w-4 text-green-500 mr-1" />
                         <span className="text-sm font-medium">
                           ₹{parseFloat(booking.totalAmount).toFixed(2)}
                         </span>

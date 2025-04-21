@@ -237,8 +237,9 @@ useEffect(() => {
         <a href="/adminlogin" className="hover:text-yellow-500" style={{ transition: "color 0.3s" }}>Admin</a>
           <a href="#become-lister" className="hover:text-yellow-500" style={{ transition: "color 0.3s" }}>Lister </a>
           <a href="#features" className="hover:text-yellow-500" style={{ transition: "color 0.3s" }}>Features</a>
-          <a href="#how-it-works" className="hover:text-yellow-500" style={{ transition: "color 0.3s" }} onClick={handleHowItWorksClick}>How It Works</a>
           
+          <a href="#how-it-works" className="hover:text-yellow-500" style={{ transition: "color 0.3s" }} onClick={handleHowItWorksClick}>How It Works</a>
+          <a href="/about" className="hover:text-yellow-500" style={{ transition: "color 0.3s" }}>About</a>
           <button style={{ 
               backgroundColor: "rgb(255, 98, 0)", 
               padding: "0.5rem 1.5rem", 

@@ -33,7 +33,7 @@ const BookingPage = () => {
 
     // Check if parking space info is available
     if (!parkingSpace) {
-      navigate('/userdashbaord');
+      navigate('/userdashboard');
       return;
     }
 
@@ -83,7 +83,6 @@ const BookingPage = () => {
     const duration = calculateDuration();
     
     // Extract numeric price from parkingSpace.price (assuming format like "₹50/hour")
-    // FIX: Improved regex to better extract the price value
     const priceMatch = parkingSpace.price.match(/(\d+)/);
     const pricePerHour = priceMatch ? parseFloat(priceMatch[1]) : 0;
     
@@ -142,7 +141,6 @@ const BookingPage = () => {
       errors.endTime = 'End time is required';
     }
     
-    // FIX: Improved logic for time validation
     const duration = calculateDuration();
     if (duration <= 0 || startTime === endTime) {
       errors.endTime = 'End time must be after start time';
@@ -156,7 +154,7 @@ const BookingPage = () => {
     return Object.keys(errors).length === 0;
   };
 
-  // Handle form submission
+  // Handle form submission - redirect to payment page instead of directly creating a booking
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -177,54 +175,34 @@ const BookingPage = () => {
     
     setIsLoading(true);
     
-    try {
-      const token = localStorage.getItem('token');
-      
-      const bookingData = {
-        parkingSpaceId: parkingSpace.id,
-        bookingDate: formatDate(bookingDate),
-        startTime,
-        endTime,
-        totalAmount,
-        vehicleInfo,
-        notes
-      }; 
-      await axios.post('http://localhost:5000/api/bookings', bookingData, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setIsLoading(false);
-      
-      Swal.fire({
-        title: 'Booking Successful!',
-        text: 'Your parking slot has been booked',
-        icon: 'success',
-        confirmButtonText: 'View My Bookings',
-        confirmButtonColor: 'var(--medium-blue)',
-        showCancelButton: true,
-        cancelButtonText: 'Close'
-      }).then((result) => {
-        if (result.isConfirmed) {
-          navigate('/userdashboard');
-        } else {
-          navigate('/userdashboard');
-        }
-      });
-    } catch (error) {
-      setIsLoading(false);
-      
-      let errorMessage = 'Failed to create booking';
-      if (error.response && error.response.data && error.response.data.error) {
-        errorMessage = error.response.data.error;
-      }
-      
-      Swal.fire({
-        title: 'Booking Failed',
-        text: errorMessage,
-        icon: 'error',
-        confirmButtonText: 'Try Again',
-        confirmButtonColor: 'var(--medium-blue)'
-      });
-    }
+    // Create a booking data object to pass to payment page
+    const bookingData = {
+      parkingSpaceId: parkingSpace.id,
+      bookingDate: formatDate(bookingDate),
+      startTime,
+      endTime,
+      totalAmount,
+      vehicleInfo,
+      notes,
+      parkingDetails: {
+        location: parkingSpace.location,
+        price: parkingSpace.price,
+      },
+      duration: calculateDuration().toFixed(1)
+    };
+    
+    // Store booking data in localStorage to be used on payment page
+    localStorage.setItem('pendingBookingData', JSON.stringify(bookingData));
+    
+    setIsLoading(false);
+    
+    // Redirect to payment page
+    navigate('/payment', { 
+      state: { 
+        bookingData,
+        parkingSpace
+      } 
+    });
   };
 
   if (!parkingSpace) {
@@ -435,7 +413,7 @@ const BookingPage = () => {
               </div>
             )}
 
-            {/* Submit Button */}
+            {/* Submit Button - Changed to proceed to payment */}
             <div className="flex justify-end space-x-4 pt-4 border-t">
               <button
                 type="button"
@@ -459,7 +437,7 @@ const BookingPage = () => {
                     Processing...
                   </>
                 ) : (
-                  <>Confirm Booking</>
+                  <>Proceed to Payment</>
                 )}
               </button>
             </div>
