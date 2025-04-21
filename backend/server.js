@@ -1305,6 +1305,38 @@ app.get('/api/parking-spaces/:id/availability', async (req, res) => {
     res.status(500).json({ error: 'Failed to check availability' });
   }
 });
+// Add this endpoint to your Express app where the other booking routes are defined
+// Update booking payment status (for lister or admin)
+app.put('/api/bookings/:id/payment-status', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { paymentStatus } = req.body;
+    
+    // Find the booking
+    const booking = await Booking.findByPk(id);
+    if (!booking) {
+      return res.status(404).json({ error: 'Booking not found' });
+    }
+    
+    // Verify the user is authorized (lister of this booking or admin)
+    if (req.user.id !== booking.listerId && req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized to update payment status' });
+    }
+    
+    // Validate payment status
+    if (!['pending', 'paid', 'refunded'].includes(paymentStatus)) {
+      return res.status(400).json({ error: 'Invalid payment status' });
+    }
+    
+    // Update booking payment status
+    await booking.update({ paymentStatus });
+    
+    res.json({ message: 'Payment status updated successfully', booking });
+  } catch (error) {
+    console.error('Error updating payment status:', error);
+    res.status(500).json({ error: 'Failed to update payment status' });
+  }
+});
 // Add this to your server.js file (near the other admin endpoints)
 // Add these endpoints to your existing server.js file
 
