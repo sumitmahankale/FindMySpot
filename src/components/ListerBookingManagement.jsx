@@ -3,6 +3,7 @@ import { Clock, Calendar, User, MapPin, Car, DollarSign, CheckCircle, XCircle, F
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import { IndianRupee } from "lucide-react"
+
 const ListerBookingManagement = () => {
   const [bookings, setBookings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -62,6 +63,38 @@ const ListerBookingManagement = () => {
       Swal.fire({
         title: 'Error',
         text: 'Failed to update booking status. Please try again.',
+        icon: 'error',
+        confirmButtonColor: 'var(--medium-blue)'
+      });
+    }
+  };
+
+  // New function to update payment status
+  const updatePaymentStatus = async (bookingId, newPaymentStatus) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(
+        `http://localhost:5000/api/bookings/${bookingId}/payment-status`,
+        { paymentStatus: newPaymentStatus },
+        { headers: { Authorization: `Bearer ${token}` }}
+      );
+      
+      // Update local state
+      setBookings(bookings.map(booking => 
+        booking.id === bookingId ? { ...booking, paymentStatus: newPaymentStatus } : booking
+      ));
+      
+      Swal.fire({
+        title: 'Success',
+        text: `Payment status updated to ${newPaymentStatus}`,
+        icon: 'success',
+        confirmButtonColor: 'var(--medium-blue)'
+      });
+    } catch (error) {
+      console.error('Error updating payment status:', error);
+      Swal.fire({
+        title: 'Error',
+        text: 'Failed to update payment status. Please try again.',
         icon: 'error',
         confirmButtonColor: 'var(--medium-blue)'
       });
@@ -391,6 +424,46 @@ const ListerBookingManagement = () => {
                                   <div className="text-sm font-medium text-gray-700">Booking Created</div>
                                   <div className="text-sm text-gray-600">
                                     {new Date(booking.createdAt).toLocaleString()}
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              {/* Payment Status Section */}
+                              <div className="flex items-start">
+                                <DollarSign className="h-4 w-4 text-gray-500 mr-2 mt-0.5" />
+                                <div>
+                                  <div className="text-sm font-medium text-gray-700">Payment Status</div>
+                                  <div className="flex items-center mt-1 space-x-2">
+                                    <button
+                                      onClick={() => updatePaymentStatus(booking.id, 'pending')}
+                                      className={`px-2 py-1 text-xs rounded-md border transition-colors ${
+                                        booking.paymentStatus === 'pending'
+                                          ? 'bg-yellow-200 text-yellow-800 border-yellow-400'
+                                          : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
+                                      }`}
+                                    >
+                                      Pending
+                                    </button>
+                                    <button
+                                      onClick={() => updatePaymentStatus(booking.id, 'paid')}
+                                      className={`px-2 py-1 text-xs rounded-md border transition-colors ${
+                                        booking.paymentStatus === 'paid'
+                                          ? 'bg-green-200 text-green-800 border-green-400'
+                                          : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
+                                      }`}
+                                    >
+                                      Paid
+                                    </button>
+                                    <button
+                                      onClick={() => updatePaymentStatus(booking.id, 'refunded')}
+                                      className={`px-2 py-1 text-xs rounded-md border transition-colors ${
+                                        booking.paymentStatus === 'refunded'
+                                          ? 'bg-purple-200 text-purple-800 border-purple-400'
+                                          : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
+                                      }`}
+                                    >
+                                      Refunded
+                                    </button>
                                   </div>
                                 </div>
                               </div>
