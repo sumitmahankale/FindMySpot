@@ -18,6 +18,8 @@ FindMySpot is a real-time parking locator web application designed to help users
 **Database:** SQL (MySQL/PostgreSQL)  
 **Maps:** Leaflet.js with OpenStreetMap integration  
 **Authentication:** JWT-based authentication system
+
+
 ![Screenshot 2025-04-20 211506](https://github.com/user-attachments/assets/a6882685-da48-4e62-b7c5-3793b9230fac)
 ![Screenshot 2025-04-20 211651](https://github.com/user-attachments/assets/4ec64a53-5c6b-4317-9777-e2bf3ef9ddca)
 ![Screenshot 2025-04-20 212035](https://github.com/user-attachments/assets/5f8dd9d1-53f2-4a13-87e7-0922774ede2b)
