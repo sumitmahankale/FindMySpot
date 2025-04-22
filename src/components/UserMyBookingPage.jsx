@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Calendar, Clock, MapPin, AlertCircle, CheckCircle, XCircle, User, Phone, Download, RefreshCw } from 'lucide-react';
 import Swal from 'sweetalert2';
+import QRCode from 'qrcode';
 
 const UserBookingsPage = () => {
   const [bookings, setBookings] = useState([]);
@@ -154,66 +155,199 @@ const UserBookingsPage = () => {
     }, 300); // Wait for animation to finish
   };
 
-  // Download ticket function
-  const downloadTicket = (booking) => {
+  // Generate ticket data for QR code
+  const generateTicketData = (booking) => {
+    return JSON.stringify({
+      id: booking.id,
+      status: booking.status,
+      date: formatDate(booking.bookingDate),
+      time: `${formatTime(booking.startTime)} - ${formatTime(booking.endTime)}`,
+      location: booking.ParkingSpace?.location || 'N/A',
+      amount: booking.totalAmount,
+      paymentStatus: booking.paymentStatus,
+      vehicle: booking.vehicleInfo || 'N/A',
+      owner: booking.Lister ? booking.Lister.fullName : 'N/A',
+      contact: booking.Lister?.phone || 'N/A',
+      notes: booking.notes || ''
+    });
+  };
+
+  // Download ticket function with QR code
+  const downloadTicket = async (booking) => {
     setGeneratingTicket(true);
     
-    setTimeout(() => {
-      try {
-        // Create the ticket content
-        const ticketContent = `
-PARKING TICKET
-------------------------------------------
-BOOKING ID: ${booking.id}
-STATUS: ${booking.status.toUpperCase()}
-------------------------------------------
-DATE: ${formatDate(booking.bookingDate)}
-TIME: ${formatTime(booking.startTime)} - ${formatTime(booking.endTime)}
-------------------------------------------
-LOCATION: ${booking.ParkingSpace?.location || 'N/A'}
-AMOUNT PAID: ₹${booking.totalAmount}
-PAYMENT STATUS: ${booking.paymentStatus.toUpperCase()}
-------------------------------------------
-VEHICLE: ${booking.vehicleInfo || 'N/A'}
-------------------------------------------
-${booking.Lister ? `OWNER: ${booking.Lister.fullName}
-CONTACT: ${booking.Lister.phone || 'N/A'}` : 'OWNER INFORMATION NOT AVAILABLE'}
-------------------------------------------
-${booking.notes ? `NOTES: ${booking.notes}` : ''}
-        `;
-        
-        // Create a blob
-        const blob = new Blob([ticketContent], { type: 'text/plain' });
-        
-        // Create a download link
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `parking-ticket-${booking.id}.txt`;
-        
-        // Trigger the download
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        // Show success message
-        Swal.fire({
-          title: 'Success!',
-          text: 'Ticket downloaded successfully',
-          icon: 'success',
-          timer: 2000,
-          showConfirmButton: false
-        });
-      } catch (err) {
-        console.error('Error downloading ticket:', err);
-        Swal.fire(
-          'Error',
-          'Failed to download ticket',
-          'error'
-        );
-      } finally {
-        setGeneratingTicket(false);
-      }
-    }, 500); // Simulate processing time
+    try {
+      // Generate QR code for ticket data
+      const ticketData = generateTicketData(booking);
+      const qrCodeDataURL = await QRCode.toDataURL(ticketData, { 
+        width: 200,
+        margin: 2,
+        errorCorrectionLevel: 'H'
+      });
+      
+      // Create the ticket content with embedded QR code
+      const ticketHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Parking Ticket #${booking.id}</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .ticket {
+      border: 2px solid #000;
+      padding: 15px;
+      border-radius: 8px;
+    }
+    .header {
+      text-align: center;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 10px;
+      margin-bottom: 15px;
+    }
+    .ticket-info {
+      display: flex;
+      flex-wrap: wrap;
+    }
+    .info-item {
+      width: 50%;
+      margin-bottom: 10px;
+    }
+    .label {
+      font-weight: bold;
+      font-size: 12px;
+      color: #555;
+    }
+    .value {
+      font-size: 16px;
+    }
+    .qr-section {
+      text-align: center;
+      margin-top: 20px;
+      border-top: 1px solid #ccc;
+      padding-top: 15px;
+    }
+    .qr-note {
+      font-size: 12px;
+      color: #555;
+      margin-top: 8px;
+    }
+    .status-${booking.status} {
+      color: ${
+        booking.status === 'pending' ? '#f59e0b' : 
+        booking.status === 'confirmed' ? '#3b82f6' : 
+        booking.status === 'completed' ? '#10b981' : 
+        booking.status === 'cancelled' ? '#ef4444' : '#000'
+      };
+      font-weight: bold;
+    }
+    .payment-${booking.paymentStatus} {
+      color: ${
+        booking.paymentStatus === 'paid' ? '#10b981' : 
+        booking.paymentStatus === 'refunded' ? '#8b5cf6' : '#f59e0b'
+      };
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="ticket">
+    <div class="header">
+      <h1>PARKING TICKET</h1>
+      <p>Booking ID: ${booking.id}</p>
+      <p>Status: <span class="status-${booking.status}">${booking.status.toUpperCase()}</span></p>
+    </div>
+    
+    <div class="ticket-info">
+      <div class="info-item">
+        <div class="label">DATE</div>
+        <div class="value">${formatDate(booking.bookingDate)}</div>
+      </div>
+      
+      <div class="info-item">
+        <div class="label">TIME</div>
+        <div class="value">${formatTime(booking.startTime)} - ${formatTime(booking.endTime)}</div>
+      </div>
+      
+      <div class="info-item">
+        <div class="label">LOCATION</div>
+        <div class="value">${booking.ParkingSpace?.location || 'N/A'}</div>
+      </div>
+      
+      <div class="info-item">
+        <div class="label">AMOUNT PAID</div>
+        <div class="value">₹${booking.totalAmount} <span class="payment-${booking.paymentStatus}">(${booking.paymentStatus.toUpperCase()})</span></div>
+      </div>
+      
+      <div class="info-item">
+        <div class="label">VEHICLE</div>
+        <div class="value">${booking.vehicleInfo || 'N/A'}</div>
+      </div>
+      
+      ${booking.Lister ? `
+      <div class="info-item">
+        <div class="label">OWNER</div>
+        <div class="value">${booking.Lister.fullName}</div>
+      </div>
+      
+      <div class="info-item">
+        <div class="label">CONTACT</div>
+        <div class="value">${booking.Lister.phone || 'N/A'}</div>
+      </div>
+      ` : '<div class="info-item">OWNER INFORMATION NOT AVAILABLE</div>'}
+      
+      ${booking.notes ? `
+      <div class="info-item" style="width: 100%">
+        <div class="label">NOTES</div>
+        <div class="value">${booking.notes}</div>
+      </div>
+      ` : ''}
+    </div>
+    
+    <div class="qr-section">
+      <img src="${qrCodeDataURL}" alt="QR Code" />
+      <div class="qr-note">Scan this QR code to view ticket information</div>
+    </div>
+  </div>
+</body>
+</html>
+      `;
+      
+      // Convert HTML to Blob
+      const blob = new Blob([ticketHtml], { type: 'text/html' });
+      
+      // Create a download link
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `parking-ticket-${booking.id}.html`;
+      
+      // Trigger the download
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Show success message
+      Swal.fire({
+        title: 'Success!',
+        text: 'Ticket with QR code downloaded successfully',
+        icon: 'success',
+        timer: 2000,
+        showConfirmButton: false
+      });
+    } catch (err) {
+      console.error('Error downloading ticket:', err);
+      Swal.fire(
+        'Error',
+        'Failed to download ticket',
+        'error'
+      );
+    } finally {
+      setGeneratingTicket(false);
+    }
   };
 
   // Format date for display
@@ -561,7 +695,6 @@ ${booking.notes ? `NOTES: ${booking.notes}` : ''}
                       )}
                     </div>
                   </div>
-                  
                   {/* Parking Space Information */}
                   <div className="bg-gray-50 p-3 rounded-lg">
                     <h3 className="text-sm font-bold text-blue-800 mb-2">Parking Details</h3>
@@ -645,7 +778,7 @@ ${booking.notes ? `NOTES: ${booking.notes}` : ''}
                     disabled={generatingTicket}
                   >
                     <Download className="w-3 h-3 mr-1" />
-                    Ticket
+                    {generatingTicket ? 'Generating...' : 'Ticket'}
                   </button>
                   
                   {(selectedBooking.status === 'pending' || selectedBooking.status === 'confirmed') && (
