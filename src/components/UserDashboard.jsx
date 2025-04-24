@@ -3,9 +3,9 @@ import { Car, Bell, LogOut, ChevronRight, Layout, Calendar, HelpCircle } from 'l
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
-import ParkingFinderPage from './ParkingFinderPage'; // Import the ParkingFinderPage component
-import UserBookingsPage from './UserMyBookingPage'; // Import the UserBookingsPage component
-import UserQueryComponent from './UserQueryComponent'; // Import the UserQueryComponent
+import ParkingFinderPage from './ParkingFinderPage';
+import UserBookingsPage from './UserMyBookingPage';
+import UserQueryComponent from './UserQueryComponent';
 
 // Custom CSS variables
 const styles = {
@@ -19,6 +19,48 @@ const styles = {
   background: '#f9f9f9',
 };
 
+// Animation keyframes
+const keyframes = `
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateX(-15px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+  
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .fade-out {
+    animation: fadeOut 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0;
+  }
+  
+  @keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+  }
+  
+  /* Ensure transitions feel smooth */
+  * {
+    backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+`;
+
 const UserMainDashboard = () => {
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [currentUser, setCurrentUser] = useState({
@@ -30,13 +72,18 @@ const UserMainDashboard = () => {
   const [lastLogin, setLastLogin] = useState('Today, 10:30 AM');
   const [pageLoaded, setPageLoaded] = useState(false);
   const [hoverTimeout, setHoverTimeout] = useState(null);
-  const [activeTab, setActiveTab] = useState('find-parking'); // Add activeTab state
+  const [activeTab, setActiveTab] = useState('find-parking');
   
   const sidebarRef = useRef(null);
   
   const navigate = useNavigate();
   
   useEffect(() => {
+    // Add the global styles to the document once when the component mounts
+    const styleElement = document.createElement('style');
+    styleElement.innerHTML = keyframes;
+    document.head.appendChild(styleElement);
+    
     setPageLoaded(true);
     
     // Get user data from localStorage (set during login)
@@ -82,13 +129,13 @@ const UserMainDashboard = () => {
     // Update current login time in localStorage
     localStorage.setItem('lastLogin', new Date().toISOString());
     
-    // Clean up any timeout when component unmounts
+    // Clean up
     return () => {
       if (hoverTimeout) clearTimeout(hoverTimeout);
+      document.head.removeChild(styleElement);
     };
   }, [navigate, hoverTimeout]);
 
-  // Similar hover functions as in ListerDashboard
   const handleMouseEnter = () => {
     if (hoverTimeout) clearTimeout(hoverTimeout);
     setIsCollapsed(false);
@@ -97,7 +144,7 @@ const UserMainDashboard = () => {
   const handleMouseLeave = () => {
     const timeout = setTimeout(() => {
       setIsCollapsed(true);
-    }, 400); // Slightly longer delay before collapsing sidebar for smoother experience
+    }, 400);
     setHoverTimeout(timeout);
   };
 
@@ -238,7 +285,7 @@ const UserMainDashboard = () => {
             </span>
           </button>
 
-          {/* Queries Nav Button - New Addition */}
+          {/* Queries Nav Button */}
           <button
             onClick={() => setActiveTab('queries')}
             className={`flex items-center w-full px-6 py-4 text-left transition-all duration-300 ease-in-out ${activeTab === 'queries' ? 'border-l-4' : 'border-l-0'}`}
@@ -353,48 +400,6 @@ const UserMainDashboard = () => {
           </div>
         </div>
       </div>
-
-      {/* CSS Animations */}
-      <style jsx>{`
-        @keyframes slideIn {
-          from {
-            opacity: 0;
-            transform: translateX(-15px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-        
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        .fade-out {
-          animation: fadeOut 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-          opacity: 0;
-        }
-        
-        @keyframes fadeOut {
-          from { opacity: 1; }
-          to { opacity: 0; }
-        }
-        
-        /* Ensure transitions feel smooth */
-        * {
-          backface-visibility: hidden;
-          -webkit-font-smoothing: antialiased;
-          -moz-osx-font-smoothing: grayscale;
-        }
-      `}</style>
     </div>
   );
 };

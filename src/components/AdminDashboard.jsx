@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Users, Map, Layout, ChevronRight, LogOut, Settings, MessageSquare, Database } from 'lucide-react';
+import { Users, Map, Layout, ChevronRight, LogOut, Settings, MessageSquare, Database, HelpCircle } from 'lucide-react';
 import AdminRequestsPage from './AdminRequestPage';
 import ListerDashboard from './AdminListerDashboard';
 import AdminQueryManagement from './AdminQueryManagement';
-import AdminData from './AdminData'; // Import the AdminData component
+import AdminData from './AdminData'; 
+import AdminUserQuery from './AdminUserQuery'; // Import the new component
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
@@ -118,7 +119,8 @@ const AdminDashboard = () => {
             { id: 'requests', label: 'Lister Requests', Icon: Users },
             { id: 'spaces', label: 'Space Management', Icon: Map },
             { id: 'queries', label: 'Lister Queries', Icon: MessageSquare },
-            { id: 'data', label: 'Data', Icon: Database }, // New Data option
+            { id: 'userqueries', label: 'User Queries', Icon: HelpCircle }, // New user queries option
+            { id: 'data', label: 'Data', Icon: Database },
             { id: 'settings', label: 'Settings', Icon: Settings }
           ].map((item, index) => (
             <button
@@ -206,8 +208,10 @@ const AdminDashboard = () => {
               <ListerDashboard />
             ) : activeTab === 'queries' ? (
               <AdminQueryManagement />
+            ) : activeTab === 'userqueries' ? (
+              <AdminUserQuery /> // Added reference to the new component
             ) : activeTab === 'data' ? (
-              <AdminData /> // Added AdminData component
+              <AdminData />
             ) : (
               <div 
                 className="bg-white rounded-lg shadow-md p-6"

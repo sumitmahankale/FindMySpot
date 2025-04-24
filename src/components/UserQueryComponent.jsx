@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Inbox, CheckCircle, Clock, AlertCircle, Send, X, Paperclip, ChevronDown, ChevronRight, RefreshCw } from 'lucide-react';
+import { Inbox, CheckCircle, Clock, AlertCircle, Send, X, Paperclip, ChevronDown, ChevronRight, RefreshCw, ChevronLeft } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
 
@@ -22,7 +22,7 @@ const statusColors = {
   closed: { bg: '#E5E7EB', text: '#4B5563', icon: <X size={16} /> }
 };
 
-const UserQueryComponent = ({ activeTab }) => {
+const UserQueryComponent = () => {
   const [formData, setFormData] = useState({
     subject: '',
     category: 'Technical Issue',
@@ -45,10 +45,9 @@ const UserQueryComponent = ({ activeTab }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (activeTab === 'query') {
-      fetchQueries();
-    }
-  }, [activeTab]);
+    // Call fetchQueries on component mount instead of relying on activeTab
+    fetchQueries();
+  }, []);
 
   const fetchQueries = async () => {
     if (!userId || !token) {
@@ -60,6 +59,10 @@ const UserQueryComponent = ({ activeTab }) => {
     setError(null);
     
     try {
+      // Mock fetch for development/testing
+      // In a real environment, uncomment the actual fetch call
+      
+      /* 
       const response = await fetch(`http://localhost:5000/api/user/${userId}/queries`, {
         method: 'GET',
         headers: {
@@ -73,7 +76,43 @@ const UserQueryComponent = ({ activeTab }) => {
       }
 
       const data = await response.json();
-      setQueries(data);
+      */
+      
+      // Temporary mock data for testing UI
+      const mockData = [
+        {
+          id: 1,
+          subject: 'Issue with payment',
+          category: 'Payment Issue',
+          description: 'I tried to pay for my booking but the transaction failed multiple times.',
+          status: 'pending',
+          createdAt: new Date(Date.now() - 86400000).toISOString(),
+          updatedAt: new Date(Date.now() - 86400000).toISOString(),
+          adminResponse: null
+        },
+        {
+          id: 2,
+          subject: 'Cannot find my reservation',
+          category: 'Booking Problem',
+          description: 'I made a booking yesterday but it doesn\'t appear in my list. The confirmation email says booking #BK12345.',
+          status: 'in-progress',
+          createdAt: new Date(Date.now() - 172800000).toISOString(),
+          updatedAt: new Date(Date.now() - 86400000).toISOString(),
+          adminResponse: 'We are looking into this issue and will get back to you shortly.'
+        },
+        {
+          id: 3,
+          subject: 'Feature request: save favorite spots',
+          category: 'Feature Request',
+          description: 'It would be great if I could bookmark my favorite parking spots for quick access.',
+          status: 'resolved',
+          createdAt: new Date(Date.now() - 604800000).toISOString(),
+          updatedAt: new Date(Date.now() - 432000000).toISOString(),
+          adminResponse: 'Thank you for your suggestion! We\'ve added this to our development roadmap and plan to implement it in our next update.'
+        }
+      ];
+      
+      setQueries(mockData);
     } catch (err) {
       console.error('Error fetching queries:', err);
       setError(err.message || 'Error fetching your queries. Please try again.');
@@ -125,10 +164,12 @@ const UserQueryComponent = ({ activeTab }) => {
       let attachmentUrl = null;
       if (file) {
         // This is a placeholder for file upload logic
-        // attachmentUrl = await uploadFile(file);
         attachmentUrl = 'mock-url-for-file-upload';
       }
 
+      // Mock successful API call for demo
+      // In a real environment, uncomment the actual fetch call
+      /*
       const response = await fetch('http://localhost:5000/api/user/queries', {
         method: 'POST',
         headers: {
@@ -138,14 +179,15 @@ const UserQueryComponent = ({ activeTab }) => {
         body: JSON.stringify({
           ...formData,
           attachmentUrl,
-          userId // Explicitly include userId for more reliable tracking
+          userId
         })
       });
 
       if (!response.ok) {
         throw new Error('Failed to submit query');
       }
-
+      */
+      
       // Success!
       Swal.fire({
         title: 'Query Submitted!',
@@ -163,8 +205,20 @@ const UserQueryComponent = ({ activeTab }) => {
       });
       setFile(null);
       
-      // Refresh queries list
-      fetchQueries();
+      // Add the new query to the state for immediate feedback
+      const newQuery = {
+        id: Date.now(), // temporary id
+        subject: formData.subject,
+        category: formData.category,
+        description: formData.description,
+        attachmentUrl,
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        adminResponse: null
+      };
+      
+      setQueries(prev => [newQuery, ...prev]);
       
       // Switch to history view
       setViewMode('history');
@@ -541,25 +595,5 @@ const UserQueryComponent = ({ activeTab }) => {
     </div>
   );
 };
-
-// ChevronLeft component
-function ChevronLeft({ size, className }) {
-  return (
-    <svg 
-      xmlns="http://www.w3.org/2000/svg" 
-      width={size} 
-      height={size} 
-      viewBox="0 0 24 24" 
-      fill="none" 
-      stroke="currentColor" 
-      strokeWidth="2" 
-      strokeLinecap="round" 
-      strokeLinejoin="round" 
-      className={className}
-    >
-      <path d="M15 18l-6-6 6-6" />
-    </svg>
-  );
-}
 
 export default UserQueryComponent;
