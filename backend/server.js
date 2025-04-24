@@ -1575,3 +1575,154 @@ app.get('/api/admin/recent-spaces', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch recent parking spaces' });
   }
 });
+// Define UserQuery model
+const UserQuery = sequelize.define('UserQuery', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  subject: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  category: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  description: {
+    type: DataTypes.TEXT,
+    allowNull: false
+  },
+  attachmentUrl: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  status: {
+    type: DataTypes.ENUM('pending', 'in-progress', 'resolved', 'closed'),
+    defaultValue: 'pending'
+  },
+  adminResponse: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  userId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'Users',
+      key: 'id'
+    }
+  }
+}, {
+  timestamps: true // Automatically adds createdAt and updatedAt
+});
+
+// Define relationships
+User.hasMany(UserQuery, { foreignKey: 'userId' });
+UserQuery.belongsTo(User, { foreignKey: 'userId' });
+
+// Create a new query
+app.post('/api/user/queries', authenticateToken, async (req, res) => {
+  try {
+    const { subject, category, description, attachmentUrl } = req.body;
+    const userId = req.user.id;
+    
+    // Validate required fields
+    if (!subject || !category || !description) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+    
+    // Create the query
+    const newQuery = await UserQuery.create({
+      subject,
+      category,
+      description,
+      attachmentUrl,
+      userId
+    });
+    
+    res.status(201).json(newQuery);
+  } catch (error) {
+    console.error('Error creating query:', error);
+    res.status(500).json({ error: 'Failed to create query', details: error.message });
+  }
+});
+
+// Get all queries for a specific user
+app.get('/api/user/:userId/queries', authenticateToken, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    // Ensure the requesting user is authorized
+    if (req.user.id !== parseInt(userId) && req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized access' });
+    }
+    
+    const queries = await UserQuery.findAll({
+      where: { userId },
+      order: [['createdAt', 'DESC']]
+    });
+    
+    res.json(queries);
+  } catch (error) {
+    console.error('Error fetching user queries:', error);
+    res.status(500).json({ error: 'Failed to fetch queries', details: error.message });
+  }
+});
+
+// Get all user queries (admin only)
+app.get('/api/admin/user-queries', authenticateToken, async (req, res) => {
+  try {
+    // In a real app, check if user is admin
+    // if (req.user.role !== 'admin') {
+    //   return res.status(403).json({ error: 'Unauthorized access' });
+    // }
+    
+    const queries = await UserQuery.findAll({
+      order: [['createdAt', 'DESC']],
+      include: [{
+        model: User,
+        attributes: ['id', 'fullName', 'email']
+      }]
+    });
+    
+    res.json(queries);
+  } catch (error) {
+    console.error('Error fetching all user queries:', error);
+    res.status(500).json({ error: 'Failed to fetch queries', details: error.message });
+  }
+});
+
+// Update user query status and add admin response (admin only)
+app.put('/api/admin/user-queries/:queryId', authenticateToken, async (req, res) => {
+  try {
+    const { queryId } = req.params;
+    const { status, adminResponse } = req.body;
+    
+    // In a real app, check if user is admin
+    // if (req.user.role !== 'admin') {
+    //   return res.status(403).json({ error: 'Unauthorized access' });
+    // }
+    
+    const query = await UserQuery.findByPk(queryId);
+    
+    if (!query) {
+      return res.status(404).json({ error: 'Query not found' });
+    }
+    
+    // Update query
+    await query.update({ 
+      status, 
+      adminResponse 
+    });
+    
+    res.json({ 
+      message: 'Query updated successfully',
+      query
+    });
+  } catch (error) {
+    console.error('Error updating query:', error);
+    res.status(500).json({ error: 'Failed to update query', details: error.message });
+  }
+});

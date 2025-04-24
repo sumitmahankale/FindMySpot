@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Car, Bell, LogOut, ChevronRight, Layout, Calendar } from 'lucide-react';
+import { Car, Bell, LogOut, ChevronRight, Layout, Calendar, HelpCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
 import ParkingFinderPage from './ParkingFinderPage'; // Import the ParkingFinderPage component
 import UserBookingsPage from './UserMyBookingPage'; // Import the UserBookingsPage component
+import UserQueryComponent from './UserQueryComponent'; // Import the UserQueryComponent
 
 // Custom CSS variables
 const styles = {
@@ -236,6 +237,35 @@ const UserMainDashboard = () => {
               My Bookings
             </span>
           </button>
+
+          {/* Queries Nav Button - New Addition */}
+          <button
+            onClick={() => setActiveTab('queries')}
+            className={`flex items-center w-full px-6 py-4 text-left transition-all duration-300 ease-in-out ${activeTab === 'queries' ? 'border-l-4' : 'border-l-0'}`}
+            style={{ 
+              backgroundColor: activeTab === 'queries' ? styles.mediumBlue : 'transparent',
+              borderColor: styles.orange,
+              animation: pageLoaded ? 'slideIn 1s cubic-bezier(0.4, 0, 0.2, 1) forwards' : 'none'
+            }}
+          >
+            <HelpCircle 
+              className={`${isCollapsed ? 'mx-auto' : 'mr-3'} h-5 w-5`}
+              style={{ 
+                color: styles.textLight,
+                transition: 'margin 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                filter: activeTab === 'queries' ? 'drop-shadow(0 0 3px rgba(255, 255, 255, 0.5))' : 'none'
+              }}
+            />
+            <span 
+              className={`whitespace-nowrap overflow-hidden ${isCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'}`}
+              style={{ 
+                color: styles.textLight,
+                transition: 'opacity 0.4s ease, width 0.3s cubic-bezier(0.4, 0, 0.2, 1)' 
+              }}
+            >
+              Queries
+            </span>
+          </button>
         </nav>
 
         <div 
@@ -296,7 +326,8 @@ const UserMainDashboard = () => {
                 style={{ backgroundColor: 'white' }}>
           <div className="flex items-center space-x-4 flex-1">
             <h2 className="text-xl font-semibold" style={{ color: styles.textDark }}>
-              {activeTab === 'find-parking' ? 'Find Parking' : 'My Bookings'}
+              {activeTab === 'find-parking' ? 'Find Parking' : 
+               activeTab === 'my-bookings' ? 'My Bookings' : 'Queries'}
             </h2>
           </div>
           
@@ -317,7 +348,8 @@ const UserMainDashboard = () => {
         {/* Dashboard Content */}
         <div className="flex-1 overflow-y-auto p-6" style={{ backgroundColor: styles.background }}>
           <div className="transition-all duration-500 ease-in-out">
-            {activeTab === 'find-parking' ? <ParkingFinderPage /> : <UserBookingsPage />}
+            {activeTab === 'find-parking' ? <ParkingFinderPage /> : 
+             activeTab === 'my-bookings' ? <UserBookingsPage /> : <UserQueryComponent />}
           </div>
         </div>
       </div>

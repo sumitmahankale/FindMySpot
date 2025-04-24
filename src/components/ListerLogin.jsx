@@ -185,7 +185,7 @@ const ListerLoginPage = () => {
 
         <div className="login-image-container animate-slide-right">
           <img
-            src="/newlogin.png"
+            src="/login1.png"
             alt="Login illustration"
             className="login-image"
           />
