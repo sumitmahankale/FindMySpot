@@ -27,7 +27,8 @@ FindMySpot is a real-time parking locator web application designed to help users
 ![Screenshot 2025-04-21 174722](https://github.com/user-attachments/assets/4bd31ecf-2e8b-47ca-bb71-d4108f4cd751)
 
 ![Screenshot 2025-04-21 175027](https://github.com/user-attachments/assets/e828e6c1-6b4b-4d93-9b58-0f902e0e123c)
-![Screenshot 2025-04-20 213735](https://github.com/user-attachments/assets/89c831b9-4e55-4dd7-97d7-a8aec06fd993)
+![Screenshot 2025-04-20 213852](https://github.com/user-attachments/assets/e1f22ba8-4849-4de9-b6a8-5f86dc17d20f)
+
 
 
 
