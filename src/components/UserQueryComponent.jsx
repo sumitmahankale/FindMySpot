@@ -62,7 +62,7 @@ const UserQueryComponent = () => {
       // Mock fetch for development/testing
       // In a real environment, uncomment the actual fetch call
       
-      /* 
+      
       const response = await fetch(`http://localhost:5000/api/user/${userId}/queries`, {
         method: 'GET',
         headers: {
@@ -75,8 +75,8 @@ const UserQueryComponent = () => {
         throw new Error('Failed to fetch queries');
       }
 
-      const data = await response.json();
-      */
+      
+      
       
       // Temporary mock data for testing UI
       const mockData = [
@@ -136,6 +136,9 @@ const UserQueryComponent = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    const userId = localStorage.getItem('userId');
+    const token = localStorage.getItem('token');
+    
     if (!formData.subject || !formData.category || !formData.description) {
       Swal.fire({
         title: 'Missing Information',
@@ -145,31 +148,28 @@ const UserQueryComponent = () => {
       });
       return;
     }
-
-    if (!userId) {
+  
+    if (!userId || !token) {
       Swal.fire({
         title: 'Authentication Required',
-        text: 'You must be logged in to submit a query. Your user ID is missing.',
+        text: 'You must be logged in to submit a query.',
         icon: 'error',
         confirmButtonColor: styles.orange
       });
       return;
     }
-
+  
     setIsSubmitting(true);
     setError(null);
-
+  
     try {
-      // In a real app, you'd upload the file first and get a URL
+      // Handle file upload if needed
       let attachmentUrl = null;
       if (file) {
         // This is a placeholder for file upload logic
         attachmentUrl = 'mock-url-for-file-upload';
       }
-
-      // Mock successful API call for demo
-      // In a real environment, uncomment the actual fetch call
-      /*
+  
       const response = await fetch('http://localhost:5000/api/user/queries', {
         method: 'POST',
         headers: {
@@ -182,11 +182,12 @@ const UserQueryComponent = () => {
           userId
         })
       });
-
+  
       if (!response.ok) {
         throw new Error('Failed to submit query');
       }
-      */
+      
+     
       
       // Success!
       Swal.fire({
@@ -195,7 +196,7 @@ const UserQueryComponent = () => {
         icon: 'success',
         confirmButtonColor: styles.orange
       });
-
+  
       // Reset form
       setFormData({
         subject: '',
@@ -205,20 +206,8 @@ const UserQueryComponent = () => {
       });
       setFile(null);
       
-      // Add the new query to the state for immediate feedback
-      const newQuery = {
-        id: Date.now(), // temporary id
-        subject: formData.subject,
-        category: formData.category,
-        description: formData.description,
-        attachmentUrl,
-        status: 'pending',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        adminResponse: null
-      };
-      
-      setQueries(prev => [newQuery, ...prev]);
+      // Refresh queries to include the newly added one
+      fetchQueries();
       
       // Switch to history view
       setViewMode('history');

@@ -77,6 +77,7 @@ const LoginPage = () => {
       localStorage.setItem('token', data.token);
       localStorage.setItem('username', data.username);
       localStorage.setItem('fullName', data.fullName);
+      localStorage.setItem('userId', data.userId);
 
       // Show success alert and redirect
       showSuccessAlert('Login successful!');

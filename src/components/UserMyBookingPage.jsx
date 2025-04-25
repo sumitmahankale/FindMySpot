@@ -4,6 +4,7 @@ import { Calendar, Clock, MapPin, AlertCircle, CheckCircle, XCircle, User, Phone
 import Swal from 'sweetalert2';
 import QRCode from 'qrcode';
 
+
 const UserBookingsPage = () => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -74,7 +75,36 @@ const UserBookingsPage = () => {
   useEffect(() => {
     fetchBookings();
   }, []);
-
+// Add this near your other useEffect hooks
+useEffect(() => {
+  // Add animation styles to document head
+  const styleElement = document.createElement('style');
+  styleElement.innerHTML = `
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    @keyframes scaleIn {
+      from { transform: scale(0.95); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    
+    .animate-fadeIn {
+      animation: fadeIn 0.3s ease-in-out;
+    }
+    
+    .animate-scaleIn {
+      animation: scaleIn 0.3s ease-out;
+    }
+  `;
+  document.head.appendChild(styleElement);
+  
+  // Clean up on unmount
+  return () => {
+    document.head.removeChild(styleElement);
+  };
+}, []);
   // Add click outside handler for modal
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -806,26 +836,7 @@ const UserBookingsPage = () => {
         </div>
       )}
 
-      {/* CSS Animations */}
-      <style jsx>{`
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        
-        @keyframes scaleIn {
-          from { transform: scale(0.95); opacity: 0; }
-          to { transform: scale(1); opacity: 1; }
-        }
-        
-        .animate-fadeIn {
-          animation: fadeIn 0.3s ease-in-out;
-        }
-        
-        .animate-scaleIn {
-          animation: scaleIn 0.3s ease-out;
-        }
-      `}</style>
+    
     </div>
   );
 };
