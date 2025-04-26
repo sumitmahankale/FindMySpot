@@ -37,6 +37,7 @@ const UserQueryComponent = () => {
   const [selectedQuery, setSelectedQuery] = useState(null);
   const [expandedQueryId, setExpandedQueryId] = useState(null);
   const [file, setFile] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   // Get user ID from localStorage
   const userId = localStorage.getItem('userId');
@@ -45,13 +46,18 @@ const UserQueryComponent = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Call fetchQueries on component mount instead of relying on activeTab
-    fetchQueries();
-  }, []);
+    // Check if user is authenticated
+    if (userId && token) {
+      setIsAuthenticated(true);
+      // Only fetch queries if we have valid auth info
+      fetchQueries();
+    }
+  }, [userId, token]);
 
   const fetchQueries = async () => {
     if (!userId || !token) {
       setError('You must be logged in to view your queries');
+      setQueries([]);
       return;
     }
 
@@ -62,22 +68,22 @@ const UserQueryComponent = () => {
       // Mock fetch for development/testing
       // In a real environment, uncomment the actual fetch call
       
-      
-      const response = await fetch(`http://localhost:5000/api/user/${userId}/queries`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      });
+     // Replace this in your fetchQueries function
+const response = await fetch(`http://localhost:5000/api/user/${userId}/queries`, {
+  method: 'GET',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}` // Make sure token is correctly formatted
+  }
+});
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch queries');
-      }
+if (!response.ok) {
+  const errorData = await response.json();
+  throw new Error(errorData.error || 'Failed to fetch queries');
+}
 
-      
-      
-      
+const data = await response.json();
+setQueries(data);
       // Temporary mock data for testing UI
       const mockData = [
         {
@@ -116,6 +122,7 @@ const UserQueryComponent = () => {
     } catch (err) {
       console.error('Error fetching queries:', err);
       setError(err.message || 'Error fetching your queries. Please try again.');
+      setQueries([]);
     } finally {
       setIsLoading(false);
     }
@@ -156,6 +163,7 @@ const UserQueryComponent = () => {
         icon: 'error',
         confirmButtonColor: styles.orange
       });
+      navigate('/login');
       return;
     }
   
@@ -186,8 +194,6 @@ const UserQueryComponent = () => {
       if (!response.ok) {
         throw new Error('Failed to submit query');
       }
-      
-     
       
       // Success!
       Swal.fire({
@@ -241,6 +247,21 @@ const UserQueryComponent = () => {
     const date = new Date(dateString);
     return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
+
+  const renderLoginPrompt = () => (
+    <div className="text-center py-16 border border-dashed border-gray-300 rounded-lg bg-gray-50">
+      <AlertCircle size={48} className="mx-auto mb-3" style={{ color: styles.orange }} />
+      <h3 className="text-lg font-medium mb-1" style={{ color: styles.mediumBlue }}>Authentication Required</h3>
+      <p className="text-gray-500 mb-4">You need to be logged in to view or submit support tickets.</p>
+      <button 
+        onClick={() => navigate('/login')}
+        className="px-4 py-2 rounded-lg text-white font-medium transition-all duration-200"
+        style={{ backgroundColor: styles.orange }}
+      >
+        Go to Login
+      </button>
+    </div>
+  );
 
   const renderQueryForm = () => (
     <div className="space-y-4">
@@ -326,14 +347,17 @@ const UserQueryComponent = () => {
       </div>
       
       <div className="pt-2 flex justify-between items-center">
-        <button 
-          onClick={() => setViewMode('history')}
-          className="px-4 py-2 rounded-lg flex items-center font-medium transition-all duration-200"
-          style={{ color: styles.mediumBlue }}
-        >
-          <Inbox className="mr-2 h-5 w-5" />
-          View Previous Queries
-        </button>
+      <button 
+  onClick={() => {
+    setViewMode('history');
+    fetchQueries(); // Add this to refresh queries when switching views
+  }}
+  className="px-4 py-2 rounded-lg flex items-center font-medium transition-all duration-200"
+  style={{ color: styles.mediumBlue }}
+>
+  <Inbox className="mr-2 h-5 w-5" />
+  View Previous Queries
+</button>
         
         <button 
           onClick={handleSubmit}
@@ -573,14 +597,19 @@ const UserQueryComponent = () => {
            viewMode === 'history' ? 'My Support Tickets' : 'Ticket Details'}
         </h2>
         
-        {viewMode === 'detail' && (
-          <span className="text-sm text-gray-500">Ticket ID: #{selectedQuery?.id}</span>
+        {viewMode === 'detail' && selectedQuery && (
+          <span className="text-sm text-gray-500">Ticket ID: #{selectedQuery.id}</span>
         )}
       </div>
       
-      {viewMode === 'form' && renderQueryForm()}
-      {viewMode === 'history' && renderQueryHistory()}
-      {viewMode === 'detail' && renderQueryDetail()}
+      {/* Check if authenticated and render appropriate view */}
+      {!isAuthenticated && viewMode !== 'form' ? renderLoginPrompt() : (
+        <>
+          {viewMode === 'form' && renderQueryForm()}
+          {viewMode === 'history' && renderQueryHistory()}
+          {viewMode === 'detail' && renderQueryDetail()}
+        </>
+      )}
     </div>
   );
 };
