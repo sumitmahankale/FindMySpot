@@ -38,21 +38,28 @@ const UserQueryComponent = () => {
   const [expandedQueryId, setExpandedQueryId] = useState(null);
   const [file, setFile] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  // Get user ID from localStorage
-  const userId = localStorage.getItem('userId');
-  const token = localStorage.getItem('token');
+  const [userId, setUserId] = useState(null);
+  const [token, setToken] = useState(null);
 
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if user is authenticated
-    if (userId && token) {
-      setIsAuthenticated(true);
-      // Only fetch queries if we have valid auth info
+    // Get authentication data from localStorage
+    const storedUserId = localStorage.getItem('userId');
+    const storedToken = localStorage.getItem('token');
+    
+    // Update state with authentication info
+    setUserId(storedUserId);
+    setToken(storedToken);
+    setIsAuthenticated(!!storedUserId && !!storedToken);
+  }, []);
+
+  // Only fetch queries when userId and token are available
+  useEffect(() => {
+    if (userId && token && viewMode === 'history') {
       fetchQueries();
     }
-  }, [userId, token]);
+  }, [userId, token, viewMode]);
 
   const fetchQueries = async () => {
     if (!userId || !token) {
@@ -60,65 +67,66 @@ const UserQueryComponent = () => {
       setQueries([]);
       return;
     }
-
+  
     setIsLoading(true);
     setError(null);
     
     try {
-      // Mock fetch for development/testing
-      // In a real environment, uncomment the actual fetch call
-      
-     // Replace this in your fetchQueries function
-const response = await fetch(`http://localhost:5000/api/user/${userId}/queries`, {
-  method: 'GET',
-  headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}` // Make sure token is correctly formatted
-  }
-});
-
-if (!response.ok) {
-  const errorData = await response.json();
-  throw new Error(errorData.error || 'Failed to fetch queries');
-}
-
-const data = await response.json();
-setQueries(data);
-      // Temporary mock data for testing UI
-      const mockData = [
-        {
-          id: 1,
-          subject: 'Issue with payment',
-          category: 'Payment Issue',
-          description: 'I tried to pay for my booking but the transaction failed multiple times.',
-          status: 'pending',
-          createdAt: new Date(Date.now() - 86400000).toISOString(),
-          updatedAt: new Date(Date.now() - 86400000).toISOString(),
-          adminResponse: null
-        },
-        {
-          id: 2,
-          subject: 'Cannot find my reservation',
-          category: 'Booking Problem',
-          description: 'I made a booking yesterday but it doesn\'t appear in my list. The confirmation email says booking #BK12345.',
-          status: 'in-progress',
-          createdAt: new Date(Date.now() - 172800000).toISOString(),
-          updatedAt: new Date(Date.now() - 86400000).toISOString(),
-          adminResponse: 'We are looking into this issue and will get back to you shortly.'
-        },
-        {
-          id: 3,
-          subject: 'Feature request: save favorite spots',
-          category: 'Feature Request',
-          description: 'It would be great if I could bookmark my favorite parking spots for quick access.',
-          status: 'resolved',
-          createdAt: new Date(Date.now() - 604800000).toISOString(),
-          updatedAt: new Date(Date.now() - 432000000).toISOString(),
-          adminResponse: 'Thank you for your suggestion! We\'ve added this to our development roadmap and plan to implement it in our next update.'
+      // Use the simpler endpoint that doesn't require userId in path
+      const response = await fetch(`http://localhost:5000/api/user/queries`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` 
         }
-      ];
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch queries');
+      }
+  
+      const data = await response.json();
       
-      setQueries(mockData);
+      if (data.length > 0) {
+        setQueries(data);
+      } else {
+        // Temporary mock data for testing UI
+        const mockData = [
+          {
+            id: 1,
+            subject: 'Issue with payment',
+            category: 'Payment Issue',
+            description: 'I tried to pay for my booking but the transaction failed multiple times.',
+            status: 'pending',
+            createdAt: new Date(Date.now() - 86400000).toISOString(),
+            updatedAt: new Date(Date.now() - 86400000).toISOString(),
+            adminResponse: null
+          },
+          {
+            id: 2,
+            subject: 'Cannot find my reservation',
+            category: 'Booking Problem',
+            description: 'I made a booking yesterday but it doesn\'t appear in my list. The confirmation email says booking #BK12345.',
+            status: 'in-progress',
+            createdAt: new Date(Date.now() - 172800000).toISOString(),
+            updatedAt: new Date(Date.now() - 86400000).toISOString(),
+            adminResponse: 'We are looking into this issue and will get back to you shortly.'
+          },
+          {
+            id: 3,
+            subject: 'Feature request: save favorite spots',
+            category: 'Feature Request',
+            description: 'It would be great if I could bookmark my favorite parking spots for quick access.',
+            status: 'resolved',
+            createdAt: new Date(Date.now() - 604800000).toISOString(),
+            updatedAt: new Date(Date.now() - 432000000).toISOString(),
+            adminResponse: 'Thank you for your suggestion! We\'ve added this to our development roadmap and plan to implement it in our next update.'
+          }
+        ];
+        
+        setQueries(mockData);
+      }
     } catch (err) {
       console.error('Error fetching queries:', err);
       setError(err.message || 'Error fetching your queries. Please try again.');
@@ -127,7 +135,6 @@ setQueries(data);
       setIsLoading(false);
     }
   };
-
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -143,19 +150,7 @@ setQueries(data);
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    const userId = localStorage.getItem('userId');
-    const token = localStorage.getItem('token');
-    
-    if (!formData.subject || !formData.category || !formData.description) {
-      Swal.fire({
-        title: 'Missing Information',
-        text: 'Please fill in all required fields',
-        icon: 'warning',
-        confirmButtonColor: styles.orange
-      });
-      return;
-    }
-  
+    // Use state values instead of directly accessing localStorage
     if (!userId || !token) {
       Swal.fire({
         title: 'Authentication Required',
@@ -164,6 +159,16 @@ setQueries(data);
         confirmButtonColor: styles.orange
       });
       navigate('/login');
+      return;
+    }
+  
+    if (!formData.subject || !formData.category || !formData.description) {
+      Swal.fire({
+        title: 'Missing Information',
+        text: 'Please fill in all required fields',
+        icon: 'warning',
+        confirmButtonColor: styles.orange
+      });
       return;
     }
   
@@ -212,10 +217,7 @@ setQueries(data);
       });
       setFile(null);
       
-      // Refresh queries to include the newly added one
-      fetchQueries();
-      
-      // Switch to history view
+      // Switch to history view and refresh queries
       setViewMode('history');
     } catch (err) {
       console.error('Error submitting query:', err);
@@ -347,17 +349,17 @@ setQueries(data);
       </div>
       
       <div className="pt-2 flex justify-between items-center">
-      <button 
-  onClick={() => {
-    setViewMode('history');
-    fetchQueries(); // Add this to refresh queries when switching views
-  }}
-  className="px-4 py-2 rounded-lg flex items-center font-medium transition-all duration-200"
-  style={{ color: styles.mediumBlue }}
->
-  <Inbox className="mr-2 h-5 w-5" />
-  View Previous Queries
-</button>
+        <button 
+          onClick={() => {
+            setViewMode('history');
+            // fetchQueries will be called by the useEffect when viewMode changes
+          }}
+          className="px-4 py-2 rounded-lg flex items-center font-medium transition-all duration-200"
+          style={{ color: styles.mediumBlue }}
+        >
+          <Inbox className="mr-2 h-5 w-5" />
+          View Previous Queries
+        </button>
         
         <button 
           onClick={handleSubmit}
@@ -589,6 +591,20 @@ setQueries(data);
     );
   };
 
+  // Check authentication state for appropriate action
+  if (!isAuthenticated && viewMode !== 'form') {
+    return (
+      <div className="bg-white rounded-lg shadow-md p-6 animate-fade-in">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold" style={{ color: styles.darkBlue }}>
+            My Support Tickets
+          </h2>
+        </div>
+        {renderLoginPrompt()}
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white rounded-lg shadow-md p-6 animate-fade-in">
       <div className="flex justify-between items-center mb-6">
@@ -602,14 +618,9 @@ setQueries(data);
         )}
       </div>
       
-      {/* Check if authenticated and render appropriate view */}
-      {!isAuthenticated && viewMode !== 'form' ? renderLoginPrompt() : (
-        <>
-          {viewMode === 'form' && renderQueryForm()}
-          {viewMode === 'history' && renderQueryHistory()}
-          {viewMode === 'detail' && renderQueryDetail()}
-        </>
-      )}
+      {viewMode === 'form' && renderQueryForm()}
+      {viewMode === 'history' && renderQueryHistory()}
+      {viewMode === 'detail' && renderQueryDetail()}
     </div>
   );
 };

@@ -1575,7 +1575,8 @@ app.get('/api/admin/recent-spaces', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch recent parking spaces' });
   }
 });
-// Define UserQuery model
+  // Define UserQuery model
+  // User Query Model Definition - keep this unchanged
 const UserQuery = sequelize.define('UserQuery', {
   id: {
     type: DataTypes.INTEGER,
@@ -1622,11 +1623,35 @@ const UserQuery = sequelize.define('UserQuery', {
 User.hasMany(UserQuery, { foreignKey: 'userId' });
 UserQuery.belongsTo(User, { foreignKey: 'userId' });
 
-// Create a new query
-app.post('/api/user/queries', authenticateToken, async (req, res) => {
+// Improved authentication middleware
+const authenticateTokenn = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  
+  if (!token) {
+    return res.status(401).json({ error: 'Authentication token is required' });
+  }
+  
+  try {
+    // Verify token and extract user info
+    const user = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = user;
+    next();
+  } catch (error) {
+    console.error('Token verification error:', error);
+    return res.status(403).json({ error: 'Invalid or expired token' });
+  }
+};
+
+// Create a new query - Updated with better error handling
+app.post('/api/user/queries', authenticateTokenn, async (req, res) => {
   try {
     const { subject, category, description, attachmentUrl } = req.body;
     const userId = req.user.id;
+    
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
     
     // Validate required fields
     if (!subject || !category || !description) {
@@ -1649,14 +1674,13 @@ app.post('/api/user/queries', authenticateToken, async (req, res) => {
   }
 });
 
-// Get all queries for a specific user
-app.get('/api/user/:userId/queries', authenticateToken, async (req, res) => {
+// Get all queries for a specific user - UPDATED route
+app.get('/api/user/queries', authenticateTokenn, async (req, res) => {
   try {
-    const { userId } = req.params;
+    const userId = req.user.id;
     
-    // Ensure the requesting user is authorized
-    if (req.user.id !== parseInt(userId) && req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Unauthorized access' });
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
     }
     
     const queries = await UserQuery.findAll({
@@ -1671,13 +1695,65 @@ app.get('/api/user/:userId/queries', authenticateToken, async (req, res) => {
   }
 });
 
+// Keep the old route for backward compatibility, but improved
+app.get('/api/user/:userId/queries', authenticateToken, async (req, res) => {
+  try {
+    const paramUserId = parseInt(req.params.userId);
+    const authenticatedUserId = req.user.id;
+    
+    // Handle undefined userId in params
+    if (isNaN(paramUserId)) {
+      return res.status(400).json({ error: 'Invalid user ID format' });
+    }
+    
+    // Ensure the requesting user is authorized
+    if (authenticatedUserId !== paramUserId && req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized access' });
+    }
+    
+    const queries = await UserQuery.findAll({
+      where: { userId: paramUserId },
+      order: [['createdAt', 'DESC']]
+    });
+    
+    res.json(queries);
+  } catch (error) {
+    console.error('Error fetching user queries:', error);
+    res.status(500).json({ error: 'Failed to fetch queries', details: error.message });
+  }
+});
+
+// Get a specific query by ID
+app.get('/api/user/queries/:queryId', authenticateToken, async (req, res) => {
+  try {
+    const { queryId } = req.params;
+    const userId = req.user.id;
+    
+    const query = await UserQuery.findOne({
+      where: { 
+        id: queryId,
+        userId // Ensure the query belongs to requesting user
+      }
+    });
+    
+    if (!query) {
+      return res.status(404).json({ error: 'Query not found' });
+    }
+    
+    res.json(query);
+  } catch (error) {
+    console.error('Error fetching query details:', error);
+    res.status(500).json({ error: 'Failed to fetch query details', details: error.message });
+  }
+});
+
 // Get all user queries (admin only)
 app.get('/api/admin/user-queries', authenticateToken, async (req, res) => {
   try {
-    // In a real app, check if user is admin
-    // if (req.user.role !== 'admin') {
-    //   return res.status(403).json({ error: 'Unauthorized access' });
-    // }
+    // Check if user is admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized access' });
+    }
     
     const queries = await UserQuery.findAll({
       order: [['createdAt', 'DESC']],
@@ -1695,15 +1771,15 @@ app.get('/api/admin/user-queries', authenticateToken, async (req, res) => {
 });
 
 // Update user query status and add admin response (admin only)
-app.put('/api/admin/user-queries/:queryId', authenticateToken, async (req, res) => {
+app.put('/api/admin/user-queries/:queryId', authenticateTokenn, async (req, res) => {
   try {
     const { queryId } = req.params;
     const { status, adminResponse } = req.body;
     
-    // In a real app, check if user is admin
-    // if (req.user.role !== 'admin') {
-    //   return res.status(403).json({ error: 'Unauthorized access' });
-    // }
+    // Check if user is admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized access' });
+    }
     
     const query = await UserQuery.findByPk(queryId);
     
