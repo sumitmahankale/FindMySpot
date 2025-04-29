@@ -35,8 +35,6 @@ const AdminQueryManagement = ({ activeTab }) => {
   const [responseText, setResponseText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const token = localStorage.getItem('token');
-
   useEffect(() => {
     if (activeTab === 'adminQueryManagement') {
       fetchAllQueries();
@@ -48,15 +46,17 @@ const AdminQueryManagement = ({ activeTab }) => {
   }, [searchTerm, statusFilter, queries]);
 
   const fetchAllQueries = async () => {
-    if (!token) {
-      setError('Authentication token not found. Please log in again.');
-      return;
-    }
-
     setIsLoading(true);
     setError(null);
     
     try {
+      // Get token from localStorage
+      const token = localStorage.getItem('authToken');
+      
+      if (!token) {
+        throw new Error('Authentication token not found');
+      }
+      
       const response = await fetch('http://localhost:5000/api/admin/user-queries', {
         method: 'GET',
         headers: {
@@ -66,7 +66,8 @@ const AdminQueryManagement = ({ activeTab }) => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch queries');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Server responded with status: ${response.status}`);
       }
 
       const data = await response.json();
@@ -92,8 +93,8 @@ const AdminQueryManagement = ({ activeTab }) => {
     if (searchTerm) {
       const lowercasedSearch = searchTerm.toLowerCase();
       filtered = filtered.filter(query => 
-        query.subject.toLowerCase().includes(lowercasedSearch) ||
-        query.description.toLowerCase().includes(lowercasedSearch) ||
+        query.subject?.toLowerCase().includes(lowercasedSearch) ||
+        query.description?.toLowerCase().includes(lowercasedSearch) ||
         query.User?.fullName?.toLowerCase().includes(lowercasedSearch) ||
         query.User?.email?.toLowerCase().includes(lowercasedSearch)
       );
@@ -115,6 +116,13 @@ const AdminQueryManagement = ({ activeTab }) => {
     setIsSubmitting(true);
     
     try {
+      // Get token from localStorage
+      const token = localStorage.getItem('authToken');
+      
+      if (!token) {
+        throw new Error('Authentication token not found');
+      }
+      
       const response = await fetch(`http://localhost:5000/api/admin/user-queries/${selectedQuery.id}`, {
         method: 'PUT',
         headers: {
@@ -128,7 +136,8 @@ const AdminQueryManagement = ({ activeTab }) => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update query');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Server responded with status: ${response.status}`);
       }
 
       const updatedQuery = await response.json();
@@ -547,7 +556,7 @@ const AdminQueryManagement = ({ activeTab }) => {
   // Main render
   return (
     <div className="w-full max-w-7xl mx-auto p-4">
-      <div className="bg-white shadow-xl rounded-xl overflow-hidden">
+      <div className="bg-white shadow-lg rounded-lg overflow-hidden">
         <div className="bg-blue-900 text-white p-6">
           <h2 className="text-2xl font-bold">User Support Management</h2>
           <p className="text-blue-100">Review and respond to user support tickets</p>
@@ -562,7 +571,7 @@ const AdminQueryManagement = ({ activeTab }) => {
 };
 
 // Helper components
-function ChevronLeft({ size, className }) {
+const ChevronLeft = ({ size, className }) => {
   return (
     <svg 
       xmlns="http://www.w3.org/2000/svg" 
@@ -579,9 +588,9 @@ function ChevronLeft({ size, className }) {
       <path d="M15 18l-6-6 6-6" />
     </svg>
   );
-}
+};
 
-function Paperclip({ size, className }) {
+const Paperclip = ({ size, className }) => {
   return (
     <svg 
       xmlns="http://www.w3.org/2000/svg" 
@@ -598,6 +607,6 @@ function Paperclip({ size, className }) {
       <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" />
     </svg>
   );
-}
+};
 
 export default AdminQueryManagement;
