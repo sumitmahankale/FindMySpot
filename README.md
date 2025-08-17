@@ -1,8 +1,14 @@
+<div align="center">
+
 # FindMySpot: Real-Time Parking Locator
 
-FindMySpot is a real-time parking locator web application designed to help users find and list available parking spots on a map. The application provides an interface for users to sign up, log in, and view available parking spots on a real-time map using Leaflet.js. Listers can add parking locations, which are then visible to all users on the map.
+Helping users find and reserve parking while enabling listers to monetize their spaces.
 
 ![App Screenshot](https://github.com/user-attachments/assets/a6882685-da48-4e62-b7c5-3793b9230fac)
+
+</div>
+
+FindMySpot is a real-time parking locator web application designed to help users find and list available parking spots on a map. Users can sign up, log in, and view available parking spots on a real-time map; listers add locations visible to everyone.
 
 ## Project Structure
 
@@ -43,20 +49,41 @@ FindMySpot/
 - Approve/reject parking space requests
 - Handle support queries
 - System analytics and monitoring
+ - Environment-based login (no self-register) via `ADMIN_USERNAME` / `ADMIN_PASSWORD`
 
 ## Tech Stack
 
 **Frontend:** React, Vite, Tailwind CSS, Leaflet.js  
+- `POST /api/auth/admin/login` - Admin login (env credentials)
 **Backend:** Node.js, Express.js, Sequelize ORM  
-**Database:** MySQL (Railway for production)  
-**Authentication:** JWT-based with role support  
-**Deployment:** Frontend (Static hosting), Backend (Render)
-
+- `/api/parking-spaces` (alias `/api/parking-entries`) - Parking space CRUD & listing
+- `/api/parking-spaces/:id/availability` - Availability & existing bookings (public; query: `date` (required), `startTime`, `endTime`)
+   - Example response:
+      ```json
+      {
+         "spaceId": 1,
+         "requested": { "date": "2025-08-17", "startTime": "09:00", "endTime": "10:00" },
+         "available": true,
+         "conflictCount": 0,
+         "conflicts": [],
+         "bookings": [ { "id": 12, "startTime": "07:00", "endTime": "08:30", "status": "confirmed" } ]
+      }
+      ```
+- `/api/bookings` - Booking management
+- `/api/listers/:id` - Public lister profile & active listings count
+- `/api/user/queries`, `/api/lister/queries` - Support systems
+- `/api/admin/*` - Admin operations & analytics
 ## Quick Start
+1. User picks space/date/time.
+2. Frontend calls availability endpoint with `date` (& optionally start/end) to fetch existing bookings.
+3. Booked slots rendered; overlapping request times blocked client-side.
+4. On payment, availability is rechecked immediately before booking submission.
+5. Backend enforces overlap rule again.
 
+Overlap Rule: conflict if `requested.start < existing.end` AND `requested.end > existing.start` on same `bookingDate` (excluding cancelled).
 ### Prerequisites
 - Node.js 16+ and npm
-- MySQL database (local or Railway)
+ - Use `/api/health` for deployment diagnostics
 
 ### Development Setup
 
