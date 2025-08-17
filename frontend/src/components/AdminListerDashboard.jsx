@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import { Edit, Trash2, AlertCircle, X, MapPin } from 'lucide-react';
 import axios from 'axios';
-import { getApiUrl } from '../config/api.js';
+import { getApiUrl, getAuthHeaders } from '../config/api.js';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -14,7 +14,9 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-const API_BASE_URL = getApiUrl('').replace(/\/$/, '');
+// NOTE: getApiUrl already returns the base including /api; avoid manual concatenation
+// This component previously built URLs like `${API_BASE_URL}/api/parking-spaces` producing /api/api/ paths.
+// Use getApiUrl('parking-spaces') etc. directly to prevent 404s.
 
 const ParkingSpaceManagement = () => {
   const [parkingSpaces, setParkingSpaces] = useState([]);
@@ -36,7 +38,7 @@ const ParkingSpaceManagement = () => {
     const fetchParkingSpaces = async () => {
       setLoading(true);
       try {
-        const response = await axios.get(`${API_BASE_URL}/api/parking-spaces`);
+        const response = await axios.get(getApiUrl('parking-spaces'));
         console.log('Fetched parking spaces:', response.data);
         setParkingSpaces(response.data);
       } catch (error) {
@@ -76,9 +78,11 @@ const ParkingSpaceManagement = () => {
       console.log('Update data:', formData);
       
       // Modified to remove authentication header
+      // Requires lister ownership on backend; admin override not yet implemented
       const response = await axios.put(
-        `${API_BASE_URL}/api/parking-spaces/${selectedSpace.id}`, 
-        { ...formData }
+        getApiUrl(`parking-spaces/${selectedSpace.id}`), 
+        { ...formData },
+        { headers: getAuthHeaders() }
       );
       
       console.log('Update response:', response.data);
@@ -106,7 +110,8 @@ const ParkingSpaceManagement = () => {
       
       // Modified to remove authentication header
       const response = await axios.delete(
-        `${API_BASE_URL}/api/parking-spaces/${selectedSpace.id}`
+        getApiUrl(`parking-spaces/${selectedSpace.id}`),
+        { headers: getAuthHeaders() }
       );
       
       console.log('Delete response:', response.data);
@@ -133,7 +138,7 @@ const ParkingSpaceManagement = () => {
   const refreshParkingSpaces = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/parking-spaces`);
+      const response = await axios.get(getApiUrl('parking-spaces'));
       console.log('Refreshed parking spaces:', response.data);
       setParkingSpaces(response.data);
       showNotification('Parking spaces refreshed', 'success');
@@ -222,18 +227,22 @@ const ParkingSpaceManagement = () => {
                 <div className="flex justify-between items-center p-4 border-b">
                   <h2 className="text-xl font-bold text-gray-800">{selectedSpace.location}</h2>
                   <div className="flex space-x-2">
-                    <button 
-                      className="flex items-center px-3 py-2 bg-blue-900 text-white rounded hover:bg-blue-700"
-                      onClick={() => setEditModalOpen(true)}
-                    >
-                      <Edit size={16} className="mr-1" /> Edit
-                    </button>
-                    <button 
-                      className="flex items-center px-3 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-                      onClick={() => setDeleteModalOpen(true)}
-                    >
-                      <Trash2 size={16} className="mr-1" /> Remove
-                    </button>
+                    {localStorage.getItem('role') === 'lister' && (
+                      <>
+                        <button 
+                          className="flex items-center px-3 py-2 bg-blue-900 text-white rounded hover:bg-blue-700"
+                          onClick={() => setEditModalOpen(true)}
+                        >
+                          <Edit size={16} className="mr-1" /> Edit
+                        </button>
+                        <button 
+                          className="flex items-center px-3 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                          onClick={() => setDeleteModalOpen(true)}
+                        >
+                          <Trash2 size={16} className="mr-1" /> Remove
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
                 
@@ -287,7 +296,7 @@ const ParkingSpaceManagement = () => {
       </div>
       
       {/* Edit Modal */}
-      {editModalOpen && (
+  {editModalOpen && localStorage.getItem('role') === 'lister' && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md relative">
             <div className="flex justify-between items-center mb-4">
@@ -376,7 +385,7 @@ const ParkingSpaceManagement = () => {
       )}
       
       {/* Delete Confirmation Modal */}
-      {deleteModalOpen && (
+  {deleteModalOpen && localStorage.getItem('role') === 'lister' && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md relative">
             <div className="flex justify-between items-center mb-4">

@@ -28,7 +28,7 @@ router.get('/lister/:listerId/queries', authenticateToken, async (req, res) => {
 // Admin list all lister queries
 router.get('/admin/queries', authenticateToken, async (req, res) => {
   try {
-    // if (req.user.role !== 'admin') return res.status(403).json({ error: 'Unauthorized access' }); // Uncomment when roles enforced
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin access required' });
     const queries = await ListerQuery.findAll({ order: [['createdAt','DESC']], include: [{ model: Lister, attributes: ['id','fullName','businessName','email','phone'] }] });
     res.json(queries);
   } catch (e) { res.status(500).json({ error: 'Failed to fetch queries', details: e.message }); }
@@ -38,7 +38,7 @@ router.get('/admin/queries', authenticateToken, async (req, res) => {
 router.put('/admin/queries/:queryId', authenticateToken, async (req, res) => {
   try {
     const { status, adminResponse } = req.body;
-    // if (req.user.role !== 'admin') return res.status(403).json({ error: 'Unauthorized access' });
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin access required' });
     const query = await ListerQuery.findByPk(req.params.queryId);
     if (!query) return res.status(404).json({ error: 'Query not found' });
     await query.update({ status: status || query.status, adminResponse: adminResponse !== undefined ? adminResponse : query.adminResponse });

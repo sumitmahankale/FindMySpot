@@ -16,6 +16,7 @@ router.post('/parking-requests', authenticateToken, async (req, res) => {
 // List pending requests (admin placeholder)
 router.get('/parking-requests', authenticateToken, async (req, res) => {
   try {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin access required' });
     const requests = await ParkingRequest.findAll({ where: { status: 'pending' }, order: [['createdAt','DESC']], include: [{ model: Lister, attributes: ['id','email','fullName','businessName','phone'] }] });
     res.json(requests);
   } catch (e) { res.status(500).json({ error: 'Failed to fetch parking requests', details: e.message }); }
@@ -35,6 +36,7 @@ router.get('/lister/:listerId/parking-requests', authenticateToken, async (req, 
 // Approve request (admin placeholder)
 router.put('/parking-requests/:id/approve', authenticateToken, async (req, res) => {
   try {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin access required' });
     const request = await ParkingRequest.findByPk(req.params.id);
     if (!request) return res.status(404).json({ error: 'Request not found' });
     await request.update({ status: 'approved' });
@@ -46,6 +48,7 @@ router.put('/parking-requests/:id/approve', authenticateToken, async (req, res) 
 // Reject request
 router.put('/parking-requests/:id/reject', authenticateToken, async (req, res) => {
   try {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin access required' });
     const request = await ParkingRequest.findByPk(req.params.id);
     if (!request) return res.status(404).json({ error: 'Request not found' });
     await request.update({ status: 'rejected' });

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { getApiUrl } from '../config/api.js';
+import { getApiUrl, getAuthHeaders } from '../config/api.js';
 import { Check, X, Info, RefreshCw, AlertTriangle, Search, Filter } from 'lucide-react';
 import axios from 'axios';
 import './CSS/ListerDashboard.css';
@@ -30,11 +30,7 @@ const AdminRequestsPage = () => {
   const fetchRequests = useCallback(async () => {
     try {
       setLoading(true);
-  const response = await axios.get(getApiUrl('parking-requests'), {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+  const response = await axios.get(getApiUrl('parking-requests'), { headers: getAuthHeaders() });
       setRequests(response.data);
     } catch (error) {
       console.error('Error fetching requests:', error);
@@ -56,11 +52,7 @@ const AdminRequestsPage = () => {
   const handleApprove = async (id) => {
     try {
       setIsProcessing(true);
-  await axios.put(getApiUrl(`parking-requests/${id}/approve`), {}, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+  await axios.put(getApiUrl(`parking-requests/${id}/approve`), {}, { headers: getAuthHeaders() });
       
       // Refresh the list after approval
       await fetchRequests();
@@ -84,11 +76,7 @@ const AdminRequestsPage = () => {
   const handleReject = async (id) => {
     try {
       setIsProcessing(true);
-  await axios.put(getApiUrl(`parking-requests/${id}/reject`), {}, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+  await axios.put(getApiUrl(`parking-requests/${id}/reject`), {}, { headers: getAuthHeaders() });
       
       // Refresh the list after rejection
       await fetchRequests();

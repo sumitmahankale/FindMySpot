@@ -60,3 +60,17 @@ router.post('/auth/lister/login', async (req, res) => {
 });
 
 module.exports = router;
+
+// Admin login (env-based credentials; placed at end to keep exports above)
+router.post('/auth/admin/login', async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    const adminUser = process.env.ADMIN_USERNAME;
+    const adminPass = process.env.ADMIN_PASSWORD;
+    if (!adminUser || !adminPass) return res.status(500).json({ error: 'Admin credentials not configured on server' });
+    if (username !== adminUser || password !== adminPass) return res.status(401).json({ error: 'Invalid admin credentials' });
+    const jwt = require('jsonwebtoken');
+    const token = jwt.sign({ id: 0, username: adminUser, role: 'admin' }, process.env.JWT_SECRET || 'insecure-dev-secret', { expiresIn: '7d' });
+    res.json({ token, username: adminUser, fullName: 'Administrator', role: 'admin' });
+  } catch (e) { res.status(500).json({ error: 'Failed to log in admin', details: e.message }); }
+});

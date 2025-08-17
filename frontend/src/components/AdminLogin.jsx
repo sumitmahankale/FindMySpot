@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import './CSS/LoginPage.css';
-import { Link } from 'react-router-dom';
 import Swal from 'sweetalert2';
+import { getApiUrl } from '../config/api.js';
 
 const LoginPage = () => {
   const [username, setUsername] = useState('');
@@ -10,9 +10,7 @@ const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Admin credentials
-  const ADMIN_USERNAME = 'sumitmahankale';
-  const ADMIN_PASSWORD = 'Sumit@123';
+  // Backend now handles admin auth via /auth/admin/login and env credentials
 
   // Success alert function
   const showSuccessAlert = (message) => {
@@ -44,28 +42,32 @@ const LoginPage = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-
-    // Simulate network delay for better UX
-    setTimeout(() => {
-      // Check if credentials match the admin credentials
-      if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-        // Store admin authentication data
-        localStorage.setItem('isAuthenticated', 'true');
-        localStorage.setItem('isAdmin', 'true');
-        localStorage.setItem('username', username);
-        localStorage.setItem('fullName', 'Admin User');
-
-        // Show success alert and redirect
-        showSuccessAlert('Admin login successful!');
-      } else {
-        // Show error for invalid credentials
-        showErrorAlert('Invalid admin credentials. Please try again.');
+    try {
+      const response = await fetch(getApiUrl('auth/admin/login'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.error || 'Login failed');
       }
+      const data = await response.json();
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('role', data.role);
+      localStorage.setItem('username', data.username);
+      localStorage.setItem('fullName', data.fullName || 'Admin');
+      localStorage.setItem('isAuthenticated', 'true');
+      localStorage.setItem('isAdmin', 'true');
+      showSuccessAlert('Admin login successful!');
+    } catch (err) {
+      showErrorAlert(err.message);
+    } finally {
       setIsLoading(false);
-    }, 800);
+    }
   };
 
   return (
