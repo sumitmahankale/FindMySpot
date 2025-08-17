@@ -42,12 +42,12 @@ router.get('/location-suggestions', async (req, res) => {
   } catch (e) { res.status(500).json({ error: 'Failed to fetch location suggestions', details: e.message }); }
 });
 
-// Availability check
-router.get('/parking-spaces/:id/availability', async (req, res) => {
+// (Legacy) Simple availability path retained for backward compatibility (delegates to main route)
+router.get('/parking-spaces/:id/availability-legacy', async (req, res) => {
   try {
     const { id } = req.params; const { date, startTime, endTime } = req.query;
     if (!date || !startTime || !endTime) return res.status(400).json({ error: 'Date, start time, and end time are required' });
-    const conflicts = await Booking.findAll({ where: { parkingSpaceId: id, bookingDate: date, status: { [Sequelize.Op.notIn]: ['cancelled'] }, [Sequelize.Op.or]: [ { startTime: { [Sequelize.Op.gte]: startTime }, endTime: { [Sequelize.Op.lte]: endTime } }, { startTime: { [Sequelize.Op.lt]: startTime }, endTime: { [Sequelize.Op.gt]: startTime } }, { startTime: { [Sequelize.Op.lt]: endTime }, endTime: { [Sequelize.Op.gt]: endTime } }, { startTime: { [Sequelize.Op.lte]: startTime }, endTime: { [Sequelize.Op.gte]: endTime } } ] } });
+    const conflicts = await Booking.findAll({ where: { parkingSpaceId: id, bookingDate: date, status: { [Sequelize.Op.ne]: 'cancelled' }, startTime: { [Sequelize.Op.lt]: endTime }, endTime: { [Sequelize.Op.gt]: startTime } } });
     res.json({ available: conflicts.length === 0, conflictCount: conflicts.length });
   } catch (e) { res.status(500).json({ error: 'Failed to check availability', details: e.message }); }
 });

@@ -21,6 +21,7 @@ const BookingPage = () => {
   const [isAvailable, setIsAvailable] = useState(true);
   const [conflictCount, setConflictCount] = useState(0);
   const [listerInfo, setListerInfo] = useState(null);
+  const [bookedSlots, setBookedSlots] = useState([]); // existing bookings for selected date
   const [formErrors, setFormErrors] = useState({});
 
   // Calculate booking duration in hours (defined before dependent callbacks)
@@ -54,9 +55,14 @@ const BookingPage = () => {
       if (typeof data.available === 'boolean') {
         setIsAvailable(data.available);
         setConflictCount(data.conflictCount || 0);
+        if (Array.isArray(data.bookings)) {
+          setBookedSlots(data.bookings);
+        }
       } else {
         // Fallback: if API older version returns only bookings
-        const conflicts = (data.bookings || []).filter(b => !(endTime <= b.startTime || startTime >= b.endTime));
+        const existing = data.bookings || [];
+        setBookedSlots(existing);
+        const conflicts = existing.filter(b => !(endTime <= b.startTime || startTime >= b.endTime));
         setConflictCount(conflicts.length);
         setIsAvailable(conflicts.length === 0);
       }
@@ -374,6 +380,21 @@ const BookingPage = () => {
                   rows={3}
                 ></textarea>
               </div>
+
+              {/* Existing Booked Slots */}
+              {bookedSlots.length > 0 && (
+                <div className="p-3 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-lg">
+                  <p className="font-medium mb-1">Booked Slots on {formatDate(bookingDate)}:</p>
+                  <ul className="text-sm space-y-1 max-h-32 overflow-auto">
+                    {bookedSlots.map(bs => (
+                      <li key={bs.id} className="flex justify-between font-mono">
+                        <span>{bs.startTime} - {bs.endTime}</span>
+                        <span className="text-xs uppercase tracking-wide {bs.status==='confirmed'?'text-green-600':'text-gray-500'}">{bs.status}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
               {/* Availability Status */}
               {!isAvailable && (

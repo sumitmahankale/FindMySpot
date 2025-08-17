@@ -123,34 +123,25 @@ router.get('/parking-spaces/:id/availability', optionalAuth, async (req, res) =>
     if (!space) return res.status(404).json({ error: 'Not found' });
 
     const { date, startTime, endTime } = req.query;
-    const where = { parkingSpaceId: spaceId };
-    if (date) where.bookingDate = date; // expect YYYY-MM-DD
+    if (!date) return res.status(400).json({ error: 'date is required (YYYY-MM-DD)' });
 
-    const bookings = await Booking.findAll({ where, order: [['startTime','ASC']] });
+    // Fetch bookings for that date (exclude cancelled)
+    const bookings = await Booking.findAll({ where: { parkingSpaceId: spaceId, bookingDate: date, status: { [Sequelize.Op.ne]: 'cancelled' } }, order: [['startTime','ASC']] });
 
-    let available = true;
-    let conflictCount = 0;
     let conflicts = [];
-
-    if (date && startTime && endTime) {
-      // Determine overlaps on same date
-      const reqStart = startTime;
-      const reqEnd = endTime;
-      conflicts = bookings.filter(b => {
-        // Overlap if NOT (requested ends before booking starts OR requested starts after booking ends)
-        return !(reqEnd <= b.startTime || reqStart >= b.endTime);
-      });
-      conflictCount = conflicts.length;
-      available = conflictCount === 0;
+    let available = true;
+    if (startTime && endTime) {
+      conflicts = bookings.filter(b => (startTime < b.endTime) && (endTime > b.startTime));
+      available = conflicts.length === 0;
     }
 
-    return res.json({
+    res.json({
       spaceId,
-      requested: { date: date || null, startTime: startTime || null, endTime: endTime || null },
+      requested: { date, startTime: startTime || null, endTime: endTime || null },
       available,
-      conflictCount,
+      conflictCount: conflicts.length,
       conflicts,
-      bookings
+      bookings: bookings.map(b => ({ id: b.id, startTime: b.startTime, endTime: b.endTime, status: b.status, totalAmount: b.totalAmount }))
     });
   } catch (e) {
     res.status(500).json({ error: 'Failed to fetch availability', details: e.message });

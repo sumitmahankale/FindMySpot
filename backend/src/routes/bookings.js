@@ -5,28 +5,31 @@ const { authenticateToken } = require('../middleware/auth');
 const { Booking, ParkingSpace, User, Lister } = require('../models');
 const router = express.Router();
 
-// Create booking (user)
+// Create booking (user) with robust overlap & provided date
 router.post('/bookings', authenticateToken, async (req, res) => {
   try {
     if (req.user.role !== 'user') return res.status(403).json({ error: 'Only users can create bookings' });
-    const { parkingSpaceId, startTime, endTime, vehicleInfo, notes } = req.body;
-    if (!parkingSpaceId || !startTime || !endTime) return res.status(400).json({ error: 'Missing required fields' });
+    const { parkingSpaceId, bookingDate, startTime, endTime, vehicleInfo, notes } = req.body;
+    if (!parkingSpaceId || !bookingDate || !startTime || !endTime) return res.status(400).json({ error: 'Missing required fields (parkingSpaceId, bookingDate, startTime, endTime)' });
     const space = await ParkingSpace.findByPk(parkingSpaceId);
     if (!space) return res.status(404).json({ error: 'Parking space not found' });
-    const overlapping = await Booking.findOne({ where: { parkingSpaceId, [Sequelize.Op.or]: [ { startTime: { [Sequelize.Op.between]: [startTime, endTime] } }, { endTime: { [Sequelize.Op.between]: [startTime, endTime] } } ] } });
+
+    // Robust overlap: existing.start < requestedEnd AND existing.end > requestedStart (same date, not cancelled)
+    const overlapping = await Booking.findOne({ where: { parkingSpaceId, bookingDate, status: { [Sequelize.Op.ne]: 'cancelled' }, startTime: { [Sequelize.Op.lt]: endTime }, endTime: { [Sequelize.Op.gt]: startTime } } });
     if (overlapping) return res.status(409).json({ error: 'Time slot already booked' });
-    // Derive listerId from space, parse price numeric portion
+
     const listerId = space.listerId;
-    // Simple amount calculation: duration hours * numeric price (if price available)
+    // Calculate amount
     let totalAmount = 0;
     if (space.price) {
-      const numericPrice = parseFloat(String(space.price).replace(/[^0-9.]/g, '')) || 0; // assume hourly
+      const numericPrice = parseFloat(String(space.price).replace(/[^0-9.]/g, '')) || 0; // hourly rate assumed
       const start = new Date(`1970-01-01T${startTime}Z`);
       const end = new Date(`1970-01-01T${endTime}Z`);
-      const hours = Math.max(0.5, (end - start) / (1000 * 60 * 60));
+      let hours = (end - start) / (1000 * 60 * 60);
+      if (hours <= 0) hours += 24; // cross-midnight handling
+      hours = Math.max(0.5, hours);
       totalAmount = Number((numericPrice * hours).toFixed(2));
     }
-    const bookingDate = new Date();
     const booking = await Booking.create({ bookingDate, parkingSpaceId, startTime, endTime, userId: req.user.id, listerId, totalAmount, vehicleInfo, notes, status: 'pending' });
     res.status(201).json(booking);
   } catch (e) { res.status(500).json({ error: 'Failed to create booking', details: e.message }); }

@@ -253,11 +253,35 @@ const PaymentPage = () => {
     
     try {
       const token = localStorage.getItem('token');
+      // Revalidate availability just before creating the booking to avoid race conditions
+      try {
+        await axios.get(getApiUrl(`parking-spaces/${bookingData.parkingSpaceId}/availability`), {
+          params: { date: bookingData.bookingDate, startTime: bookingData.startTime, endTime: bookingData.endTime }
+        }).then(({ data }) => {
+          if (data.available === false) {
+            throw new Error('Selected slot is no longer available');
+          }
+        });
+      } catch (avalErr) {
+        setProcessingBooking(false);
+        Swal.fire({
+          title: 'Slot Unavailable',
+          text: avalErr.message || 'Please pick a different time slot.',
+          icon: 'error',
+          confirmButtonText: 'Back to Booking'
+        }).then(() => navigate(-1));
+        return;
+      }
       
       // Add payment status to booking data
       const bookingPayload = {
-        ...bookingData,
-        paymentStatus: 'paid',
+        parkingSpaceId: bookingData.parkingSpaceId,
+        bookingDate: bookingData.bookingDate,
+        startTime: bookingData.startTime,
+        endTime: bookingData.endTime,
+        vehicleInfo: bookingData.vehicleInfo,
+        notes: bookingData.notes,
+        paymentStatus: 'paid'
       };
       
       // Create the booking
