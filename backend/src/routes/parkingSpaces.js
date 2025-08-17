@@ -12,7 +12,7 @@ async function listSpaces(req, res) {
     const where = {};
     if (q) where.name = { [Sequelize.Op.like]: `%${q}%` };
     if (location) where.location = { [Sequelize.Op.like]: `%${location}%` };
-    const spaces = await ParkingSpace.findAll({ where, include: [{ model: Lister, attributes: ['id','name','email'] }] });
+  const spaces = await ParkingSpace.findAll({ where, include: [{ model: Lister, attributes: ['id','fullName','businessName','email','phone'] }] });
     res.json(spaces);
   } catch (e) { res.status(500).json({ error: 'Failed to fetch parking spaces', details: e.message }); }
 }
@@ -26,20 +26,19 @@ router.get('/parking-entries', listSpaces);
 router.post('/parking-spaces', authenticateToken, async (req, res) => {
   try {
     if (req.user.role !== 'lister') return res.status(403).json({ error: 'Only listers can create parking spaces' });
-    const { name, location, pricePerHour, capacity, description } = req.body;
-    if (!name || !location || !pricePerHour) return res.status(400).json({ error: 'Missing required fields' });
-    const space = await ParkingSpace.create({ name, location, pricePerHour, capacity, description, listerId: req.user.id });
+    const { name, contact, location, price, availability, description, lat, lng } = req.body;
+    if (!name || !location || !price || !contact || lat === undefined || lng === undefined) return res.status(400).json({ error: 'Missing required fields' });
+    const space = await ParkingSpace.create({ name, contact, location, price, availability: availability || 'Not specified', description, lat, lng, listerId: req.user.id });
     res.status(201).json(space);
   } catch (e) { res.status(500).json({ error: 'Failed to create parking space', details: e.message }); }
 });
 // Alias
 router.post('/parking-entries', authenticateToken, async (req, res) => {
-  // Delegate to main handler logic by calling next route function would require refactor; duplicating minimal logic
   try {
     if (req.user.role !== 'lister') return res.status(403).json({ error: 'Only listers can create parking spaces' });
-    const { name, location, pricePerHour, capacity, description } = req.body;
-    if (!name || !location || !pricePerHour) return res.status(400).json({ error: 'Missing required fields' });
-    const space = await ParkingSpace.create({ name, location, pricePerHour, capacity, description, listerId: req.user.id });
+    const { name, contact, location, price, availability, description, lat, lng } = req.body;
+    if (!name || !location || !price || !contact || lat === undefined || lng === undefined) return res.status(400).json({ error: 'Missing required fields' });
+    const space = await ParkingSpace.create({ name, contact, location, price, availability: availability || 'Not specified', description, lat, lng, listerId: req.user.id });
     res.status(201).json(space);
   } catch (e) { res.status(500).json({ error: 'Failed to create parking space', details: e.message }); }
 });
