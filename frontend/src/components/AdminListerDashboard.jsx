@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import { Edit, Trash2, AlertCircle, X, MapPin } from 'lucide-react';
 import axios from 'axios';
+import { getApiUrl } from '../config/api.js';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -13,7 +14,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = getApiUrl('').replace(/\/$/, '');
 
 const ParkingSpaceManagement = () => {
   const [parkingSpaces, setParkingSpaces] = useState([]);

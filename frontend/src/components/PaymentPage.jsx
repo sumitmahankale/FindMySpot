@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getApiUrl } from '../config/api.js';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { 
@@ -260,7 +261,7 @@ const PaymentPage = () => {
       };
       
       // Create the booking
-      await axios.post('http://localhost:5000/api/bookings', bookingPayload, {
+  await axios.post(getApiUrl('bookings'), bookingPayload, {
         headers: { Authorization: `Bearer ${token}` }
       });
       

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { getApiUrl } from '../config/api.js';
 import { Link } from 'react-router-dom';
 import './CSS/ForgetPassword.css';
 
@@ -33,7 +34,7 @@ const ForgotPassword = () => {
     setIsLoading(true);
 
     // Fix: Use the complete URL with correct API endpoint
-    fetch('http://localhost:5000/api/auth/reset-password', {
+  fetch(getApiUrl('auth/reset-password'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

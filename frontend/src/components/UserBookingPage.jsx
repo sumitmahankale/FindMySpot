@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { getApiUrl } from '../config/api.js';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { MapPin, Clock, Calendar, User, CreditCard, Car, Edit, CheckCircle } from 'lucide-react';
 import axios from 'axios';
@@ -22,26 +23,44 @@ const BookingPage = () => {
   const [listerInfo, setListerInfo] = useState(null);
   const [formErrors, setFormErrors] = useState({});
 
+  const calculateTotalAmount = useCallback(() => {
+    if (!parkingSpace) return;
+    const duration = calculateDuration();
+    const priceMatch = parkingSpace.price.match(/(\d+)/);
+    const pricePerHour = priceMatch ? parseFloat(priceMatch[1]) : 0;
+    const amount = pricePerHour * duration;
+    setTotalAmount(amount);
+  }, [parkingSpace, calculateDuration]); // Updated dependencies
+
+  const checkAvailability = useCallback(async () => {
+    if (!parkingSpace) return;
+    try {
+      const formattedDate = formatDate(bookingDate);
+      const response = await axios.get(getApiUrl(`parking-spaces/${parkingSpace.id}/availability`), {
+        params: { date: formattedDate, startTime, endTime }
+      });
+      setIsAvailable(response.data.available);
+      setConflictCount(response.data.conflictCount || 0);
+    } catch (error) {
+      console.error('Error checking availability:', error);
+      setIsAvailable(false);
+    }
+  }, [parkingSpace, bookingDate, startTime, endTime]);
+
   useEffect(() => {
-    // Check if user is authenticated
     const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
     if (!isAuthenticated) {
-      // Redirect to login page with return URL
       navigate('/login', { state: { from: '/booking', parkingSpace: JSON.stringify(parkingSpace) } });
       return;
     }
-
-    // Check if parking space info is available
     if (!parkingSpace) {
       navigate('/userdashboard');
       return;
     }
-
-    // Fetch lister information
     const fetchListerInfo = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get(`http://localhost:5000/api/listers/${parkingSpace.listerId}`, {
+        const response = await axios.get(getApiUrl(`listers/${parkingSpace.listerId}`), {
           headers: { Authorization: `Bearer ${token}` }
         });
         setListerInfo(response.data);
@@ -49,13 +68,12 @@ const BookingPage = () => {
         console.error('Error fetching lister information:', error);
       }
     };
-
     fetchListerInfo();
     calculateTotalAmount();
-  }, [parkingSpace, navigate]);
+  }, [parkingSpace, navigate, calculateTotalAmount]);
 
   // Calculate booking duration in hours
-  const calculateDuration = () => {
+  const calculateDuration = useCallback(() => {
     if (!startTime || !endTime) return 0;
     
     const [startHour, startMinute] = startTime.split(':').map(Number);
@@ -74,56 +92,20 @@ const BookingPage = () => {
     
     // Convert back to hours (as a decimal)
     return diffMinutes / 60;
-  };
+  }, [startTime, endTime]); // Updated dependencies
 
-  // Calculate total amount based on duration and price per hour
-  const calculateTotalAmount = () => {
-    if (!parkingSpace) return;
-    
-    const duration = calculateDuration();
-    
-    // Extract numeric price from parkingSpace.price (assuming format like "₹50/hour")
-    const priceMatch = parkingSpace.price.match(/(\d+)/);
-    const pricePerHour = priceMatch ? parseFloat(priceMatch[1]) : 0;
-    
-    const amount = pricePerHour * duration;
-    setTotalAmount(amount);
-  };
-
-  // Handle time changes
+  // Recalculate totals & availability when dependencies change
   useEffect(() => {
     calculateTotalAmount();
     checkAvailability();
-  }, [startTime, endTime, bookingDate]);
+  }, [calculateTotalAmount, checkAvailability]);
 
   // Format date for API requests
   const formatDate = (date) => {
     return date.toISOString().split('T')[0];
   };
 
-  // Check if the selected time slot is available
-  const checkAvailability = async () => {
-    if (!parkingSpace) return;
-    
-    try {
-      // Format date properly for the API request
-      const formattedDate = formatDate(bookingDate);
-      
-      const response = await axios.get(`http://localhost:5000/api/parking-spaces/${parkingSpace.id}/availability`, {
-        params: {
-          date: formattedDate,
-          startTime,
-          endTime
-        }
-      });
-      
-      setIsAvailable(response.data.available);
-      setConflictCount(response.data.conflictCount || 0);
-    } catch (error) {
-      console.error('Error checking availability:', error);
-      setIsAvailable(false);
-    }
-  };
+  // checkAvailability now memoized above
 
   // Validate form data
   const validateForm = () => {

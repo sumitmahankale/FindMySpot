@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getApiUrl } from '../config/api.js';
 import { MapPin, Check } from 'lucide-react';
 import axios from 'axios';
 
@@ -72,7 +73,7 @@ const ListParkingSpaceForm = () => {
       }
       
       // Submit parking space request
-      await axios.post('http://localhost:5000/api/parking-requests', {
+  await axios.post(getApiUrl('parking-requests'), {
         ...formData,
         listerName: fullName || 'Unknown',
         listerEmail: email || 'Unknown',

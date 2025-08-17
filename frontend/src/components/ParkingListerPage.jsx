@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import { Check, PlusCircle } from 'lucide-react';
 import axios from 'axios';
+import { getApiUrl, getAuthHeaders } from '../config/api';
 import { useNavigate } from 'react-router-dom';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -73,7 +74,7 @@ const ParkingListerPage = () => {
   // Fetch existing parking spaces
   const fetchParkingSpaces = async () => {
     try {
-      const { data } = await axios.get('http://localhost:5000/api/parking-spaces');
+      const { data } = await axios.get(getApiUrl('parking-spaces'));
       setSpaces(data);
     } catch (error) {
       console.error('Error fetching parking spaces:', error);
@@ -111,7 +112,7 @@ const ParkingListerPage = () => {
     try {
       const token = localStorage.getItem('token');
       const userId = localStorage.getItem('userId');
-      
+
       if (!token) {
         throw new Error('Authentication required');
       }
@@ -130,8 +131,8 @@ const ParkingListerPage = () => {
         listerId: userId
       };
       
-      await axios.post('http://localhost:5000/api/parking-requests', requestData, {
-        headers: { Authorization: `Bearer ${token}` }
+      await axios.post(getApiUrl('parking-requests'), requestData, {
+        headers: getAuthHeaders()
       });
       
       setStatus({ loading: false, success: true, error: '' });

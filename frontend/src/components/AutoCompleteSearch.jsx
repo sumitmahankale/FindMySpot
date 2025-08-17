@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { getApiUrl } from '../config/api.js';
 import { Search, MapPin, X } from 'lucide-react';
 import axios from 'axios';
 
@@ -19,7 +20,7 @@ const AutocompleteSearch = ({ onLocationSelect }) => {
 
     setIsLoading(true);
     try {
-      const response = await axios.get(`http://localhost:5000/api/location-suggestions`, {
+  const response = await axios.get(getApiUrl('location-suggestions'), {
         params: { query: input }
       });
       setSuggestions(response.data);

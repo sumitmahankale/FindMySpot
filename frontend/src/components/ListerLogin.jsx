@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import './CSS/LoginPage.css'; // Assuming you have a similar CSS file for login
 import { Link } from 'react-router-dom';
 import Swal from 'sweetalert2';
+import { getApiUrl } from '../config/api.js';
 
 const ListerLoginPage = () => {
   const [email, setEmail] = useState('');
@@ -54,7 +55,7 @@ const ListerLoginPage = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/lister/login', {
+      const response = await fetch(getApiUrl('auth/lister/login'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

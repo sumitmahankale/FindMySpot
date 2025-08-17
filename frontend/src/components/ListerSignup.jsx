@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import './CSS/listersignup.css';
+import { getApiUrl } from '../config/api.js';
 
 const ListerSignupPage = () => {
   const [formData, setFormData] = useState({
@@ -87,7 +88,7 @@ const ListerSignupPage = () => {
         }
       });
 
-      const response = await fetch('http://localhost:5000/api/auth/lister/register', {
+  const response = await fetch(getApiUrl('auth/lister/register'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

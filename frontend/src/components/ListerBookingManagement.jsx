@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getApiUrl } from '../config/api.js';
 import { Clock, Calendar, User, MapPin, Car, DollarSign, CheckCircle, XCircle, FileText, ChevronDown, ChevronUp, Search } from 'lucide-react';
 import axios from 'axios';
 import Swal from 'sweetalert2';
@@ -21,7 +22,7 @@ const ListerBookingManagement = () => {
     try {
       setIsLoading(true);
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:5000/api/lister/bookings', {
+  const response = await axios.get(getApiUrl('lister/bookings'), {
         headers: { Authorization: `Bearer ${token}` }
       });
       setBookings(response.data);
@@ -42,7 +43,7 @@ const ListerBookingManagement = () => {
     try {
       const token = localStorage.getItem('token');
       await axios.put(
-        `http://localhost:5000/api/bookings/${bookingId}/status`,
+        getApiUrl(`bookings/${bookingId}/status`),
         { status: newStatus },
         { headers: { Authorization: `Bearer ${token}` }}
       );
@@ -74,7 +75,7 @@ const ListerBookingManagement = () => {
     try {
       const token = localStorage.getItem('token');
       await axios.put(
-        `http://localhost:5000/api/bookings/${bookingId}/payment-status`,
+        getApiUrl(`bookings/${bookingId}/payment-status`),
         { paymentStatus: newPaymentStatus },
         { headers: { Authorization: `Bearer ${token}` }}
       );

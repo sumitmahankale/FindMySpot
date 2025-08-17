@@ -2,13 +2,15 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || 
   (import.meta.env.MODE === 'production' ? 'https://findmyspot-grxt.onrender.com/api' : 'http://localhost:4000/api');
 
-// Debug logging
-console.log('Environment variables:', {
-  VITE_API_URL: import.meta.env.VITE_API_URL,
-  NODE_ENV: import.meta.env.NODE_ENV,
-  MODE: import.meta.env.MODE
-});
-console.log('Using API_BASE_URL:', API_BASE_URL);
+// Debug logging (only in development)
+if (import.meta.env.MODE !== 'production') {
+  console.log('Environment variables:', {
+    VITE_API_URL: import.meta.env.VITE_API_URL,
+    NODE_ENV: import.meta.env.NODE_ENV,
+    MODE: import.meta.env.MODE
+  });
+  console.log('Using API_BASE_URL:', API_BASE_URL);
+}
 
 export const apiConfig = {
   baseURL: API_BASE_URL,

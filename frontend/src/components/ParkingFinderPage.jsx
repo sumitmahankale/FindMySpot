@@ -1,5 +1,6 @@
 // ParkingFinderPage.jsx - For users to find parking
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { getApiUrl } from '../config/api.js';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import { MapPin, Phone, User, Calendar, Info, X, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -30,9 +31,9 @@ const ParkingFinderPage = () => {
   const navigate = useNavigate();
   
   // Fetch parking spaces from the backend
-  const fetchParkingSpaces = async () => {
+  const fetchParkingSpaces = useCallback(async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/parking-spaces');
+  const response = await axios.get(getApiUrl('parking-spaces'));
       setSpaces(response.data);
       
       // Check for new listings since last fetch
@@ -47,17 +48,14 @@ const ParkingFinderPage = () => {
     } catch (error) {
       console.error('Error fetching parking spaces:', error);
     }
-  };
+  }, [spaces.length]);
   
   // Initial fetch and setup polling for updates
   useEffect(() => {
     fetchParkingSpaces();
-    
-    // Poll for updates every 30 seconds
     const interval = setInterval(fetchParkingSpaces, 30000);
-    
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchParkingSpaces]);
   
   // Try to get user's current location
   useEffect(() => {
@@ -104,7 +102,7 @@ const ParkingFinderPage = () => {
   };
 
   // Handle search
-  const handleSearch = async () => {
+  const handleSearch = useCallback(async () => {
     if (!selectedLocation) {
       return;
     }
@@ -113,7 +111,7 @@ const ParkingFinderPage = () => {
     
     try {
       // Use coordinates from selected location for search with a fixed radius
-      const response = await axios.get(`http://localhost:5000/api/search-parking`, {
+  const response = await axios.get(getApiUrl('search-parking'), {
         params: {
           lat: selectedLocation.lat,
           lng: selectedLocation.lng,
@@ -137,14 +135,14 @@ const ParkingFinderPage = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [selectedLocation]);
   
   // Automatically search when location changes
   useEffect(() => {
     if (selectedLocation) {
       handleSearch();
     }
-  }, [selectedLocation]);
+  }, [selectedLocation, handleSearch]);
   
   // Reset search
   const resetSearch = () => {

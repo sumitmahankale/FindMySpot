@@ -20,6 +20,12 @@ if (RAILWAY_URL) {
     }
   });
 } else {
+  // Support Railway style env var names (MYSQLHOST, MYSQLUSER, etc.) transparently
+  const derivedHost = process.env.DB_HOST || process.env.MYSQLHOST;
+  const derivedUser = process.env.DB_USER || process.env.MYSQLUSER;
+  const derivedPassword = process.env.DB_PASSWORD || process.env.MYSQLPASSWORD;
+  const derivedName = process.env.DB_NAME || process.env.MYSQLDATABASE;
+
   const options = {
     dialect: DB_DIALECT,
     logging: false,
@@ -33,10 +39,10 @@ if (RAILWAY_URL) {
   if (DB_DIALECT === 'sqlite') {
     options.storage = process.env.DB_STORAGE || 'database.sqlite';
   } else {
-    options.host = process.env.DB_HOST || 'localhost';
-    options.username = process.env.DB_USER || 'root';
-    options.password = process.env.DB_PASSWORD || '';
-    options.database = process.env.DB_NAME || 'FindMySpot';
+  options.host = derivedHost || 'localhost';
+  options.username = derivedUser || 'root';
+  options.password = derivedPassword || '';
+  options.database = derivedName || 'FindMySpot';
     if (process.env.DB_SSL === 'true') {
       options.dialectOptions = { ssl: { require: true, rejectUnauthorized: false } };
     }

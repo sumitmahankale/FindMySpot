@@ -32,7 +32,51 @@ app.get('/api/health/db', async (req, res) => {
     await sequelize.authenticate();
     res.json({ status: 'ok', database: 'connected', time: new Date().toISOString() });
   } catch (error) {
+    // Provide softer failure in development when DB not configured
+    if (process.env.NODE_ENV !== 'production') {
+      return res.status(200).json({
+        status: 'degraded',
+        database: 'disconnected',
+        note: 'Database not connected (development fallback). Set env vars for full check.',
+        error: error.message
+      });
+    }
     res.status(500).json({ status: 'error', database: 'disconnected', error: error.message });
+  }
+});
+
+// Extended DB diagnostics (avoid exposing in production without auth)
+app.get('/api/health/db/extended', async (req, res) => {
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(403).json({ error: 'Forbidden in production' });
+  }
+  try {
+    const start = Date.now();
+    await sequelize.authenticate();
+    const duration = Date.now() - start;
+    // Simple ping query depending on dialect
+    let pingResult = null;
+    try {
+      pingResult = await sequelize.query('SELECT 1 AS ping');
+    } catch (e) {
+      pingResult = { error: e.message };
+    }
+    res.json({
+      status: 'ok',
+      latencyMs: duration,
+      dialect: sequelize.getDialect(),
+      configHost: process.env.DB_HOST || process.env.MYSQLHOST || null,
+      database: process.env.DB_NAME || process.env.MYSQLDATABASE || null,
+      pool: {
+        max: sequelize.options.pool.max,
+        min: sequelize.options.pool.min,
+        idle: sequelize.options.pool.idle,
+        acquire: sequelize.options.pool.acquire
+      },
+      pingResult: Array.isArray(pingResult) ? pingResult[0] : pingResult
+    });
+  } catch (error) {
+    res.status(500).json({ status: 'error', error: error.message });
   }
 });
 

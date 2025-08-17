@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { Users, Briefcase, HelpCircle, Activity, TrendingUp, AlertTriangle, Clock } from 'lucide-react';
 import axios from 'axios';
+import { getApiUrl } from '../config/api.js';
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({
@@ -29,12 +30,11 @@ const AdminDashboard = () => {
       try {
         setLoading(true);
         // Use the correct API URL
-        const apiUrl = import.meta.env?.VITE_API_URL || 'http://localhost:5000';
-        
-        console.log('Fetching dashboard data from:', `${apiUrl}/api/admin/dashboard`);
+  const apiOrigin = getApiUrl('').replace(/\/$/, '');
+  console.log('Fetching dashboard data from:', `${apiOrigin}/admin/dashboard`);
         
         try {
-          const response = await axios.get(`${apiUrl}/api/admin/dashboard`, {
+          const response = await axios.get(getApiUrl('admin/dashboard'), {
             headers: {
               'Content-Type': 'application/json',
               'Accept': 'application/json'

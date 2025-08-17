@@ -1,5 +1,6 @@
 // ListerDashboard.jsx - For parking space owners to manage parking entries
 import React, { useState, useEffect } from 'react';
+import { getApiUrl } from '../config/api.js';
 import axios from 'axios';
 import { Trash2 } from 'lucide-react';
 
@@ -24,7 +25,7 @@ const ListerDashboard = () => {
         setIsLoading(true);
         // Mock data if API fails - for testing purposes
         try {
-          const response = await axios.get('http://localhost:5000/api/parking-entries');
+          const response = await axios.get(getApiUrl('parking-entries'));
           setEntries(response.data);
         } catch (apiError) {
           console.warn('API not available, using mock data:', apiError);
@@ -57,7 +58,7 @@ const ListerDashboard = () => {
       // Try with API first
       let addedEntry;
       try {
-        const response = await axios.post('http://localhost:5000/api/parking-entries', newEntry);
+  const response = await axios.post(getApiUrl('parking-entries'), newEntry);
         addedEntry = response.data;
       } catch (apiError) {
         console.warn('API not available, adding entry locally:', apiError);
@@ -103,7 +104,7 @@ const ListerDashboard = () => {
       try {
         // Try API delete first
         try {
-          await axios.delete(`http://localhost:5000/api/parking-entries/${entryId}`);
+          await axios.delete(getApiUrl(`parking-entries/${entryId}`));
         } catch (apiError) {
           console.warn('API not available, deleting entry locally:', apiError);
           // No action needed here as we'll update local state anyway

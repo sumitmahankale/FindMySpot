@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { getApiUrl } from '../config/api.js';
 import { Car, MessageSquare, Map, Layout, ChevronRight, Bell, LogOut, HelpCircle, AlertTriangle, Navigation, Calendar } from 'lucide-react';
 import ListerDashboard from './ListerDashboard';
 import { useNavigate } from 'react-router-dom';
@@ -134,7 +135,7 @@ const ListerMainDashboard = () => {
     setError(null);
     
     try {
-      const response = await fetch(`http://localhost:5000/api/lister/${listerId}/parking-spaces`, {
+  const response = await fetch(getApiUrl(`lister/${listerId}/parking-spaces`), {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,

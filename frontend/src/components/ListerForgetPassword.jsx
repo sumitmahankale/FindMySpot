@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { getApiUrl } from '../config/api.js';
 import { Link } from 'react-router-dom';
 import Swal from 'sweetalert2';
 
@@ -52,7 +53,7 @@ const ListerForgetPassword = () => {
     setIsLoading(true);
     
     // API call to reset password
-    fetch('http://localhost:5000/api/auth/lister/reset-password', {
+  fetch(getApiUrl('auth/lister/reset-password'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

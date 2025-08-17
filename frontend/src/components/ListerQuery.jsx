@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Inbox, CheckCircle, Clock, AlertCircle, Send, X, Paperclip, ChevronDown, ChevronRight, RefreshCw } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
+import { getApiUrl, getAuthHeaders } from '../config/api.js';
 
 // Custom CSS variables (matching the existing style palette)
 const styles = {
@@ -44,13 +45,7 @@ const ListerQueryComponent = ({ activeTab }) => {
 
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (activeTab === 'query') {
-      fetchQueries();
-    }
-  }, [activeTab]);
-
-  const fetchQueries = async () => {
+  const fetchQueries = useCallback(async () => {
     if (!listerId || !token) {
       setError('You must be logged in to view your queries');
       return;
@@ -58,29 +53,25 @@ const ListerQueryComponent = ({ activeTab }) => {
 
     setIsLoading(true);
     setError(null);
-    
     try {
-      const response = await fetch(`http://localhost:5000/api/lister/${listerId}/queries`, {
+      const response = await fetch(getApiUrl(`lister/${listerId}/queries`), {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
+        headers: getAuthHeaders(token)
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch queries');
-      }
-
+      if (!response.ok) throw new Error('Failed to fetch queries');
       const data = await response.json();
       setQueries(data);
     } catch (err) {
       console.error('Error fetching queries:', err);
       setError(err.message || 'Error fetching your queries. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    } finally { setIsLoading(false); }
+  }, [listerId, token]);
+
+  useEffect(() => {
+    if (activeTab === 'query') fetchQueries();
+  }, [activeTab, fetchQueries]);
+
+  // removed old fetchQueries definition replaced by useCallback version above
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -121,24 +112,19 @@ const ListerQueryComponent = ({ activeTab }) => {
     setError(null);
 
     try {
-      // In a real app, you'd upload the file first and get a URL
+      // Optional file handling placeholder
       let attachmentUrl = null;
       if (file) {
-        // This is a placeholder for file upload logic
-        // attachmentUrl = await uploadFile(file);
         attachmentUrl = 'mock-url-for-file-upload';
       }
 
-      const response = await fetch('http://localhost:5000/api/lister/queries', {
+      const response = await fetch(getApiUrl('lister/queries'), {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers: getAuthHeaders(token),
         body: JSON.stringify({
           ...formData,
           attachmentUrl,
-          listerId // Explicitly include listerId for more reliable tracking
+          listerId
         })
       });
 

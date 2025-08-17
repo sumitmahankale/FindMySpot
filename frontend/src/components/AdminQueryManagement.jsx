@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { getApiUrl, getAuthHeaders } from '../config/api.js';
 import { 
   Search, Filter, RefreshCw, CheckCircle, Clock, AlertCircle, 
   X, MessageSquare, ChevronDown, ChevronRight, FileText
@@ -38,17 +39,7 @@ const AdminQueryManagement = ({ activeTab }) => {
 
   const token = localStorage.getItem('token');
 
-  useEffect(() => {
-    if (activeTab === 'adminQueryManagement') {
-      fetchAllQueries();
-    }
-  }, [activeTab]);
-
-  useEffect(() => {
-    filterQueries();
-  }, [searchTerm, statusFilter, queries]);
-
-  const fetchAllQueries = async () => {
+  const fetchAllQueries = useCallback(async () => {
     if (!token) {
       setError('Authentication token not found. Please log in again.');
       return;
@@ -56,20 +47,14 @@ const AdminQueryManagement = ({ activeTab }) => {
 
     setIsLoading(true);
     setError(null);
-    
     try {
-      const response = await fetch('http://localhost:5000/api/admin/queries', {
+      const response = await fetch(getApiUrl('admin/queries'), {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
+        headers: getAuthHeaders()
       });
-
       if (!response.ok) {
         throw new Error('Failed to fetch queries');
       }
-
       const data = await response.json();
       setQueries(data);
       setFilteredQueries(data);
@@ -79,17 +64,19 @@ const AdminQueryManagement = ({ activeTab }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [token]);
 
-  const filterQueries = () => {
+  useEffect(() => {
+    if (activeTab === 'adminQueryManagement') {
+      fetchAllQueries();
+    }
+  }, [activeTab, fetchAllQueries]);
+
+  const filterQueries = useCallback(() => {
     let filtered = [...queries];
-    
-    // Apply status filter
     if (statusFilter !== 'all') {
       filtered = filtered.filter(query => query.status === statusFilter);
     }
-    
-    // Apply search filter
     if (searchTerm) {
       const lowercasedSearch = searchTerm.toLowerCase();
       filtered = filtered.filter(query => 
@@ -100,9 +87,14 @@ const AdminQueryManagement = ({ activeTab }) => {
         query.Lister?.email?.toLowerCase().includes(lowercasedSearch)
       );
     }
-    
     setFilteredQueries(filtered);
-  };
+  }, [queries, statusFilter, searchTerm]);
+
+  useEffect(() => {
+    filterQueries();
+  }, [filterQueries]);
+
+  // moved fetchAllQueries above wrapped in useCallback
 
   const handleUpdateQueryStatus = async (e) => {
     e.preventDefault();
@@ -122,12 +114,9 @@ const AdminQueryManagement = ({ activeTab }) => {
     setIsSubmitting(true);
     
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/queries/${selectedQuery.id}`, {
+      const response = await fetch(getApiUrl(`admin/queries/${selectedQuery.id}`), {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           status: selectedQuery.status,
           adminResponse: responseText || selectedQuery.adminResponse

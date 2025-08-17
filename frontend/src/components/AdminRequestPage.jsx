@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { getApiUrl } from '../config/api.js';
 import { Check, X, Info, RefreshCw, AlertTriangle, Search, Filter } from 'lucide-react';
 import axios from 'axios';
 import './CSS/ListerDashboard.css';
@@ -26,10 +27,10 @@ const AdminRequestsPage = () => {
   const [mapKey, setMapKey] = useState(0); // Key to force map re-render
   
   // Fetch parking space requests
-  const fetchRequests = async () => {
+  const fetchRequests = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:5000/api/parking-requests', {
+  const response = await axios.get(getApiUrl('parking-requests'), {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
@@ -41,11 +42,11 @@ const AdminRequestsPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
   
   useEffect(() => {
     fetchRequests();
-  }, []);
+  }, [fetchRequests]);
   
   const showNotification = (message, type) => {
     setNotification({ show: true, message, type });
@@ -55,7 +56,7 @@ const AdminRequestsPage = () => {
   const handleApprove = async (id) => {
     try {
       setIsProcessing(true);
-      await axios.put(`http://localhost:5000/api/parking-requests/${id}/approve`, {}, {
+  await axios.put(getApiUrl(`parking-requests/${id}/approve`), {}, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
@@ -83,7 +84,7 @@ const AdminRequestsPage = () => {
   const handleReject = async (id) => {
     try {
       setIsProcessing(true);
-      await axios.put(`http://localhost:5000/api/parking-requests/${id}/reject`, {}, {
+  await axios.put(getApiUrl(`parking-requests/${id}/reject`), {}, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
