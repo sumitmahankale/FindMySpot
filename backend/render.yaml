@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: findmyspot-backend
+    env: node
+    plan: free
+    buildCommand: npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DB_DIALECT
+        value: mysql
+      - key: DB_SSL
+        value: true
+      - key: DB_POOL_MAX
+        value: 15
+      - key: RATE_LIMIT_WINDOW_MS
+        value: 60000
+      - key: RATE_LIMIT_MAX
+        value: 120
