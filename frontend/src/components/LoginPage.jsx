@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './CSS/LoginPage.css';
-import { getApiUrl, getAuthHeaders } from '../config/api.js';
+import { getApiUrl } from '../config/api.js';
 import { Link } from 'react-router-dom';
 import Swal from 'sweetalert2';
 
