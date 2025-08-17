@@ -1,3 +1,5 @@
+# Consolidated ignore
+
 # Logs
 logs
 *.log
@@ -7,13 +9,13 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# Dependencies
+# Dependencies / build artifacts
 node_modules
 dist
 dist-ssr
 *.local
 
-# Environment variables
+# Environment files
 .env
 .env.local
 .env.development.local
@@ -27,9 +29,9 @@ database.sqlite
 
 # Upload directories
 uploads/
-/backend/uploads/
+backend/uploads/
 
-# Editor directories and files
+# Editor / IDE
 .vscode/*
 !.vscode/extensions.json
 .idea
@@ -40,7 +42,7 @@ uploads/
 *.sln
 *.sw?
 
-# OS generated files
+# OS generated
 Thumbs.db
 ehthumbs.db
 bash.exe.stackdump

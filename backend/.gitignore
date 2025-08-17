@@ -1,3 +1,31 @@
 node_modules/
 .env
 *.sqlite
+*.db
+database.sqlite
+
+# Upload directories
+uploads/
+backend/uploads/
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+bash.exe.stackdump
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock

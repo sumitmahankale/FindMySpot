@@ -17,8 +17,39 @@ const rateLimit = require('./middleware/rateLimit');
 
 const app = express();
 
-// Basic security + parsing middleware
-app.use(cors({ origin: process.env.CORS_ORIGIN?.split(',') || '*', credentials: true }));
+// CORS configuration with support for:
+// - Comma separated exact origins in CORS_ORIGIN
+// - Wildcard '*' to allow all
+// - Wildcard subdomain patterns like *.vercel.app
+const rawCors = process.env.CORS_ORIGIN;
+let allowedOrigins = [];
+if (rawCors && rawCors.trim().length > 0) {
+  allowedOrigins = rawCors.split(',').map(o => o.trim()).filter(Boolean);
+}
+
+const corsOptions = {
+  credentials: true,
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true); // non-browser
+    if (allowedOrigins.includes('*')) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    const matchedWildcard = allowedOrigins.some(pattern => {
+      if (pattern.startsWith('*.')) {
+        const suffix = pattern.slice(1);
+        return origin.endsWith(suffix);
+      }
+      return false;
+    });
+    if (matchedWildcard) return callback(null, true);
+    console.warn('[CORS BLOCK]', origin, 'not in allowed list:', allowedOrigins);
+    return callback(new Error('CORS origin not allowed'));
+  },
+  optionsSuccessStatus: 204
+};
+
+app.use(cors(corsOptions));
+// Explicitly handle preflight to surface CORS diagnostics
+app.options('*', cors(corsOptions));
 app.use(bodyParser.json());
 
 // Optional request logging for debugging (enable with LOG_REQUESTS=true)
