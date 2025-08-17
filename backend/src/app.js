@@ -47,6 +47,17 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 // Apply basic rate limiting then mount routes
 app.use(rateLimit, routes);
 
+// Root route (informational) to avoid Not Found when visiting base URL
+app.get('/', (req, res) => {
+  res.json({
+    service: 'FindMySpot API',
+    status: 'ok',
+    health: '/api/health',
+    dbHealth: '/api/health/db',
+    docs: 'Add API docs endpoint later'
+  });
+});
+
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({ error: 'Not Found' });
