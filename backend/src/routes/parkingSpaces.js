@@ -3,6 +3,15 @@ const express = require('express');
 const { Sequelize } = require('sequelize');
 const { authenticateToken } = require('../middleware/auth');
 const { ParkingSpace, Lister, Booking } = require('../models');
+const jwt = require('jsonwebtoken');
+// Optional auth: if token provided and valid, attaches req.user; otherwise continues anonymously
+function optionalAuth(req, _res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  if (!token) return next();
+  try { req.user = jwt.verify(token, process.env.JWT_SECRET || 'insecure-dev-secret'); } catch (_) { /* ignore */ }
+  next();
+}
 const router = express.Router();
 
 // Helper to build list (reused by alias)
@@ -106,7 +115,7 @@ router.get('/lister/:listerId/parking-spaces', authenticateToken, async (req, re
 });
 
 // Availability endpoint: returns bookings for a space (basic)
-router.get('/parking-spaces/:id/availability', authenticateToken, async (req, res) => {
+router.get('/parking-spaces/:id/availability', optionalAuth, async (req, res) => {
   try {
     const spaceId = parseInt(req.params.id, 10);
     if (Number.isNaN(spaceId)) return res.status(400).json({ error: 'Invalid space ID' });
