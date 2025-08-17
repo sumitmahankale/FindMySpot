@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import './CSS/SignUp.css';
 import { Link } from 'react-router-dom';
 import Swal from 'sweetalert2';
+import { getApiUrl } from '../config/api.js';
 
 const SignupPage = () => {
   const [email, setEmail] = useState('');
@@ -62,7 +63,7 @@ const SignupPage = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/register', {
+      const response = await fetch(getApiUrl('auth/register'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

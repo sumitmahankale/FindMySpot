@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Calendar, Clock, MapPin, AlertCircle, CheckCircle, XCircle, User, Phone, Download, RefreshCw } from 'lucide-react';
 import Swal from 'sweetalert2';
 import QRCode from 'qrcode';
+import { getApiUrl, getAuthHeaders } from '../config/api.js';
 
 
 const UserBookingsPage = () => {
@@ -28,10 +29,8 @@ const UserBookingsPage = () => {
     
     try {
       setRefreshing(true);
-      const response = await axios.get('http://localhost:5000/api/user/bookings', {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+      const response = await axios.get(getApiUrl('user/bookings'), {
+        headers: getAuthHeaders(token)
       });
       
       setBookings(response.data);
@@ -144,10 +143,8 @@ useEffect(() => {
         setLoading(true);
         
         try {
-          await axios.put(`http://localhost:5000/api/bookings/${bookingId}/cancel`, {}, {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
+          await axios.put(getApiUrl(`bookings/${bookingId}/cancel`), {}, {
+            headers: getAuthHeaders(token)
           });
           
           // Refresh bookings instead of just updating state

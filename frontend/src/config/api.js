@@ -14,6 +14,10 @@ export const getApiUrl = (endpoint) => {
   if (endpoint.startsWith('/')) {
     endpoint = endpoint.slice(1);
   }
+  // Remove /api prefix if already included in endpoint
+  if (endpoint.startsWith('api/')) {
+    endpoint = endpoint.substring(4);
+  }
   return `${API_BASE_URL}/${endpoint}`;
 };
 
@@ -26,4 +30,6 @@ export const getAuthHeaders = (token = null) => {
   };
 };
 
+// Export the base URL for direct usage
+export { API_BASE_URL };
 export default API_BASE_URL;

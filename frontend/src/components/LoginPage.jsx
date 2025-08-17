@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './CSS/LoginPage.css';
+import { getApiUrl, getAuthHeaders } from '../config/api.js';
 import { Link } from 'react-router-dom';
 import Swal from 'sweetalert2';
 
@@ -55,7 +56,7 @@ const LoginPage = () => {
 
     try {
       // Call the backend login API endpoint
-      const response = await fetch('http://localhost:5000/api/auth/login', {
+      const response = await fetch(getApiUrl('auth/login'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

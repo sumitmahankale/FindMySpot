@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Inbox, CheckCircle, Clock, AlertCircle, Send, X, Paperclip, ChevronDown, ChevronRight, RefreshCw, ChevronLeft } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
+import { getApiUrl, getAuthHeaders } from '../config/api.js';
 
 // Custom CSS variables (matching the existing style palette)
 const styles = {
@@ -73,12 +74,9 @@ const UserQueryComponent = () => {
     
     try {
       // Use the simpler endpoint that doesn't require userId in path
-      const response = await fetch(`http://localhost:5000/api/user/queries`, {
+      const response = await fetch(getApiUrl('user/queries'), {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}` 
-        }
+        headers: getAuthHeaders(token)
       });
   
       if (!response.ok) {
@@ -183,12 +181,9 @@ const UserQueryComponent = () => {
         attachmentUrl = 'mock-url-for-file-upload';
       }
   
-      const response = await fetch('http://localhost:5000/api/user/queries', {
+      const response = await fetch(getApiUrl('user/queries'), {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers: getAuthHeaders(token),
         body: JSON.stringify({
           ...formData,
           attachmentUrl,
