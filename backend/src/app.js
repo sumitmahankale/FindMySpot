@@ -10,7 +10,7 @@ const path = require('path');
 
 const { sequelize } = require('./config/db');
 // Import models to ensure associations are registered
-require('./models/index');
+require('./models');
 
 const routes = require('./routes');
 const rateLimit = require('./middleware/rateLimit');
@@ -24,6 +24,21 @@ app.use(bodyParser.json());
 // Health endpoint
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString() });
+});
+
+// Database health check
+app.get('/api/health/db', async (req, res) => {
+  try {
+    await sequelize.authenticate();
+    res.json({ status: 'ok', database: 'connected', time: new Date().toISOString() });
+  } catch (error) {
+    res.status(500).json({ status: 'error', database: 'disconnected', error: error.message });
+  }
+});
+
+// Test endpoint to check if routing works
+app.get('/api/test', (req, res) => {
+  res.json({ message: 'Backend routing is working!', timestamp: new Date().toISOString() });
 });
 
 // Static file serving placeholder (if needed for uploads)

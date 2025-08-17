@@ -1,5 +1,6 @@
 // Centralized API configuration
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 
+  (import.meta.env.MODE === 'production' ? 'https://findmyspot-grxt.onrender.com/api' : 'http://localhost:4000/api');
 
 // Debug logging
 console.log('Environment variables:', {
