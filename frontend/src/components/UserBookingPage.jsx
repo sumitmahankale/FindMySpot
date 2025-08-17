@@ -23,24 +23,43 @@ const BookingPage = () => {
   const [listerInfo, setListerInfo] = useState(null);
   const [formErrors, setFormErrors] = useState({});
 
+  // Calculate booking duration in hours (defined before dependent callbacks)
+  const calculateDuration = useCallback(() => {
+    if (!startTime || !endTime) return 0;
+    const [startHour, startMinute] = startTime.split(':').map(Number);
+    const [endHour, endMinute] = endTime.split(':').map(Number);
+    const startTotalMinutes = startHour * 60 + startMinute;
+    const endTotalMinutes = endHour * 60 + endMinute;
+    let diffMinutes = endTotalMinutes - startTotalMinutes;
+    if (diffMinutes <= 0) diffMinutes += 24 * 60; // next day booking support
+    return diffMinutes / 60;
+  }, [startTime, endTime]);
+
   const calculateTotalAmount = useCallback(() => {
     if (!parkingSpace) return;
     const duration = calculateDuration();
-    const priceMatch = parkingSpace.price.match(/(\d+)/);
-    const pricePerHour = priceMatch ? parseFloat(priceMatch[1]) : 0;
-    const amount = pricePerHour * duration;
-    setTotalAmount(amount);
-  }, [parkingSpace, calculateDuration]); // Updated dependencies
+    const priceText = parkingSpace.price || '';
+    const priceMatch = priceText.match(/(\d+(?:\.\d+)?)/);
+    const priceValue = priceMatch ? parseFloat(priceMatch[1]) : 0;
+    setTotalAmount(priceValue * duration);
+  }, [parkingSpace, calculateDuration]);
 
   const checkAvailability = useCallback(async () => {
     if (!parkingSpace) return;
     try {
       const formattedDate = formatDate(bookingDate);
-      const response = await axios.get(getApiUrl(`parking-spaces/${parkingSpace.id}/availability`), {
+      const { data } = await axios.get(getApiUrl(`parking-spaces/${parkingSpace.id}/availability`), {
         params: { date: formattedDate, startTime, endTime }
       });
-      setIsAvailable(response.data.available);
-      setConflictCount(response.data.conflictCount || 0);
+      if (typeof data.available === 'boolean') {
+        setIsAvailable(data.available);
+        setConflictCount(data.conflictCount || 0);
+      } else {
+        // Fallback: if API older version returns only bookings
+        const conflicts = (data.bookings || []).filter(b => !(endTime <= b.startTime || startTime >= b.endTime));
+        setConflictCount(conflicts.length);
+        setIsAvailable(conflicts.length === 0);
+      }
     } catch (error) {
       console.error('Error checking availability:', error);
       setIsAvailable(false);
@@ -72,27 +91,7 @@ const BookingPage = () => {
     calculateTotalAmount();
   }, [parkingSpace, navigate, calculateTotalAmount]);
 
-  // Calculate booking duration in hours
-  const calculateDuration = useCallback(() => {
-    if (!startTime || !endTime) return 0;
-    
-    const [startHour, startMinute] = startTime.split(':').map(Number);
-    const [endHour, endMinute] = endTime.split(':').map(Number);
-    
-    // Convert to minutes for easier calculation
-    const startTotalMinutes = startHour * 60 + startMinute;
-    const endTotalMinutes = endHour * 60 + endMinute;
-    
-    // Calculate difference in minutes and handle negative values (next day booking)
-    let diffMinutes = endTotalMinutes - startTotalMinutes;
-    if (diffMinutes <= 0) {
-      // Assuming the booking extends to the next day
-      diffMinutes += 24 * 60;
-    }
-    
-    // Convert back to hours (as a decimal)
-    return diffMinutes / 60;
-  }, [startTime, endTime]); // Updated dependencies
+  // (calculateDuration moved above)
 
   // Recalculate totals & availability when dependencies change
   useEffect(() => {

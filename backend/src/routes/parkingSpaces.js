@@ -112,10 +112,40 @@ router.get('/parking-spaces/:id/availability', authenticateToken, async (req, re
     if (Number.isNaN(spaceId)) return res.status(400).json({ error: 'Invalid space ID' });
     const space = await ParkingSpace.findByPk(spaceId);
     if (!space) return res.status(404).json({ error: 'Not found' });
-    // Optionally restrict visibility; for now allow any authenticated user
-    const bookings = await Booking.findAll({ where: { parkingSpaceId: spaceId }, order: [['startTime','ASC']] });
-    res.json({ spaceId, bookings });
-  } catch (e) { res.status(500).json({ error: 'Failed to fetch availability', details: e.message }); }
+
+    const { date, startTime, endTime } = req.query;
+    const where = { parkingSpaceId: spaceId };
+    if (date) where.bookingDate = date; // expect YYYY-MM-DD
+
+    const bookings = await Booking.findAll({ where, order: [['startTime','ASC']] });
+
+    let available = true;
+    let conflictCount = 0;
+    let conflicts = [];
+
+    if (date && startTime && endTime) {
+      // Determine overlaps on same date
+      const reqStart = startTime;
+      const reqEnd = endTime;
+      conflicts = bookings.filter(b => {
+        // Overlap if NOT (requested ends before booking starts OR requested starts after booking ends)
+        return !(reqEnd <= b.startTime || reqStart >= b.endTime);
+      });
+      conflictCount = conflicts.length;
+      available = conflictCount === 0;
+    }
+
+    return res.json({
+      spaceId,
+      requested: { date: date || null, startTime: startTime || null, endTime: endTime || null },
+      available,
+      conflictCount,
+      conflicts,
+      bookings
+    });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to fetch availability', details: e.message });
+  }
 });
 
 
