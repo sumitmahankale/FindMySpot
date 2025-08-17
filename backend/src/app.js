@@ -21,6 +21,14 @@ const app = express();
 app.use(cors({ origin: process.env.CORS_ORIGIN?.split(',') || '*', credentials: true }));
 app.use(bodyParser.json());
 
+// Optional request logging for debugging (enable with LOG_REQUESTS=true)
+if (process.env.LOG_REQUESTS === 'true') {
+  app.use((req, res, next) => {
+    console.log(`[REQ] ${req.method} ${req.originalUrl}`);
+    next();
+  });
+}
+
 // Health endpoint
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString() });
@@ -99,6 +107,20 @@ app.get('/', (req, res) => {
     health: '/api/health',
     dbHealth: '/api/health/db',
     docs: 'Add API docs endpoint later'
+  });
+});
+
+// /api index convenience route
+app.get('/api', (req, res) => {
+  res.json({
+    service: 'FindMySpot API',
+    status: 'ok',
+    endpoints: {
+      health: '/api/health',
+      dbHealth: '/api/health/db',
+      authLogin: '/api/auth/login',
+      authRegister: '/api/auth/register'
+    }
   });
 });
 
