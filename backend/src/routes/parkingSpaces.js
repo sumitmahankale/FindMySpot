@@ -5,8 +5,8 @@ const { authenticateToken } = require('../middleware/auth');
 const { ParkingSpace, Lister, Booking } = require('../models');
 const router = express.Router();
 
-// List parking spaces with basic filters
-router.get('/parking-spaces', async (req, res) => {
+// Helper to build list (reused by alias)
+async function listSpaces(req, res) {
   try {
     const { location, q } = req.query;
     const where = {};
@@ -15,10 +15,26 @@ router.get('/parking-spaces', async (req, res) => {
     const spaces = await ParkingSpace.findAll({ where, include: [{ model: Lister, attributes: ['id','name','email'] }] });
     res.json(spaces);
   } catch (e) { res.status(500).json({ error: 'Failed to fetch parking spaces', details: e.message }); }
-});
+}
+
+// List parking spaces with basic filters
+router.get('/parking-spaces', listSpaces);
+// Legacy/alternate alias used by frontend (parking-entries)
+router.get('/parking-entries', listSpaces);
 
 // Create parking space (lister)
 router.post('/parking-spaces', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'lister') return res.status(403).json({ error: 'Only listers can create parking spaces' });
+    const { name, location, pricePerHour, capacity, description } = req.body;
+    if (!name || !location || !pricePerHour) return res.status(400).json({ error: 'Missing required fields' });
+    const space = await ParkingSpace.create({ name, location, pricePerHour, capacity, description, listerId: req.user.id });
+    res.status(201).json(space);
+  } catch (e) { res.status(500).json({ error: 'Failed to create parking space', details: e.message }); }
+});
+// Alias
+router.post('/parking-entries', authenticateToken, async (req, res) => {
+  // Delegate to main handler logic by calling next route function would require refactor; duplicating minimal logic
   try {
     if (req.user.role !== 'lister') return res.status(403).json({ error: 'Only listers can create parking spaces' });
     const { name, location, pricePerHour, capacity, description } = req.body;
@@ -38,6 +54,15 @@ router.put('/parking-spaces/:id', authenticateToken, async (req, res) => {
     res.json(space);
   } catch (e) { res.status(500).json({ error: 'Failed to update parking space', details: e.message }); }
 });
+router.put('/parking-entries/:id', authenticateToken, async (req, res) => {
+  try {
+    const space = await ParkingSpace.findByPk(req.params.id);
+    if (!space) return res.status(404).json({ error: 'Not found' });
+    if (req.user.role !== 'lister' || space.listerId !== req.user.id) return res.status(403).json({ error: 'Forbidden' });
+    await space.update(req.body);
+    res.json(space);
+  } catch (e) { res.status(500).json({ error: 'Failed to update parking space', details: e.message }); }
+});
 
 // Delete parking space
 router.delete('/parking-spaces/:id', authenticateToken, async (req, res) => {
@@ -49,5 +74,40 @@ router.delete('/parking-spaces/:id', authenticateToken, async (req, res) => {
     res.json({ message: 'Deleted' });
   } catch (e) { res.status(500).json({ error: 'Failed to delete parking space', details: e.message }); }
 });
+router.delete('/parking-entries/:id', authenticateToken, async (req, res) => {
+  try {
+    const space = await ParkingSpace.findByPk(req.params.id);
+    if (!space) return res.status(404).json({ error: 'Not found' });
+    if (req.user.role !== 'lister' || space.listerId !== req.user.id) return res.status(403).json({ error: 'Forbidden' });
+    await space.destroy();
+    res.json({ message: 'Deleted' });
+  } catch (e) { res.status(500).json({ error: 'Failed to delete parking space', details: e.message }); }
+});
+
+// Lister-specific listing
+router.get('/lister/:listerId/parking-spaces', authenticateToken, async (req, res) => {
+  try {
+    const listerId = parseInt(req.params.listerId, 10);
+    if (Number.isNaN(listerId)) return res.status(400).json({ error: 'Invalid lister ID' });
+    // Allow lister owner or admin
+    if (req.user.id !== listerId && req.user.role !== 'admin') return res.status(403).json({ error: 'Unauthorized access' });
+    const spaces = await ParkingSpace.findAll({ where: { listerId }, include: [{ model: Lister, attributes: ['id','fullName','businessName','email'] }], order: [['createdAt','DESC']] });
+    res.json(spaces);
+  } catch (e) { res.status(500).json({ error: 'Failed to fetch lister parking spaces', details: e.message }); }
+});
+
+// Availability endpoint: returns bookings for a space (basic)
+router.get('/parking-spaces/:id/availability', authenticateToken, async (req, res) => {
+  try {
+    const spaceId = parseInt(req.params.id, 10);
+    if (Number.isNaN(spaceId)) return res.status(400).json({ error: 'Invalid space ID' });
+    const space = await ParkingSpace.findByPk(spaceId);
+    if (!space) return res.status(404).json({ error: 'Not found' });
+    // Optionally restrict visibility; for now allow any authenticated user
+    const bookings = await Booking.findAll({ where: { parkingSpaceId: spaceId }, order: [['startTime','ASC']] });
+    res.json({ spaceId, bookings });
+  } catch (e) { res.status(500).json({ error: 'Failed to fetch availability', details: e.message }); }
+});
+
 
 module.exports = router;
