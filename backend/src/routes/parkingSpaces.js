@@ -12,9 +12,19 @@ async function listSpaces(req, res) {
     const where = {};
     if (q) where.name = { [Sequelize.Op.like]: `%${q}%` };
     if (location) where.location = { [Sequelize.Op.like]: `%${location}%` };
-  const spaces = await ParkingSpace.findAll({ where, include: [{ model: Lister, attributes: ['id','fullName','businessName','email','phone'] }] });
-    res.json(spaces);
-  } catch (e) { res.status(500).json({ error: 'Failed to fetch parking spaces', details: e.message }); }
+    try {
+      const spaces = await ParkingSpace.findAll({ where, include: [{ model: Lister, attributes: ['id','fullName','businessName','email','phone'] }] });
+      return res.json(spaces);
+    } catch (inner) {
+      // Fallback: attribute mismatch (e.g., production DB column naming) – retry without explicit attributes
+      console.warn('[parking-spaces] initial query failed, retrying without attribute list:', inner.message);
+      const spaces = await ParkingSpace.findAll({ where, include: [{ model: Lister }] });
+      return res.json(spaces);
+    }
+  } catch (e) {
+    console.error('[parking-spaces] fatal fetch error:', e);
+    res.status(500).json({ error: 'Failed to fetch parking spaces', details: e.message });
+  }
 }
 
 // List parking spaces with basic filters
