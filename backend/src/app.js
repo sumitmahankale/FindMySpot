@@ -26,30 +26,51 @@ let allowedOrigins = [];
 if (rawCors && rawCors.trim().length > 0) {
   allowedOrigins = rawCors.split(',').map(o => o.trim()).filter(Boolean);
 }
+// Normalized (strip trailing slash) for comparison
+const normalizedAllowed = allowedOrigins.map(o => o.replace(/\/$/, ''));
+console.log('[CORS] Allowed origins:', allowedOrigins);
+
+// Optional fallback regex pattern (e.g. ".*vercel.app$")
+let fallbackPattern = null;
+if (process.env.CORS_FALLBACK_REGEX) {
+  try { fallbackPattern = new RegExp(process.env.CORS_FALLBACK_REGEX); } catch (e) { console.warn('[CORS] Invalid CORS_FALLBACK_REGEX:', e.message); }
+}
 
 const corsOptions = {
   credentials: true,
   origin: (origin, callback) => {
-    if (!origin) return callback(null, true); // non-browser
-    if (allowedOrigins.includes('*')) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    const matchedWildcard = allowedOrigins.some(pattern => {
+    if (!origin) return callback(null, true); // non-browser / same-origin
+
+    const originalOrigin = origin;
+    const norm = origin.replace(/\/$/, '');
+
+    // Allow all
+    if (normalizedAllowed.includes('*')) return callback(null, true);
+
+    // Exact match (original or normalized)
+    if (normalizedAllowed.includes(norm) || normalizedAllowed.includes(originalOrigin)) return callback(null, true);
+
+    // Wildcard subdomain patterns '*.domain'
+    const wildcardHit = normalizedAllowed.some(pattern => {
       if (pattern.startsWith('*.')) {
-        const suffix = pattern.slice(1);
-        return origin.endsWith(suffix);
+        const suffix = pattern.slice(1); // remove leading '*'
+        return norm.endsWith(suffix);
       }
       return false;
     });
-    if (matchedWildcard) return callback(null, true);
-    console.warn('[CORS BLOCK]', origin, 'not in allowed list:', allowedOrigins);
+    if (wildcardHit) return callback(null, true);
+
+    // Regex fallback
+    if (fallbackPattern && fallbackPattern.test(norm)) return callback(null, true);
+
+    console.warn('[CORS BLOCK]', originalOrigin, 'not allowed. Allowed list:', allowedOrigins, 'normalized:', normalizedAllowed, 'regex:', process.env.CORS_FALLBACK_REGEX || 'none');
     return callback(new Error('CORS origin not allowed'));
   },
   optionsSuccessStatus: 204
 };
 
 app.use(cors(corsOptions));
-// Explicitly handle preflight to surface CORS diagnostics
-app.options('*', cors(corsOptions));
+app.options('*', cors(corsOptions)); // Preflight
 app.use(bodyParser.json());
 
 // Optional request logging for debugging (enable with LOG_REQUESTS=true)
