@@ -1,6 +1,6 @@
 # FindMySpot Backend
 
-Production-grade Express + Sequelize backend for FindMySpot.
+Production-grade Express + Sequelize backend for FindMySpot. A single representative UI screenshot now lives in the root `README.md` (extra images removed for brevity).
 
 ## Quick Start
 
@@ -105,8 +105,12 @@ We use Sequelize migrations for schema management:
 
 ## API Endpoints
 
-### Health Check
-- `GET /api/health` - Service health status
+### Health & Index
+- `GET /` - Root welcome
+- `GET /api` - API index (lists groups)
+- `GET /api/health` - Basic service health status
+- `GET /api/health/db` - Database connectivity (shows degraded info in dev)
+- `GET /api/health/db/extended` - Extended diagnostics (development only)
 
 ### Authentication
 - `POST /api/auth/register` - User registration

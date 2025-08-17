@@ -1,6 +1,6 @@
 # FindMySpot Frontend
 
-React + Vite frontend application for FindMySpot parking space finder.
+React + Vite frontend application for FindMySpot parking space finder. A single representative screenshot is available in the root project `README.md` (others removed to keep docs lean).
 
 ## Quick Start
 

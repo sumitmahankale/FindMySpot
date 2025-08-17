@@ -12,6 +12,16 @@ if (import.meta.env.MODE !== 'production') {
   console.log('Using API_BASE_URL:', API_BASE_URL);
 }
 
+// Warn in any environment if a remote origin tries to use a localhost API base
+try {
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    if (host && host !== 'localhost' && /localhost:5?000/.test(API_BASE_URL)) {
+      console.warn('[FindMySpot] WARNING: Frontend deployed on', host, 'is still pointing to', API_BASE_URL, '- check VITE_API_URL env var and redeploy.');
+    }
+  }
+} catch { /* ignore */ }
+
 export const apiConfig = {
   baseURL: API_BASE_URL,
   timeout: 10000, // 10 seconds
