@@ -191,7 +191,7 @@ npm run db:migrate:undo     # Rollback last migration
 ## Screenshots
 
 ![Screenshot 2025-04-20 211506](https://github.com/user-attachments/assets/a6882685-da48-4e62-b7c5-3793b9230fac)
-![Screenshot 2025-04-20 211651](https://github.com/user-attachments/assets/4ec64a53-5c6b-4317-9777-e2bf3ef9ddca)
+
 ![Screenshot 2025-04-20 212035](https://github.com/user-attachments/assets/5f8dd9d1-53f2-4a13-87e7-0922774ede2b)
 ![Screenshot 2025-04-20 212216](https://github.com/user-attachments/assets/81485a3c-2204-448e-b1d6-48420507167c)
 ![Screenshot 2025-04-21 174722](https://github.com/user-attachments/assets/4bd31ecf-2e8b-47ca-bb71-d4108f4cd751)
