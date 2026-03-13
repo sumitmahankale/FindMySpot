@@ -66,7 +66,7 @@ const AdminQueryManagement = ({ activeTab }) => {
     
     try {
       // Get token from localStorage
-      const token = localStorage.getItem('authToken');
+      const token = localStorage.getItem('token') || localStorage.getItem('authToken');
       
       if (!token) {
         throw new Error('Authentication token not found');
@@ -112,7 +112,7 @@ const AdminQueryManagement = ({ activeTab }) => {
     
     try {
       // Get token from localStorage
-      const token = localStorage.getItem('authToken');
+      const token = localStorage.getItem('token') || localStorage.getItem('authToken');
       
       if (!token) {
         throw new Error('Authentication token not found');

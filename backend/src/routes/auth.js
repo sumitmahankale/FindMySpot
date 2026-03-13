@@ -15,7 +15,7 @@ router.post('/auth/register', async (req, res) => {
     const hashed = await bcrypt.hash(password, 10);
     const user = await User.create({ email, fullName, password: hashed });
   const token = jwt.sign({ id: user.id, email: user.email, role: 'user' }, process.env.JWT_SECRET || 'insecure-dev-secret', { expiresIn: '7d' });
-  res.status(201).json({ token, username: user.email, fullName: user.fullName, role: 'user' });
+  res.status(201).json({ token, username: user.email, fullName: user.fullName, userId: user.id, role: 'user' });
   } catch (e) { res.status(400).json({ error: 'Failed to register user', details: e.message }); }
 });
 
@@ -28,7 +28,7 @@ router.post('/auth/login', async (req, res) => {
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) return res.status(401).json({ error: 'Invalid email or password' });
   const token = jwt.sign({ id: user.id, email: user.email, role: 'user' }, process.env.JWT_SECRET || 'insecure-dev-secret', { expiresIn: '7d' });
-  res.json({ token, username: user.email, fullName: user.fullName, role: 'user' });
+  res.json({ token, username: user.email, fullName: user.fullName, userId: user.id, role: 'user' });
   } catch (e) { res.status(500).json({ error: 'Failed to log in', details: e.message }); }
 });
 

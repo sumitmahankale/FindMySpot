@@ -6,6 +6,6 @@ export default defineConfig({
   plugins: [react()],
   server: {
     open: false, // This stops it from auto-opening in the browser
-    port: 4000,  // Optional: set to your preferred port
+    port: 5173,  // Keep frontend separate from backend (4000)
   }
 })

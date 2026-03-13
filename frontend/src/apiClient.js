@@ -1,14 +1,9 @@
-// Centralized API base URL helper for deployment flexibility
-// Usage: import { apiBase, apiUrl } from './apiClient';
-// apiUrl('/auth/login') => `${apiBase}/auth/login`
+import { API_BASE_URL, getApiUrl } from './config/api';
 
-export const apiBase = import.meta?.env?.VITE_API_URL || (typeof window !== 'undefined' ? window.__API_BASE__ : '') || 'http://localhost:5000/api';
+export const apiBase = API_BASE_URL;
 
 export function apiUrl(path = '') {
-  if (!path.startsWith('/')) path = '/' + path;
-  // Avoid duplicating /api if caller already includes it
-  if (path.startsWith('/api/')) return (import.meta?.env?.VITE_API_ORIGIN || apiBase.replace(/\/api$/,'')) + path;
-  return apiBase + path;
+  return getApiUrl(path);
 }
 
 export function withAuthHeaders(token) {
