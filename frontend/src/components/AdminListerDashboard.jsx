@@ -77,8 +77,7 @@ const ParkingSpaceManagement = () => {
       console.log('Updating space with ID:', selectedSpace.id);
       console.log('Update data:', formData);
       
-      // Modified to remove authentication header
-      // Requires lister ownership on backend; admin override not yet implemented
+      // Uses auth token; backend allows admin control for space management.
       const response = await axios.put(
         getApiUrl(`parking-spaces/${selectedSpace.id}`), 
         { ...formData },
@@ -108,7 +107,7 @@ const ParkingSpaceManagement = () => {
     try {
       console.log('Deleting space with ID:', selectedSpace.id);
       
-      // Modified to remove authentication header
+      // Uses auth token; backend allows admin control for space management.
       const response = await axios.delete(
         getApiUrl(`parking-spaces/${selectedSpace.id}`),
         { headers: getAuthHeaders() }
@@ -227,7 +226,7 @@ const ParkingSpaceManagement = () => {
                 <div className="flex justify-between items-center p-4 border-b">
                   <h2 className="text-xl font-bold text-gray-800">{selectedSpace.location}</h2>
                   <div className="flex space-x-2">
-                    {localStorage.getItem('role') === 'lister' && (
+                    {localStorage.getItem('role') === 'admin' && (
                       <>
                         <button 
                           className="flex items-center px-3 py-2 bg-blue-900 text-white rounded hover:bg-blue-700"
@@ -296,7 +295,7 @@ const ParkingSpaceManagement = () => {
       </div>
       
       {/* Edit Modal */}
-  {editModalOpen && localStorage.getItem('role') === 'lister' && (
+  {editModalOpen && localStorage.getItem('role') === 'admin' && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md relative">
             <div className="flex justify-between items-center mb-4">
@@ -385,7 +384,7 @@ const ParkingSpaceManagement = () => {
       )}
       
       {/* Delete Confirmation Modal */}
-  {deleteModalOpen && localStorage.getItem('role') === 'lister' && (
+  {deleteModalOpen && localStorage.getItem('role') === 'admin' && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md relative">
             <div className="flex justify-between items-center mb-4">

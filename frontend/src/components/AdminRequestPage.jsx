@@ -30,7 +30,7 @@ const AdminRequestsPage = () => {
   const fetchRequests = useCallback(async () => {
     try {
       setLoading(true);
-  const response = await axios.get(getApiUrl('parking-requests'), { headers: getAuthHeaders() });
+      const response = await axios.get(getApiUrl(`parking-requests?status=${filterStatus}`), { headers: getAuthHeaders() });
       setRequests(response.data);
     } catch (error) {
       console.error('Error fetching requests:', error);
@@ -38,7 +38,7 @@ const AdminRequestsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [filterStatus]);
   
   useEffect(() => {
     fetchRequests();

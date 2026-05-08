@@ -67,7 +67,9 @@ router.put('/parking-spaces/:id', authenticateToken, async (req, res) => {
   try {
     const space = await ParkingSpace.findByPk(req.params.id);
     if (!space) return res.status(404).json({ error: 'Not found' });
-    if (req.user.role !== 'lister' || space.listerId !== req.user.id) return res.status(403).json({ error: 'Forbidden' });
+    const isListerOwner = req.user.role === 'lister' && space.listerId === req.user.id;
+    const isAdmin = req.user.role === 'admin';
+    if (!isListerOwner && !isAdmin) return res.status(403).json({ error: 'Forbidden' });
     await space.update(req.body);
     res.json(space);
   } catch (e) { res.status(500).json({ error: 'Failed to update parking space', details: e.message }); }
@@ -76,7 +78,9 @@ router.put('/parking-entries/:id', authenticateToken, async (req, res) => {
   try {
     const space = await ParkingSpace.findByPk(req.params.id);
     if (!space) return res.status(404).json({ error: 'Not found' });
-    if (req.user.role !== 'lister' || space.listerId !== req.user.id) return res.status(403).json({ error: 'Forbidden' });
+    const isListerOwner = req.user.role === 'lister' && space.listerId === req.user.id;
+    const isAdmin = req.user.role === 'admin';
+    if (!isListerOwner && !isAdmin) return res.status(403).json({ error: 'Forbidden' });
     await space.update(req.body);
     res.json(space);
   } catch (e) { res.status(500).json({ error: 'Failed to update parking space', details: e.message }); }
@@ -87,7 +91,9 @@ router.delete('/parking-spaces/:id', authenticateToken, async (req, res) => {
   try {
     const space = await ParkingSpace.findByPk(req.params.id);
     if (!space) return res.status(404).json({ error: 'Not found' });
-    if (req.user.role !== 'lister' || space.listerId !== req.user.id) return res.status(403).json({ error: 'Forbidden' });
+    const isListerOwner = req.user.role === 'lister' && space.listerId === req.user.id;
+    const isAdmin = req.user.role === 'admin';
+    if (!isListerOwner && !isAdmin) return res.status(403).json({ error: 'Forbidden' });
     await space.destroy();
     res.json({ message: 'Deleted' });
   } catch (e) { res.status(500).json({ error: 'Failed to delete parking space', details: e.message }); }
@@ -96,7 +102,9 @@ router.delete('/parking-entries/:id', authenticateToken, async (req, res) => {
   try {
     const space = await ParkingSpace.findByPk(req.params.id);
     if (!space) return res.status(404).json({ error: 'Not found' });
-    if (req.user.role !== 'lister' || space.listerId !== req.user.id) return res.status(403).json({ error: 'Forbidden' });
+    const isListerOwner = req.user.role === 'lister' && space.listerId === req.user.id;
+    const isAdmin = req.user.role === 'admin';
+    if (!isListerOwner && !isAdmin) return res.status(403).json({ error: 'Forbidden' });
     await space.destroy();
     res.json({ message: 'Deleted' });
   } catch (e) { res.status(500).json({ error: 'Failed to delete parking space', details: e.message }); }

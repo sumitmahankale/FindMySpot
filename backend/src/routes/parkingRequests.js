@@ -13,11 +13,13 @@ router.post('/parking-requests', authenticateToken, async (req, res) => {
   } catch (e) { res.status(400).json({ error: 'Failed to create parking request', details: e.message }); }
 });
 
-// List pending requests (admin placeholder)
+// List requests (admin) – supports ?status=pending|approved|rejected|all
 router.get('/parking-requests', authenticateToken, async (req, res) => {
   try {
-  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin access required' });
-    const requests = await ParkingRequest.findAll({ where: { status: 'pending' }, order: [['createdAt','DESC']], include: [{ model: Lister, attributes: ['id','email','fullName','businessName','phone'] }] });
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin access required' });
+    const status = req.query.status || 'all';
+    const whereClause = (status && status !== 'all') ? { status } : {};
+    const requests = await ParkingRequest.findAll({ where: whereClause, order: [['createdAt','DESC']], include: [{ model: Lister, attributes: ['id','email','fullName','businessName','phone'] }] });
     res.json(requests);
   } catch (e) { res.status(500).json({ error: 'Failed to fetch parking requests', details: e.message }); }
 });
