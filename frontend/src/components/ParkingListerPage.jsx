@@ -98,6 +98,19 @@ const ParkingListerPage = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleGoToLogin = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('role');
+    localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('username');
+    localStorage.removeItem('email');
+    localStorage.removeItem('fullName');
+    localStorage.removeItem('businessName');
+    localStorage.removeItem('phone');
+    navigate('/listerlogin');
+  };
+
   // Submit parking space request
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -194,12 +207,20 @@ const ParkingListerPage = () => {
             </div>
             <h3 className="text-lg font-medium text-green-800 mb-2">Request Submitted Successfully!</h3>
             <p className="text-green-600">Your parking space listing has been submitted for review.</p>
-            <button 
-              onClick={() => setStatus({ loading: false, success: false, error: '' })}
-              className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-            >
-              List Another Space
-            </button>
+            <div className="mt-4 flex flex-col sm:flex-row justify-center gap-3">
+              <button 
+                onClick={() => setStatus({ loading: false, success: false, error: '' })}
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+              >
+                List Another Space
+              </button>
+              <button
+                onClick={handleGoToLogin}
+                className="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-800"
+              >
+                Go to Login
+              </button>
+            </div>
           </div>
         ) : (
           <div className="flex flex-col md:flex-row gap-6">
